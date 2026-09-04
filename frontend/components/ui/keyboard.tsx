@@ -283,10 +283,12 @@ const KeyboardProvider = ({
   children,
   enableSound = false,
   containerRef,
+  syncPhysicalKeyboard = false,
 }: {
   children: React.ReactNode;
   enableSound?: boolean;
   containerRef: React.RefObject<HTMLDivElement | null>;
+  syncPhysicalKeyboard?: boolean;
 }) => {
   const audioContextRef = useRef<AudioContext | null>(null);
   const audioBufferRef = useRef<AudioBuffer | null>(null);
@@ -405,9 +407,9 @@ const KeyboardProvider = ({
     };
   }, [containerRef]);
 
-  // Handle physical keyboard events (only when visible)
+  // Handle physical keyboard events (disabled by default so user keyboard is not synced)
   useEffect(() => {
-    if (!isVisible) return;
+    if (!syncPhysicalKeyboard || !isVisible) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
       // Prevent repeat events
@@ -431,7 +433,7 @@ const KeyboardProvider = ({
       document.removeEventListener("keydown", handleKeyDown);
       document.removeEventListener("keyup", handleKeyUp);
     };
-  }, [isVisible, playSoundDown, playSoundUp, setPressed, setReleased]);
+  }, [syncPhysicalKeyboard, isVisible, playSoundDown, playSoundUp, setPressed, setReleased]);
 
   return (
     <KeyboardContext.Provider
@@ -514,15 +516,21 @@ export const Keyboard = ({
   className,
   enableSound = false,
   showPreview = false,
+  syncPhysicalKeyboard = false,
 }: {
   className?: string;
   enableSound?: boolean;
   showPreview?: boolean;
+  syncPhysicalKeyboard?: boolean;
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
   return (
-    <KeyboardProvider enableSound={enableSound} containerRef={containerRef}>
+    <KeyboardProvider
+      enableSound={enableSound}
+      containerRef={containerRef}
+      syncPhysicalKeyboard={syncPhysicalKeyboard}
+    >
       <div
         ref={containerRef}
         className={cn(

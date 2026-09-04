@@ -2,7 +2,7 @@ import React from "react";
 import { cn } from "@/lib/utils";
 import { motion } from "motion/react";
 
-function StackIcon() {
+function StackIcon({ className }: { className?: string }) {
     return (
         <>
             <motion.div

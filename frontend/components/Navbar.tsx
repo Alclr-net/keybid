@@ -1,20 +1,63 @@
 'use client';
 import React from "react";
-import { ToggleTheme } from "./ToggleTheme";
+import { KeybidThemeToggleWithTransition } from "./ThemeTransition";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 import StackIcon from "./StackIcon";
 import Pannel from "./Pannel";
 import Ping from "./Ping";
+import { motion, useScroll, useTransform } from "motion/react";
+
 function Navbar() {
+    const { scrollY } = useScroll();
+
+    // Smoothly and continuously interpolate opacity from 0 to 1 as the user scrolls
+    const blurOpacity = useTransform(scrollY, [0, 70], [0, 1]);
+
     return (
         <>
-            <header className="min-w-6xl mx-auto flex justify-between items-stretch sticky top-5 z-50 bg-white border border-dashed border-neutral-700 backdrop-blur-2xl rounded-2xl dark:border-neutral-900">
+            {/* Smooth Multi-Layer Progressive Top Blur on Scroll */}
+            <motion.div
+                aria-hidden="true"
+                style={{ opacity: blurOpacity }}
+                className="pointer-events-none fixed top-0 inset-x-0 h-28 sm:h-32 z-40 select-none overflow-hidden"
+            >
+                {/* Layer 1: Ambient soft base blur across the entire height */}
+                <div
+                    className="absolute inset-0"
+                    style={{
+                        backdropFilter: "blur(8px)",
+                        WebkitBackdropFilter: "blur(8px)",
+                        maskImage:
+                            "linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.8) 40%, rgba(0,0,0,0.2) 80%, rgba(0,0,0,0) 100%)",
+                        WebkitMaskImage:
+                            "linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.8) 40%, rgba(0,0,0,0.2) 80%, rgba(0,0,0,0) 100%)",
+                    }}
+                />
+
+                {/* Layer 2: Deeper blur closer to the top and navbar */}
+                <div
+                    className="absolute inset-0"
+                    style={{
+                        backdropFilter: "blur(16px)",
+                        WebkitBackdropFilter: "blur(16px)",
+                        maskImage:
+                            "linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.7) 35%, rgba(0,0,0,0) 75%)",
+                        WebkitMaskImage:
+                            "linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.7) 35%, rgba(0,0,0,0) 75%)",
+                    }}
+                />
+
+                {/* Layer 3: Soft ambient background gradient to dissolve content */}
+                <div className="absolute inset-0 bg-gradient-to-b from-[#f8fafc]/80 via-[#f8fafc]/30 to-transparent dark:from-[#080a0d]/85 dark:via-[#080a0d]/35 dark:to-transparent" />
+            </motion.div>
+
+            <header className="w-[95%] max-w-6xl mx-auto flex justify-between items-stretch sticky top-4 sm:top-5 z-50 bg-white border border-neutral-200 dark:border-neutral-800/80 backdrop-blur-2xl rounded-2xl shadow-xs">
 
                 {/* Left: logo group */}
                 <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
 
-                    <StackIcon />
+                    <StackIcon className={cn("size-15")} />
 
 
                     <div className={cn("text-neutral-700/90 flex justify-center items-center shrink-0")}>
@@ -48,7 +91,7 @@ function Navbar() {
                         </div>
                     </Pannel>
 
-                    <ToggleTheme />
+                    <KeybidThemeToggleWithTransition variant="circle" start="top-center" blur={true} />
                 </div>
 
             </header>

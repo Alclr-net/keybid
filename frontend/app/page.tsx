@@ -13,6 +13,7 @@ import { cn } from '@/lib/utils';
 
 import Container from '@/components/Container';
 import KeyboardDemo from '@/components/keyboard-demo';
+import UriClaimInput from '@/components/InputToClaim';
 
 const sorted = [...COMPANIES].sort((a, b) => b.bid - a.bid);
 const leader = sorted[0];
@@ -110,9 +111,10 @@ export default function KeybidPage() {
       <Container>
         <div className="mx-auto w-full pt-4 pb-12">
           <HeroSection />
+          <KeyboardDemo />
         </div>
       </Container>
-      <KeyboardDemo />
+
 
       {/* ── Studio Display Product Mockup Hero ── */}
 
