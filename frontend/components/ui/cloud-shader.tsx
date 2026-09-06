@@ -294,12 +294,13 @@ export const CloudShader = ({
 
     let frame = 0;
     let running = true;
+    let isVisible = true;
     const reduceMotion = window.matchMedia(
       "(prefers-reduced-motion: reduce)",
     ).matches;
 
     const resize = () => {
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
       const width = canvas.clientWidth;
       const height = canvas.clientHeight;
       const w = Math.max(1, Math.floor(width * dpr));
@@ -316,21 +317,31 @@ export const CloudShader = ({
     observer.observe(canvas);
     resize();
 
+    let intersectionObserver: IntersectionObserver | null = null;
+    if (typeof IntersectionObserver !== "undefined") {
+      intersectionObserver = new IntersectionObserver(([entry]) => {
+        isVisible = entry.isIntersecting;
+      }, { threshold: 0.05 });
+      intersectionObserver.observe(canvas);
+    }
+
     const start = performance.now();
     const draw = (now: number) => {
       if (!running) return;
-      const p = paramsRef.current;
-      const elapsed = reduceMotion ? 0 : ((now - start) / 1000) * p.speed;
-      const cloud = parseHex(p.cloudColor);
-      const skyTop = parseHex(p.skyTopColor);
-      const skyBottom = parseHex(p.skyBottomColor);
+      if (isVisible) {
+        const p = paramsRef.current;
+        const elapsed = reduceMotion ? 0 : ((now - start) / 1000) * p.speed;
+        const cloud = parseHex(p.cloudColor);
+        const skyTop = parseHex(p.skyTopColor);
+        const skyBottom = parseHex(p.skyBottomColor);
 
-      gl.uniform1f(loc.time, elapsed);
-      gl.uniform1f(loc.count, Math.min(6, Math.max(1, p.count)));
-      gl.uniform3f(loc.cloud, cloud[0], cloud[1], cloud[2]);
-      gl.uniform3f(loc.skyTop, skyTop[0], skyTop[1], skyTop[2]);
-      gl.uniform3f(loc.skyBottom, skyBottom[0], skyBottom[1], skyBottom[2]);
-      gl.drawArrays(gl.TRIANGLES, 0, 3);
+        gl.uniform1f(loc.time, elapsed);
+        gl.uniform1f(loc.count, Math.min(6, Math.max(1, p.count)));
+        gl.uniform3f(loc.cloud, cloud[0], cloud[1], cloud[2]);
+        gl.uniform3f(loc.skyTop, skyTop[0], skyTop[1], skyTop[2]);
+        gl.uniform3f(loc.skyBottom, skyBottom[0], skyBottom[1], skyBottom[2]);
+        gl.drawArrays(gl.TRIANGLES, 0, 3);
+      }
       frame = requestAnimationFrame(draw);
     };
 
@@ -340,6 +351,7 @@ export const CloudShader = ({
       running = false;
       cancelAnimationFrame(frame);
       observer.disconnect();
+      intersectionObserver?.disconnect();
       gl.deleteBuffer(buffer);
       gl.deleteProgram(program);
       gl.deleteShader(vert);

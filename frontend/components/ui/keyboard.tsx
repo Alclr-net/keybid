@@ -547,7 +547,7 @@ export const Keyboard = ({
 
 export const Keypad = () => {
   return (
-    <div className="h-full w-fit rounded-xl bg-[#e3e4e8] dark:bg-[#14161a] p-1 shadow-sm ring-1 ring-black/10 dark:ring-white/10 shadow-black/5 dark:shadow-black/50 transition-colors duration-250">
+    <div className="h-full w-fit rounded-xl bg-[#e3e4e8] dark:bg-[#14161a] p-1 ring-1 ring-black/10 dark:ring-white/20 shadow-[0_1px_2px_rgba(0,0,0,0.14),0_2px_4px_rgba(0,0,0,0.12),0_6px_14px_-2px_rgba(0,0,0,0.16),0_16px_32px_-4px_rgba(0,0,0,0.18)] dark:shadow-[0_1px_2px_rgba(0,0,0,0.5),0_3px_6px_rgba(0,0,0,0.6),0_8px_18px_-2px_rgba(0,0,0,0.7),0_20px_40px_-4px_rgba(0,0,0,0.85)] transition-all duration-250">
       {/* Function Row */}
       <Row>
         <Key
@@ -884,7 +884,7 @@ const Key = ({
         className={cn(
           "flex h-6 w-6 cursor-pointer items-center justify-center rounded-[3.5px] bg-white dark:bg-[#23252a] text-neutral-800 dark:text-neutral-200 shadow-[0px_0px_1px_0px_rgba(0,0,0,0.35),0px_1px_1.5px_0px_rgba(0,0,0,0.12),0px_1px_0px_0px_rgba(255,255,255,1)_inset] dark:shadow-[0px_0px_1px_0px_rgba(0,0,0,0.85),0px_1px_1.5px_0px_rgba(0,0,0,0.5),0px_1px_0px_0px_rgba(255,255,255,0.08)_inset] transition-all duration-75 active:scale-[0.98]",
           isPressed &&
-            "scale-[0.98] bg-neutral-200/90 dark:bg-[#1a1b20] shadow-[0px_0px_1px_0px_rgba(0,0,0,0.2)] dark:shadow-[0px_0px_1px_0px_rgba(0,0,0,0.9)]",
+          "scale-[0.98] bg-neutral-200/90 dark:bg-[#1a1b20] shadow-[0px_0px_1px_0px_rgba(0,0,0,0.2)] dark:shadow-[0px_0px_1px_0px_rgba(0,0,0,0.9)]",
           className,
         )}
       >
@@ -947,7 +947,7 @@ const ModifierKey = ({
         className={cn(
           "flex h-6 w-6 cursor-pointer items-center justify-center rounded-[3.5px] bg-white dark:bg-[#23252a] text-neutral-800 dark:text-neutral-200 shadow-[0px_0px_1px_0px_rgba(0,0,0,0.35),0px_1px_1.5px_0px_rgba(0,0,0,0.12),0px_1px_0px_0px_rgba(255,255,255,1)_inset] dark:shadow-[0px_0px_1px_0px_rgba(0,0,0,0.85),0px_1px_1.5px_0px_rgba(0,0,0,0.5),0px_1px_0px_0px_rgba(255,255,255,0.08)_inset] transition-all duration-75 active:scale-[0.98]",
           isPressed &&
-            "scale-[0.98] bg-neutral-200/90 dark:bg-[#1a1b20] shadow-[0px_0px_1px_0px_rgba(0,0,0,0.2)] dark:shadow-[0px_0px_1px_0px_rgba(0,0,0,0.9)]",
+          "scale-[0.98] bg-neutral-200/90 dark:bg-[#1a1b20] shadow-[0px_0px_1px_0px_rgba(0,0,0,0.2)] dark:shadow-[0px_0px_1px_0px_rgba(0,0,0,0.9)]",
           className,
         )}
       >

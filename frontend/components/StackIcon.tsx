@@ -38,7 +38,7 @@ function StackIcon({ className }: { className?: string }) {
                         )}
                     >
                         <motion.div
-                            className={cn(" bg-white rounded-[14px] bg-violet-300",
+                            className={cn(" bg-white rounded-[14px] bg-blue-600/70",
                                 "shadow-[0_4px_16px_rgba(0,0,0,0.06),0_1px_3px_rgba(0,0,0,0.04),inset_0_1.5px_1px_0.5px_rgba(255,255,255,0.2),inset_0_-2px_1px_0.05px_rgba(0,0,0,0.1)]",
                             )}
                             variants={{

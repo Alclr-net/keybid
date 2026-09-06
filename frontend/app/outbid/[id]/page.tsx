@@ -55,14 +55,14 @@ export default function OutbidPage() {
           <div className="w-16 h-16 rounded-2xl bg-amber-400/10 border border-amber-400/40 flex items-center justify-center text-amber-500 mx-auto text-3xl">
             👑
           </div>
-          <h1 className="text-2xl font-black">You outbid {company.name}!</h1>
-          <p className="text-zinc-600 dark:text-zinc-400 text-sm leading-relaxed">
-            You placed a bid of <strong className="text-zinc-950 dark:text-white">${bidAmount}</strong> — you now rank
-            ahead of <strong className="text-red-500 dark:text-red-400">{company.name}</strong> on the keyboard leaderboard.
+          <h1 className="text-2xl font-bold tracking-tight">You outbid {company.name}!</h1>
+          <p className="text-neutral-500 dark:text-neutral-400 text-sm font-normal leading-relaxed">
+            You placed a bid of <strong className="text-zinc-950 dark:text-white font-semibold">${bidAmount}</strong> — you now rank
+            ahead of <strong className="text-blue-600 dark:text-blue-400 font-semibold">{company.name}</strong> on the keyboard leaderboard.
           </p>
           <Link
             href="/"
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-sm transition-colors shadow-sm"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:bg-blue-800 disabled:bg-blue-600/50 disabled:text-white/50 text-white font-bold text-sm transition-colors shadow-sm cursor-pointer"
           >
             See Live Rankings →
           </Link>
@@ -97,10 +97,10 @@ export default function OutbidPage() {
           <div className="text-xs font-mono text-red-500 dark:text-red-400 uppercase tracking-widest font-semibold">
             {rank === 1 ? '👑 Currently #1' : `Currently #${rank} on leaderboard`}
           </div>
-          <h1 className="text-2xl font-black text-zinc-950 dark:text-white">
-            OUTBID <span className="text-red-500">@{company.name}</span>
+          <h1 className="text-2xl font-bold tracking-tight text-zinc-950 dark:text-white">
+            OUTBID <span className="text-blue-600 dark:text-blue-400">@{company.name}</span>
           </h1>
-          <p className="text-zinc-600 dark:text-zinc-400 text-sm">
+          <p className="text-neutral-500 dark:text-neutral-400 text-sm font-normal">
             Beat their bid to take their keyboard key and rank above them.
           </p>
         </div>
@@ -154,9 +154,9 @@ export default function OutbidPage() {
         {/* Outbid controls */}
         <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/40 p-6 space-y-5 shadow-xs">
           <div className="space-y-1">
-            <h2 className="font-bold text-zinc-950 dark:text-white text-sm">Your Bid Amount</h2>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400">
-              You need to bid at least <strong className="text-zinc-900 dark:text-white">${minBid}</strong> to outrank {company.name}.
+            <h2 className="font-semibold tracking-tight text-zinc-950 dark:text-white text-sm">Your Bid Amount</h2>
+            <p className="text-xs font-normal text-neutral-500 dark:text-neutral-400">
+              You need to bid at least <strong className="text-zinc-900 dark:text-white font-semibold">${minBid}</strong> to outrank {company.name}.
             </p>
           </div>
 
@@ -193,8 +193,8 @@ export default function OutbidPage() {
                 onClick={() => setBidAmount(amt)}
                 className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-colors cursor-pointer ${
                   bidAmount === amt
-                    ? 'bg-red-600 border-red-500 text-white'
-                    : 'bg-zinc-100 dark:bg-zinc-800 border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-400 hover:border-red-500 hover:text-red-500'
+                    ? 'bg-blue-600 border-blue-600 text-white hover:bg-blue-700 active:bg-blue-800'
+                    : 'bg-zinc-100 dark:bg-zinc-800 border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-400 hover:border-blue-600 hover:text-blue-600'
                 }`}
               >
                 ${amt}
@@ -205,7 +205,7 @@ export default function OutbidPage() {
           <button
             onClick={handleOutbid}
             disabled={loading || bidAmount < minBid}
-            className="w-full rounded-xl bg-red-600 hover:bg-red-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3.5 text-sm transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-sm"
+            className="w-full rounded-xl bg-blue-600 hover:bg-blue-700 active:bg-blue-800 disabled:bg-blue-600/50 disabled:text-white/50 disabled:cursor-not-allowed text-white font-bold py-3.5 text-sm transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-sm"
           >
             {loading ? (
               <>

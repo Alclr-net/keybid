@@ -1,10 +1,8 @@
 'use client';
 
 import React from 'react';
-import { CloudShader } from '@/components/ui/cloud-shader';
 import { cn } from '@/lib/utils';
 import { DitherShader } from '@/components/ui/dither-shader';
-import DitherShaderDemo from './dither-shader-demo';
 import imgSrc from '@/public/imgSrc.jpg';
 import { FaApple } from "react-icons/fa";
 import { BsToggles } from "react-icons/bs";
@@ -13,7 +11,6 @@ import { FaWifi } from "react-icons/fa";
 import RealTimeClock from './DateTime';
 import { IosDock } from './IosDock';
 import MacWindow from './MacWindow';
-import CanvasRevealEffectDemo from './canvas-reveal-effect-demo';
 
 
 
@@ -61,10 +58,10 @@ function HeroSection({ className, children }: HeroSectionProps) {
             />
 
             {/* macOS Menu Bar */}
-            <div className="absolute top-0 inset-x-0  px-3 sm:px-2 flex items-center justify-between  text-white text-[8px] font-medium z-10 select-none">
-              <div className="flex items-center   gap-4 tracking-tighter text-shadow-xs">
+            <div className="absolute top-0 inset-x-0 px-3 sm:px-2 flex items-center justify-between text-white text-[8px] font-normal z-10 select-none" style={{ letterSpacing: '-0.01em' }}>
+              <div className="flex items-center gap-4 text-shadow-xs">
                 <FaApple />
-                <span className="font-medium ">Finder</span>
+                <span className="font-semibold">Finder</span>
                 <span className="hidden sm:inline text-white/90">File</span>
                 <span className="hidden sm:inline text-white/90">Edit</span>
                 <span className="hidden sm:inline text-white/90">View</span>
@@ -72,7 +69,7 @@ function HeroSection({ className, children }: HeroSectionProps) {
                 <span className="hidden md:inline text-white/90">Window</span>
                 <span className="hidden md:inline text-white/90">Help</span>
               </div>
-              <div className="flex items-center gap-2 sm:gap-2.5 text-white/80 font-medium  text-[8px] text-white/90 text-shadow-xs">
+              <div className="flex items-center gap-2 sm:gap-2.5 text-white/90 font-normal text-[8px] text-shadow-xs">
                 <FaWifi />
                 <IoSearch />
                 <BsToggles />

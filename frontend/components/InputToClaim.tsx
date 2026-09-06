@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import { IconWorld, IconAlertCircle } from "@tabler/icons-react";
+import { cn } from "@/lib/utils";
 
 interface CompanyInfo {
     domain: string;
@@ -12,10 +14,12 @@ interface UriClaimInputProps {
     placeholder?: string;
     disabled?: boolean;
     debounceMs?: number;
+    className?: string;
 }
 
 function normalizeDomain(input: string): string | null {
     const trimmed = input.trim();
+    console.log(trimmed)
     if (!trimmed) return null;
     try {
         const url = trimmed.startsWith("http") ? trimmed : `https://${trimmed}`;
@@ -25,11 +29,12 @@ function normalizeDomain(input: string): string | null {
     }
 }
 
-export default function UriClaimInput({
+export function UriClaimInput({
     onClaim,
-    placeholder = "yourcompany.com",
+    placeholder = "https://yourcompany.com",
     disabled = false,
     debounceMs = 450,
+    className,
 }: UriClaimInputProps) {
     const [value, setValue] = useState("");
     const [info, setInfo] = useState<CompanyInfo | null>(null);
@@ -38,22 +43,38 @@ export default function UriClaimInput({
 
     const resolveCompany = useCallback((domain: string) => {
         setStatus("loading");
-        const logoUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
 
-        console.log("[UriClaimInput] fetching logo:", logoUrl);
+        const providers = [
+            `https://www.google.com/s2/favicons?domain=${domain}&sz=128`,
+            `https://icons.duckduckgo.com/ip3/${domain}.ico`,
+            `https://${domain}/favicon.ico`,
+        ];
 
-        const img = new Image();
-        img.onload = () => {
-            console.log("[UriClaimInput] logo loaded ✅", logoUrl);
-            setInfo({ domain, logo: logoUrl });
-            setStatus("found");
+        const loadImage = (url: string): Promise<HTMLImageElement> => {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.onload = () => resolve(img);
+                img.onerror = () => reject();
+                img.src = url;
+            });
         };
-        img.onerror = (e) => {
-            console.error("[UriClaimInput] logo FAILED to load ❌", logoUrl, e);
+
+        (async () => {
+            for (const logoUrl of providers) {
+                try {
+                    const img = await loadImage(logoUrl);
+                    if (img.naturalWidth > 16 && img.naturalHeight > 16) {
+                        setInfo({ domain, logo: logoUrl });
+                        setStatus("found");
+                        return;
+                    }
+                } catch {
+                    // try next provider
+                }
+            }
             setInfo(null);
             setStatus("error");
-        };
-        img.src = logoUrl;
+        })();
     }, []);
 
     useEffect(() => {
@@ -66,8 +87,6 @@ export default function UriClaimInput({
             return;
         }
 
-        console.log("[UriClaimInput] typing, debouncing:", domain);
-
         debounceRef.current = setTimeout(() => {
             resolveCompany(domain);
         }, debounceMs);
@@ -77,48 +96,82 @@ export default function UriClaimInput({
         };
     }, [value, debounceMs, resolveCompany]);
 
-    const canClaim = status === "found" && !disabled;
+    const inputRef = useRef<HTMLInputElement | null>(null);
+
+    const handleClaimClick = () => {
+        const trimmed = value.trim();
+        if (!trimmed) {
+            inputRef.current?.focus();
+            return;
+        }
+        const domain = normalizeDomain(trimmed);
+        const targetUri = trimmed.startsWith("http") ? trimmed : `https://${trimmed}`;
+        const claimInfo = info || (domain ? { domain, logo: `https://www.google.com/s2/favicons?domain=${domain}&sz=128` } : null);
+        onClaim(targetUri, claimInfo);
+    };
 
     return (
-        <div className="flex w-full max-w-md items-center gap-2 rounded-xl border border-neutral-200 bg-white p-1.5 shadow-sm dark:border-neutral-800 dark:bg-neutral-950">
-            {/* Left: logo preview */}
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-neutral-100 text-base dark:bg-neutral-900">
-                {status === "loading" && (
-                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-neutral-300 border-t-neutral-600" />
-                )}
-                {status === "found" && info && (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                        src={info.logo}
-                        alt={`${info.domain} logo`}
-                        className="h-full w-full object-contain p-1.5"
+        <div className={cn("w-full max-w-2xl mx-auto flex flex-col sm:flex-row items-stretch sm:items-center gap-3", className)}>
+            {/* ── Left Group: Separated Logo Badge + Large Spacious Input ── */}
+            <div className="flex items-center gap-2.5 sm:gap-3 flex-1 min-w-0">
+                {/* ── 1. Separated Domain/Logo Badge ── */}
+                <div className="relative flex w-12 h-12 sm:w-14 sm:h-14 shrink-0 items-center justify-center rounded-2xl border border-zinc-200/90 dark:border-white/15 bg-white dark:bg-zinc-900 shadow-sm transition-all overflow-hidden select-none">
+                    {status === "loading" && (
+                        <span className="h-5 w-5 animate-spin rounded-full border-2 border-zinc-300 border-t-blue-600 dark:border-zinc-700 dark:border-t-blue-400" />
+                    )}
+                    {status === "found" && info && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                            src={info.logo}
+                            alt={`${info.domain} logo`}
+                            className="w-full h-full object-contain p-2.5"
+                        />
+                    )}
+                    {status === "error" && (
+                        <IconAlertCircle size={22} className="text-amber-500" title="Logo not found" />
+                    )}
+                    {status === "idle" && (
+                        <IconWorld size={22} className="text-zinc-400 dark:text-zinc-500" />
+                    )}
+                </div>
+
+                {/* ── 2. Separated Large Spacious Text Input Container ── */}
+                <div className="flex-1 relative flex items-center h-12 sm:h-14 rounded-2xl bg-white dark:bg-zinc-900/90 border border-zinc-200/90 dark:border-white/15 shadow-sm transition-all duration-200 focus-within:border-blue-500 focus-within:ring-4 focus-within:ring-blue-500/15">
+                    <input
+                        ref={inputRef}
+                        type="text"
+                        value={value}
+                        onChange={(e) => setValue(e.target.value)}
+                        onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                                e.preventDefault();
+                                handleClaimClick();
+                            }
+                        }}
+                        placeholder={placeholder}
+                        disabled={disabled}
+                        spellCheck={false}
+                        autoComplete="off"
+                        className="w-full h-full bg-transparent px-4 sm:px-6 text-base sm:text-lg text-zinc-950 dark:text-white outline-none placeholder:text-zinc-400 dark:placeholder:text-zinc-500 font-normal"
                     />
-                )}
-                {status === "error" && <span title="Logo failed to load">⚠️</span>}
-                {status === "idle" && <span className="text-neutral-300 dark:text-neutral-700">🌐</span>}
+                </div>
             </div>
 
-            {/* Middle: input */}
-            <input
-                type="text"
-                value={value}
-                onChange={(e) => setValue(e.target.value)}
-                placeholder={placeholder}
-                disabled={disabled}
-                spellCheck={false}
-                autoComplete="off"
-                className="min-w-0 flex-1 bg-transparent px-1 text-sm text-neutral-900 outline-none placeholder:text-neutral-400 disabled:opacity-50 dark:text-neutral-100 dark:placeholder:text-neutral-600"
-            />
-
-            {/* Right: claim button */}
+            {/* ── 3. Separated Claim Button (Never dims or shifts color on disable) ── */}
             <button
                 type="button"
-                disabled={!canClaim}
-                onClick={() => onClaim(value.trim(), info)}
-                className="shrink-0 rounded-lg bg-neutral-900 px-4 py-2 text-sm font-medium text-white transition-colors enabled:hover:bg-neutral-700 disabled:cursor-not-allowed disabled:bg-neutral-200 disabled:text-neutral-400 dark:bg-white dark:text-neutral-900 dark:enabled:hover:bg-neutral-200 dark:disabled:bg-neutral-800 dark:disabled:text-neutral-600"
+                onClick={handleClaimClick}
+                className={cn(
+                    "shrink-0 h-12 sm:h-14 px-7 sm:px-9 rounded-2xl text-sm sm:text-base font-bold tracking-wide transition-all cursor-pointer select-none flex items-center justify-center gap-2",
+                    "bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white",
+                    "shadow-[0_4px_16px_rgba(37,99,235,0.35),inset_0_1px_0.5px_rgba(255,255,255,0.25)] hover:shadow-[0_6px_22px_rgba(37,99,235,0.45)] active:scale-[0.98]"
+                )}
             >
-                Claim
+                Claim a Key
             </button>
         </div>
     );
 }
+
+export { UriClaimInput as InputToClaim };
+export default UriClaimInput;

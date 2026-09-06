@@ -602,7 +602,7 @@ export const useThemeTransition = ({
       });
 
       transition.finished
-        .catch(() => {})
+        .catch(() => { })
         .finally(() => {
           document.documentElement.classList.remove('theme-transitioning');
         });
@@ -645,7 +645,10 @@ export const KeybidThemeToggleWithTransition = ({
   return (
     <div
       className={cn(
-        'group size-15 flex justify-center items-center rounded-[14px] hover:cursor-pointer bg-violet-400/20 mx-[1] transition-transform active:scale-95',
+        'group size-15 flex justify-center items-center rounded-[14px] hover:cursor-pointer bg-blue-600/80 mx-[1] transition-transform active:scale-95',
+        "shadow-[0_4px_16px_rgba(0,0,0,0.06),0_1px_3px_rgba(0,0,0,0.04),inset_0_1.5px_1px_0.5px_rgba(255,255,255,0.2),inset_0_-2px_1px_0.05px_rgba(0,0,0,0.1)]",
+
+
         className
       )}
       onClick={(e) => toggleTheme(e)}
@@ -664,13 +667,13 @@ export const KeybidThemeToggleWithTransition = ({
           <IconSun
             stroke={1}
             className={cn(
-              'text-zinc-700 dark:block hidden cursor-pointer size-5 fill-zinc-700 group-hover:fill-yellow-500 transition-all duration-300'
+              'text-black dark:block hidden cursor-pointer size-5 fill-black group-hover:text-yellow-500 group-hover:fill-yellow-500 transition-color duration-300'
             )}
           />
           <IconMoon
             stroke={1}
             className={cn(
-              'text-zinc-700 dark:hidden block cursor-pointer size-5 fill-zinc-700 group-hover:fill-neutral-200 transition-all duration-300'
+              'text-black dark:hidden block cursor-pointer size-5 fill-black group-hover:text-white group-hover:fill-neutral-200 transition-color duration-300'
             )}
           />
         </>

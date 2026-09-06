@@ -54,15 +54,15 @@ function SubmitForm() {
           <div className="w-16 h-16 rounded-2xl bg-green-500/10 border border-green-500/40 flex items-center justify-center text-green-500 mx-auto">
             <IconCheck size={32} />
           </div>
-          <h1 className="text-2xl font-black">You&apos;re in the queue!</h1>
-          <p className="text-zinc-600 dark:text-zinc-400 text-sm leading-relaxed">
-            <strong className="text-zinc-950 dark:text-white">{form.name}</strong> has been submitted with a bid of{' '}
-            <strong className="text-red-500 dark:text-red-400">${form.bid}</strong>. Once reviewed, your company
+          <h1 className="text-2xl font-bold tracking-tight">You&apos;re in the queue!</h1>
+          <p className="text-neutral-500 dark:text-neutral-400 text-sm font-normal leading-relaxed">
+            <strong className="text-zinc-950 dark:text-white font-semibold">{form.name}</strong> has been submitted with a bid of{' '}
+            <strong className="text-blue-600 dark:text-blue-400 font-semibold">${form.bid}</strong>. Once reviewed, your company
             will appear on the live leaderboard.
           </p>
           <Link
             href="/"
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-sm transition-colors shadow-sm"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:bg-blue-800 disabled:bg-blue-600/50 disabled:text-white/50 text-white font-bold text-sm transition-colors shadow-sm cursor-pointer"
           >
             View Leaderboard →
           </Link>
@@ -92,10 +92,10 @@ function SubmitForm() {
 
       <main className="max-w-lg mx-auto px-4 py-12 space-y-8">
         <div className="space-y-2">
-          <h1 className="text-3xl font-black text-zinc-950 dark:text-white">Claim a keyboard key</h1>
-          <p className="text-zinc-600 dark:text-zinc-400 text-sm leading-relaxed">
+          <h1 className="text-3xl font-bold tracking-tight text-zinc-950 dark:text-white">Claim a keyboard key</h1>
+          <p className="text-neutral-500 dark:text-neutral-400 text-sm font-normal leading-relaxed">
             Highest bidder gets displayed on the keyboard. Anyone can outbid you.
-            Starting bid is <strong className="text-zinc-900 dark:text-white">$1</strong>.
+            Starting bid is <strong className="text-zinc-900 dark:text-white font-semibold">$1</strong>.
           </p>
         </div>
 
@@ -108,7 +108,7 @@ function SubmitForm() {
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
               placeholder="e.g. Acme Corp"
-              className="w-full rounded-xl bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 focus:border-red-500 focus:outline-none px-4 py-3 text-zinc-900 dark:text-white text-sm placeholder:text-zinc-400 dark:placeholder:text-zinc-600 transition-colors shadow-2xs"
+              className="w-full rounded-xl bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 focus:outline-none px-4 py-3 text-zinc-900 dark:text-white text-sm placeholder:text-zinc-400 dark:placeholder:text-zinc-600 transition-colors shadow-2xs"
             />
           </div>
 
@@ -123,7 +123,7 @@ function SubmitForm() {
                 value={form.url}
                 onChange={(e) => setForm({ ...form, url: e.target.value })}
                 placeholder="https://yourcompany.com"
-                className="w-full rounded-xl bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 focus:border-red-500 focus:outline-none pl-10 pr-4 py-3 text-zinc-900 dark:text-white text-sm placeholder:text-zinc-400 dark:placeholder:text-zinc-600 transition-colors shadow-2xs"
+                className="w-full rounded-xl bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 focus:outline-none pl-10 pr-4 py-3 text-zinc-900 dark:text-white text-sm placeholder:text-zinc-400 dark:placeholder:text-zinc-600 transition-colors shadow-2xs"
               />
             </div>
           </div>
@@ -138,7 +138,7 @@ function SubmitForm() {
               onChange={(e) => setForm({ ...form, tagline: e.target.value })}
               placeholder="What does your company do?"
               maxLength={100}
-              className="w-full rounded-xl bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 focus:border-red-500 focus:outline-none px-4 py-3 text-zinc-900 dark:text-white text-sm placeholder:text-zinc-400 dark:placeholder:text-zinc-600 transition-colors shadow-2xs"
+              className="w-full rounded-xl bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 focus:outline-none px-4 py-3 text-zinc-900 dark:text-white text-sm placeholder:text-zinc-400 dark:placeholder:text-zinc-600 transition-colors shadow-2xs"
             />
           </div>
 
@@ -147,11 +147,11 @@ function SubmitForm() {
             <label className="text-xs font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wider">
               Company Icon / Logo <span className="text-zinc-400 dark:text-zinc-600 normal-case font-normal">(PNG, SVG)</span>
             </label>
-            <label className="flex items-center gap-4 p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 border-dashed hover:border-red-500 cursor-pointer transition-colors group shadow-2xs">
+            <label className="flex items-center gap-4 p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 border-dashed hover:border-blue-600 cursor-pointer transition-colors group shadow-2xs">
               {iconPreview ? (
                 <img src={iconPreview} alt="preview" className="w-12 h-12 rounded-lg object-contain" />
               ) : (
-                <div className="w-12 h-12 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-400 dark:text-zinc-500 group-hover:text-red-500 transition-colors">
+                <div className="w-12 h-12 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-400 dark:text-zinc-500 group-hover:text-blue-600 transition-colors">
                   <IconUpload size={22} />
                 </div>
               )}
@@ -196,7 +196,7 @@ function SubmitForm() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-xl bg-red-600 hover:bg-red-500 disabled:opacity-60 text-white font-bold py-3.5 text-sm transition-colors flex items-center justify-center gap-2 shadow-sm"
+            className="w-full rounded-xl bg-blue-600 hover:bg-blue-700 active:bg-blue-800 disabled:bg-blue-600/50 disabled:text-white/50 text-white font-bold py-3.5 text-sm transition-colors flex items-center justify-center gap-2 shadow-sm cursor-pointer"
           >
             {loading ? (
               <>

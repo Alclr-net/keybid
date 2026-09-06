@@ -117,13 +117,13 @@ export const Keyboard: React.FC = () => {
             placeholder="Search startup or key…"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-zinc-900 border border-zinc-800 focus:border-zinc-600 rounded-xl pl-9 pr-4 py-2.5 text-xs text-white placeholder:text-zinc-600 outline-none transition-colors"
+            className="w-full bg-zinc-900 border border-zinc-800 focus:border-blue-600 focus:ring-1 focus:ring-blue-600/30 rounded-xl pl-9 pr-4 py-2.5 text-xs text-white placeholder:text-zinc-600 outline-none transition-colors"
           />
         </div>
 
         {/* Stats pill */}
         <div className="flex items-center gap-2 text-xs font-mono px-4 py-2.5 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-400 shrink-0">
-          <IconFlame size={14} className="text-red-500" />
+          <IconFlame size={14} className="text-blue-500" />
           <span className="text-white font-bold">{claimedKeys.length}</span>
           <span className="text-zinc-600">/ {allKeys.length}</span>
           <span>claimed</span>
@@ -133,14 +133,14 @@ export const Keyboard: React.FC = () => {
         <button
           type="button"
           onClick={() => setSoundEnabled((v) => !v)}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border text-xs font-medium transition-all shrink-0
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border text-xs font-medium transition-all shrink-0 cursor-pointer
             ${soundEnabled
               ? 'bg-zinc-900 border-zinc-700 text-zinc-200'
               : 'bg-zinc-950 border-zinc-800 text-zinc-500'
             }`}
         >
           {soundEnabled
-            ? <IconVolume size={14} className="text-red-500" />
+            ? <IconVolume size={14} className="text-blue-500" />
             : <IconVolumeOff size={14} />
           }
           <span className="hidden sm:inline">{soundEnabled ? 'Sound On' : 'Muted'}</span>
@@ -153,7 +153,7 @@ export const Keyboard: React.FC = () => {
             const unclaimed = allKeys.find((k) => !k.startup);
             setSelectedKey(unclaimed ?? allKeys[0]);
           }}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-bold transition-all hover:shadow-lg hover:shadow-red-600/30 shrink-0"
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:bg-blue-800 disabled:bg-blue-600/50 disabled:text-white/50 text-white text-xs font-bold transition-all shadow-sm shrink-0 cursor-pointer"
         >
           <IconPlus size={14} />
           Claim Key
@@ -242,7 +242,7 @@ export const Keyboard: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => openUrl(s.url)}
-                      className="flex items-center gap-1 text-[11px] text-red-500 hover:text-red-400 font-semibold transition-colors"
+                      className="flex items-center gap-1 text-[11px] text-blue-600 dark:text-blue-400 hover:text-blue-700 font-semibold transition-colors cursor-pointer"
                     >
                       Visit <IconExternalLink size={11} />
                     </button>

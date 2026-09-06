@@ -29,20 +29,20 @@ export const KeyCap: React.FC<KeyCapProps> = ({
       const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
       if (!AudioCtx) return;
       const ctx = new AudioCtx();
-      
+
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
-      
+
       osc.type = 'triangle';
       osc.frequency.setValueAtTime(startup ? 750 : 550, ctx.currentTime);
       osc.frequency.exponentialRampToValueAtTime(140, ctx.currentTime + 0.035);
-      
+
       gain.gain.setValueAtTime(0.25, ctx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.035);
-      
+
       osc.connect(gain);
       gain.connect(ctx.destination);
-      
+
       osc.start();
       osc.stop(ctx.currentTime + 0.035);
     } catch {
@@ -99,18 +99,17 @@ export const KeyCap: React.FC<KeyCapProps> = ({
           boxShadow: isPressed
             ? 'inset 0 2px 4px rgba(0,0,0,0.9), 0 1px 1px rgba(255,255,255,0.05)'
             : startup
-            ? `0 3px 0 #0d0e11, 0 6px 12px ${glowColor}35, inset 0 1px 1px rgba(255,255,255,0.15)`
-            : '0 3px 0 #0a0b0d, 0 4px 6px rgba(0,0,0,0.6), inset 0 1px 1px rgba(255,255,255,0.12)',
+              ? `0 3px 0 #0d0e11, 0 6px 12px ${glowColor}35, inset 0 1px 1px rgba(255,255,255,0.15)`
+              : '0 3px 0 #0a0b0d, 0 4px 6px rgba(0,0,0,0.6), inset 0 1px 1px rgba(255,255,255,0.12)',
         }}
         className={`
           w-full h-full transition-all duration-75 ease-out flex flex-col items-center justify-between cursor-pointer relative overflow-hidden
           rounded-t-[6px] rounded-b-[10px] border border-zinc-800/90
           ${isFnRow ? 'px-1 py-1 text-[9px]' : 'px-1.5 py-1 text-xs'}
           ${isPressed ? 'translate-y-[2.5px]' : 'translate-y-0 hover:-translate-y-[0.5px]'}
-          ${
-            startup
-              ? 'bg-gradient-to-b from-zinc-800 to-zinc-900 text-white border-zinc-700/80 hover:border-zinc-500'
-              : keyConfig.isSpecial
+          ${startup
+            ? 'bg-gradient-to-b from-zinc-800 to-zinc-900 text-white border-zinc-700/80 hover:border-zinc-500'
+            : keyConfig.isSpecial
               ? 'bg-gradient-to-b from-zinc-900 to-zinc-950 text-zinc-300 hover:text-white hover:from-zinc-800'
               : 'bg-gradient-to-b from-zinc-850 via-zinc-900 to-[#141518] text-zinc-100 hover:from-zinc-800 hover:to-zinc-900'
           }

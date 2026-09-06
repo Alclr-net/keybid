@@ -2,8 +2,10 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { motion } from 'motion/react';
 import { cn } from '@/lib/utils';
-import { COMPANIES } from '@/app/data/keybidData';
+import { COMPANIES, Company } from '@/app/data/keybidData';
+import OutbidModal from '@/components/OutbidModal';
 import {
   IconChevronLeft,
   IconChevronRight,
@@ -21,11 +23,14 @@ import {
   IconShieldCheck,
   IconPin,
   IconCloud,
+  IconX,
   IconCopy,
   IconTrophy,
   IconWorld,
   IconPointFilled,
   IconRefresh,
+  IconHandClick,
+  IconMedal,
 } from '@tabler/icons-react';
 
 const TOP5 = [...COMPANIES].sort((a, b) => b.bid - a.bid).slice(0, 5);
@@ -35,16 +40,31 @@ const POOL = COMPANIES.reduce((s, c) => s + c.bid, 0);
 function TrafficLights() {
   return (
     <div className="flex items-center gap-[7px]">
-      <button
-        className="w-3 h-3 rounded-full bg-[#ff5f57] ring-1 ring-black/15 flex items-center justify-center hover:brightness-90 transition-all cursor-pointer"
+      <motion.button
+        initial={{ scale: 0, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ type: "spring", stiffness: 420, damping: 20, delay: 0.35 }}
+        className={cn("w-3 h-3 rounded-full bg-[#ff5f57] flex items-center justify-center hover:brightness-90 transition-all cursor-pointer",
+          "shadow-[0_4px_16px_rgba(0,0,0,0.06),0_1px_3px_rgba(0,0,0,0.04),inset_0_1.5px_1px_0.5px_rgba(255,255,255,0.2),inset_0_-2px_1px_0.05px_rgba(0,0,0,0.1)]"
+        )}
         title="Close"
       />
-      <button
-        className="w-3 h-3 rounded-full bg-[#ffbd2e] ring-1 ring-black/15 flex items-center justify-center hover:brightness-90 transition-all cursor-pointer"
+      <motion.button
+        initial={{ scale: 0, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ type: "spring", stiffness: 420, damping: 20, delay: 0.40 }}
+        className={cn("w-3 h-3 rounded-full bg-[#ffbd2e] flex items-center justify-center hover:brightness-90 transition-all cursor-pointer",
+          "shadow-[0_4px_16px_rgba(0,0,0,0.06),0_1px_3px_rgba(0,0,0,0.04),inset_0_1.5px_1px_0.5px_rgba(255,255,255,0.2),inset_0_-2px_1px_0.05px_rgba(0,0,0,0.1)]"
+        )}
         title="Minimize"
       />
-      <button
-        className="w-3 h-3 rounded-full bg-[#28c840] ring-1 ring-black/15 flex items-center justify-center hover:brightness-90 transition-all cursor-pointer"
+      <motion.button
+        initial={{ scale: 0, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ type: "spring", stiffness: 420, damping: 20, delay: 0.45 }}
+        className={cn("w-3 h-3 rounded-full bg-[#28c840] flex items-center justify-center hover:brightness-90 transition-all cursor-pointer",
+          "shadow-[0_4px_16px_rgba(0,0,0,0.06),0_1px_3px_rgba(0,0,0,0.04),inset_0_1.5px_1px_0.5px_rgba(255,255,255,0.2),inset_0_-2px_1px_0.05px_rgba(0,0,0,0.1)]"
+        )}
         title="Zoom"
       />
     </div>
@@ -77,11 +97,20 @@ function ReadingGlassesIcon({ className }: { className?: string }) {
 /* ═══════════════════════════ MacWindow (iOS/macOS Safari) ═══════════════════════════ */
 export default function MacWindow({ className }: { className?: string }) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [searchValue, setSearchValue] = useState('https://www.keybid.lol');
-  const [urlFocused, setUrlFocused] = useState(false);
+  const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
+
 
   return (
-    <div
+    <motion.div
+      initial={{ opacity: 0, scale: 0.88, y: 18 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      transition={{
+        type: 'spring',
+        stiffness: 280,
+        damping: 24,
+        mass: 0.8,
+        delay: 0.2,
+      }}
       className={cn(
         'relative flex select-none w-full h-full max-w-5xl',
         'rounded-xl sm:rounded-2xl overflow-hidden',
@@ -90,7 +119,6 @@ export default function MacWindow({ className }: { className?: string }) {
         'shadow-[0_20px_50px_-10px_rgba(0,0,0,0.45),0_0_0_1px_rgba(255,255,255,0.1)_inset]',
         className,
       )}
-      style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif' }}
     >
       {/* ══ LEFT FULL-HEIGHT UNIFIED SIDEBAR ══ */}
       {sidebarOpen && (
@@ -123,31 +151,31 @@ export default function MacWindow({ className }: { className?: string }) {
                 <div className="w-3.5 h-3.5 rounded border border-zinc-400/80 dark:border-zinc-500/80 flex items-center justify-center p-[1.5px]">
                   <div className="w-full h-full border-t border-zinc-400/80 dark:border-zinc-500/80" />
                 </div>
-                <span>Start Page</span>
+                <span className={cn("text-shadow-xs")}>Start Page</span>
               </button>
 
               {/* Tab Groups header & list */}
               <div>
-                <p className="px-2 mb-1 text-[9px] font-semibold text-zinc-400 dark:text-zinc-500 tracking-wider uppercase">
+                <p className={cn("px-2 mb-1 text-[8px] font-semibold text-zinc-400 dark:text-zinc-500 tracking-wider uppercase text-shadow-xs")}>
                   Tab Groups
                 </p>
                 <ul className="space-y-0.5">
                   <li>
                     <button className="w-full flex items-center gap-2 px-2 py-1 rounded-md text-left bg-black/[0.08] dark:bg-white/[0.12] text-zinc-950 dark:text-white font-semibold shadow-2xs cursor-pointer">
                       <IconTrophy size={13} stroke={2} className="text-amber-500" />
-                      <span>Rankings</span>
+                      <span className={cn("text-shadow-xs")}> Top 5 Rankings</span>
                     </button>
                   </li>
                   <li>
                     <button className="w-full flex items-center gap-2 px-2 py-1 rounded-md text-left text-zinc-600 dark:text-zinc-400 hover:bg-black/[0.04] dark:hover:bg-white/[0.04] hover:text-zinc-900 dark:hover:text-zinc-200 transition-all cursor-pointer">
                       <IconCopy size={12} stroke={1.8} className="opacity-75" />
-                      <span>Keyboards</span>
+                      <span className={cn("text-shadow-xs")}>Keyboards</span>
                     </button>
                   </li>
                   <li>
                     <button className="w-full flex items-center gap-2 px-2 py-1 rounded-md text-left text-zinc-600 dark:text-zinc-400 hover:bg-black/[0.04] dark:hover:bg-white/[0.04] hover:text-zinc-900 dark:hover:text-zinc-200 transition-all cursor-pointer">
                       <IconCopy size={12} stroke={1.8} className="opacity-75" />
-                      <span>Trending</span>
+                      <span className={cn("text-shadow-xs")}>Trending</span>
                     </button>
                   </li>
                 </ul>
@@ -159,19 +187,19 @@ export default function MacWindow({ className }: { className?: string }) {
           <div className="px-2 py-2 border-t border-black/[0.06] dark:border-white/[0.06] text-[10.5px] text-zinc-600 dark:text-zinc-400 space-y-0.5">
             <button className="w-full flex items-center gap-2 px-2 py-0.5 rounded-md hover:bg-black/[0.04] dark:hover:bg-white/[0.04] hover:text-zinc-900 dark:hover:text-zinc-200 transition-colors cursor-pointer">
               <IconBookmark size={12} stroke={1.8} className="text-blue-500" />
-              <span>Bookmarks</span>
+              <span className={cn("text-shadow-xs")}>Bookmarks</span>
             </button>
             <button className="w-full flex items-center gap-2 px-2 py-0.5 rounded-md hover:bg-black/[0.04] dark:hover:bg-white/[0.04] hover:text-zinc-900 dark:hover:text-zinc-200 transition-colors cursor-pointer">
               <ReadingGlassesIcon className="text-blue-500" />
-              <span>Reading List</span>
+              <span className={cn("text-shadow-xs")}>Reading List</span>
             </button>
             <button className="w-full flex items-center gap-2 px-2 py-0.5 rounded-md hover:bg-black/[0.04] dark:hover:bg-white/[0.04] hover:text-zinc-900 dark:hover:text-zinc-200 transition-colors cursor-pointer">
               <IconUsers size={12} stroke={1.8} className="text-blue-500" />
-              <span>Shared with You</span>
+              <span className={cn("text-shadow-xs")}>Shared with You</span>
             </button>
             <button className="w-full flex items-center gap-2 px-2 py-0.5 rounded-md hover:bg-black/[0.04] dark:hover:bg-white/[0.04] hover:text-zinc-900 dark:hover:text-zinc-200 transition-colors cursor-pointer">
               <IconCloud size={12} stroke={1.8} className="text-blue-500" />
-              <span>iCloud Tabs</span>
+              <span className={cn("text-shadow-xs")}>iCloud Tabs</span>
             </button>
           </div>
         </aside>
@@ -209,14 +237,9 @@ export default function MacWindow({ className }: { className?: string }) {
             >
               <IconChevronRight size={15} stroke={1.8} />
             </button>
+
             <button
-              className="p-1 rounded-md hover:bg-black/[0.05] dark:hover:bg-white/[0.05] text-zinc-500 dark:text-zinc-400 ml-0.5 transition-colors cursor-pointer"
-              title="Privacy Report"
-            >
-              <IconShield size={13} stroke={1.8} />
-            </button>
-            <button
-              className="p-1 rounded-md hover:bg-black/[0.05] dark:hover:bg-white/[0.05] text-zinc-500 dark:text-zinc-400 transition-colors cursor-pointer"
+              className="p-1 rounded-md hover:bg-black/[0.05] dark:hover:bg-white/[0.05] text-green-500 dark:text-green-400 transition-colors cursor-pointer"
               title="Tracking Protection"
             >
               <IconShieldCheck size={13} stroke={1.8} />
@@ -227,21 +250,23 @@ export default function MacWindow({ className }: { className?: string }) {
           <div
             className={cn(
               'flex-1 max-w-[380px] mx-auto h-[24px] flex items-center justify-center gap-1.5 px-3 rounded-lg text-[11px] transition-all',
-              urlFocused
-                ? 'bg-white dark:bg-black ring-2 ring-blue-500/40 border border-blue-500/60 shadow-xs'
-                : 'bg-black/[0.04] dark:bg-neutral-900/90 border border-black/[0.06] dark:border-white/[0.1] hover:border-black/[0.15] dark:hover:border-white/[0.2]',
+              "shadow-[0_4px_16px_rgba(0,0,0,0.06),0_1px_3px_rgba(0,0,0,0.04),inset_0_1px_0.5px_0.05px_rgba(255,255,255,0.2),inset_0_-1px_0.5px_0.05px_rgba(0,0,0,0.1)]",
+              'bg-black/[0.04] dark:bg-neutral-900/90 ',
             )}
           >
             <IconSearch size={10} className="text-zinc-400 dark:text-zinc-500 shrink-0" stroke={2} />
-            <input
-              type="text"
-              value={searchValue}
-              onChange={(e) => setSearchValue(e.target.value)}
-              onFocus={() => setUrlFocused(true)}
-              onBlur={() => setUrlFocused(false)}
-              className="w-full min-w-0 bg-transparent border-none outline-none text-center text-zinc-700 dark:text-zinc-200 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 font-medium"
-              placeholder="Search or enter website name"
-            />
+            <div
+
+              className={cn("w-full min-w-0 bg-transparent border-none outline-none text-center text-zinc-700 dark:text-zinc-200 placeholder:text-zinc-400/50 dark:placeholder:text-zinc-500 font-medium cursor-pointer",
+
+              )}
+
+            >
+              <p className={cn("text-shadow-xs")}>
+                https://www.keybid.lol
+              </p>
+            </div>
+
           </div>
 
           {/* Right Toolbar Action Icons */}
@@ -268,31 +293,20 @@ export default function MacWindow({ className }: { className?: string }) {
         </header>
 
         {/* ── Sub-toolbar: Tab Strip (Only Rankings Tab!) ── */}
-        <nav className="h-7 shrink-0 flex items-center px-2 gap-1 border-b border-black/[0.06] dark:border-white/[0.08] bg-neutral-50/90 dark:bg-black/90 backdrop-blur-md overflow-hidden">
+        <nav className=" shrink-0 flex items-center gap-1 border-b border-black/[0.06] dark:border-white/[0.08] bg-neutral-50/90 dark:bg-black/90 backdrop-blur-md overflow-hidden">
           {/* Pin icon */}
-          <div className="px-1 text-zinc-400 dark:text-zinc-500 shrink-0">
-            <IconPin size={10} className="-rotate-45" stroke={2} />
-          </div>
+
 
           {/* Only Ranking Tab */}
-          <div className="flex items-center gap-1.5 h-5.5 px-3 rounded-md text-[10.5px] bg-white text-zinc-900 dark:bg-neutral-900 dark:text-white shadow-2xs font-semibold select-none cursor-default border border-black/[0.06] dark:border-white/[0.1]">
-            <IconTrophy size={11} className="text-amber-500 shrink-0" stroke={2} />
-            <span className="text-[10px]">Rankings</span>
-            <span className="text-[9px] px-1 py-0.2 rounded-xs bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 font-bold ml-1">
-              Live
-            </span>
+          <div className="flex items-center gap-1.5   py-2 px-2 text-[10.5px] bg-white text-zinc-900 dark:bg-neutral-900 dark:text-white shadow-xs font-semibold select-none cursor-default group cursor-pointer">
+            <div className="px-1 text-zinc-400 dark:text-zinc-500 shrink-0">
+              <IconPin size={13} className="-rotate-45 " stroke={2} />
+            </div>
+            <span className={cn("text-shadow-xs")}> Top 5 Startup</span>
+            <IconX size={10} className={cn(" text-transparent group-hover:text-neutral-400 dark:group-hover:text-neutral-500 transition-color duration-300 ease-out")} stroke={2} />
           </div>
 
-          <div className="flex-1" />
 
-          <div className="flex items-center gap-2 text-[9.5px] text-zinc-500 dark:text-zinc-400 pr-1">
-            <span className="font-mono">Pool: ${POOL}</span>
-            <span className="text-zinc-300 dark:text-zinc-600">·</span>
-            <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-medium">
-              <IconPointFilled size={7} className="animate-pulse" />
-              124 online
-            </span>
-          </div>
         </nav>
 
         {/* ── Main Canvas Content Area: Fitted to Window with Zero Drag Scrollbars ── */}
@@ -300,14 +314,15 @@ export default function MacWindow({ className }: { className?: string }) {
           {/* Header Bar */}
           <div className="flex items-center justify-between pb-1.5 px-1.5 border-b border-black/[0.05] dark:border-white/[0.06]">
             <div className="flex items-center gap-1.5">
-              <IconTrophy size={13} className="text-amber-500" stroke={2} />
-              <span className="text-[11px] font-bold text-zinc-900 dark:text-zinc-100">Live Rankings Leaderboard</span>
-              <span className="text-[9px] font-medium text-zinc-400 dark:text-zinc-500 ml-1">
-                Top 5 startups
+              <span className="text-[9px] px-1 py-0.2 rounded-xs bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 font-bold ml-1 shadow-2xs text-shadow-xs   border-[0.5px] border-emerald-500/30">
+                Live
               </span>
+              <span className="text-[11px] font-semibold tracking-tight text-zinc-900 dark:text-zinc-100 text-shadow-xs">Rankings Leaderboard</span>
+
+
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-[9px] text-zinc-400 dark:text-zinc-500 font-mono hidden sm:inline">
+              <span className="text-[10px] text-zinc-400 dark:text-zinc-500 font-mono hidden sm:inline text-shadow-xs tracking-tight">
                 sorted by bid
               </span>
               <button
@@ -320,14 +335,22 @@ export default function MacWindow({ className }: { className?: string }) {
           </div>
 
           {/* All 5 Company Rows Fitted Neatly (No Scrolling!) */}
-          <div className="flex-1 flex flex-col justify-around py-0.5 space-y-1">
+          <div className="flex-1 flex flex-col justify-around space-y-1">
             {TOP5.map((company, i) => {
               const isLeader = i === 0;
               return (
-                <div
+                <motion.div
                   key={company.id}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{
+                    duration: 0.35,
+                    delay: 0.38 + i * 0.05,
+                    ease: [0.16, 1, 0.3, 1],
+                  }}
                   className={cn(
-                    'flex items-center gap-2.5 px-2.5 py-2 rounded-lg border transition-all cursor-default group',
+                    'flex items-center gap-2.5 px-2.5 py-4  rounded-xl border transition-all cursor-default group ',
+                    "shadow-[0_4px_16px_rgba(0,0,0,0.06),0_1px_3px_rgba(0,0,0,0.04),inset_0_1px_0.5px_0.05px_rgba(255,255,255,0.2),inset_0_-1px_0.5px_0.05px_rgba(0,0,0,0.1)]",
                     isLeader
                       ? 'bg-gradient-to-r from-amber-500/[0.12] via-amber-500/[0.03] to-transparent border-amber-500/35'
                       : 'bg-neutral-50/70 dark:bg-neutral-950/70 border-black/[0.05] dark:border-white/[0.06] hover:bg-neutral-100/70 dark:hover:bg-neutral-900/60',
@@ -338,7 +361,7 @@ export default function MacWindow({ className }: { className?: string }) {
                     {isLeader ? (
                       <IconTrophy size={12} className="text-amber-500 mx-auto" />
                     ) : (
-                      <span className="text-[10px] font-bold text-zinc-400 dark:text-zinc-500">{i + 1}</span>
+                      <span className="text-[10px] font-medium text-neutral-400 dark:text-neutral-500 text-shadow-xs">#{i + 1}</span>
                     )}
                   </div>
 
@@ -347,7 +370,7 @@ export default function MacWindow({ className }: { className?: string }) {
                   <img
                     src={company.iconUrl}
                     alt={company.name}
-                    className="w-8 h-8 rounded-lg object-contain shrink-0"
+                    className="w-8 h-8 rounded-lg object-contain shrink-0 "
                     onError={(e) => {
                       (e.currentTarget as HTMLImageElement).style.visibility = 'hidden';
                     }}
@@ -355,78 +378,70 @@ export default function MacWindow({ className }: { className?: string }) {
 
                   {/* Name + tagline */}
                   <div className="flex-1 min-w-0">
-                    <p
-                      className={cn(
-                        'text-[11px] font-bold leading-tight truncate',
-                        isLeader ? 'text-amber-700 dark:text-amber-300' : 'text-zinc-900 dark:text-zinc-100',
-                      )}
-                    >
-                      {company.name}
-                    </p>
-                    <p className="text-[9px] text-zinc-500 dark:text-zinc-400 truncate leading-tight mt-0.5">
+                    <div className={cn(" flex items-center gap-1")}>
+
+                      <p
+                        className={cn(
+                          'text-[12px] font-semibold tracking-tight leading-tight truncate text-shadow-xs',
+                          isLeader ? 'text-amber-700 dark:text-amber-300' : 'text-zinc-900 dark:text-zinc-100',
+                        )}
+                      >
+                        {company.name}
+                      </p>
+                      <p className="text-[8px] font-normal text-neutral-400 truncate leading-tight mt-0.5">
+                        / Claimed key <span className="text-blue-600 dark:text-blue-400 font-medium text-shadow-xs">{company.keySlot}</span>
+                      </p>
+                    </div>
+                    <p className="text-[9px] font-normal text-neutral-500 dark:text-neutral-400 truncate leading-tight mt-0.5">
                       {company.tagline}
                     </p>
                   </div>
 
                   {/* Clicks */}
-                  <div className="hidden sm:block text-right shrink-0">
-                    <span className="text-[8.5px] font-mono text-zinc-400 dark:text-zinc-500">
-                      {company.clicks} clicks
-                    </span>
-                  </div>
-
-                  {/* Key Slot Badge */}
-                  <div
-                    className={cn(
-                      'w-5 h-5 flex items-center justify-center rounded border shrink-0 text-[9.5px] font-black',
-                      isLeader
-                        ? 'border-amber-400/40 bg-amber-400/15 text-amber-700 dark:text-amber-400'
-                        : 'border-black/[0.08] bg-black/[0.03] text-zinc-600 dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-zinc-400',
-                    )}
-                  >
-                    {company.keySlot}
-                  </div>
-
-                  {/* Bid */}
-                  <div className="w-12 text-right shrink-0">
-                    <span
-                      className={cn(
-                        'text-[11.5px] font-black',
-                        isLeader ? 'text-amber-600 dark:text-amber-400' : 'text-zinc-900 dark:text-zinc-200',
-                      )}
-                    >
-                      ${company.bid}
+                  <div className=" flex justify-center items-center gap-1 text-right shrink-0">
+                    <IconHandClick size={10} className={cn("text-blue-600 dark:text-blue-400")} stroke={2} />
+                    <span className="text-[11px] font-mono  text-zinc-600 dark:text-zinc-400">
+                      {company.clicks}
                     </span>
                   </div>
 
                   {/* Outbid CTA */}
-                  <Link
-                    href={`/outbid/${company.id}`}
-                    className={cn(
-                      'shrink-0 flex items-center gap-1 px-2.5 py-0.5 rounded text-[9.5px] font-bold transition-all shadow-2xs cursor-pointer',
-                      isLeader
-                        ? 'bg-amber-500 hover:bg-amber-400 text-black'
-                        : 'bg-violet-600 hover:bg-violet-500 text-white',
-                    )}
-                  >
-                    <IconArrowUp size={9} stroke={2.5} />
-                    Outbid
-                  </Link>
-                </div>
+                  <div className={cn("p-[2px] rounded-md transition-all duration-200 ease-out shadow-xs",
+                    isLeader ? "bg-amber-500/25" : "bg-blue-600/20"
+                  )}>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedCompany(company)}
+                      className={cn(
+                        'shrink-0 flex items-center gap-1 px-2.5 py-1 rounded-[5px] text-xs font-bold transition-colors cursor-pointer shadow-2xs',
+                        "shadow-[0_4px_16px_rgba(0,0,0,0.06),0_1px_3px_rgba(0,0,0,0.04),inset_0_1px_0.5px_0.05px_rgba(255,255,255,0.2),inset_0_-1px_0.5px_0.05px_rgba(0,0,0,0.1)]",
+                        isLeader
+                          ? 'bg-amber-400 hover:bg-amber-500 text-black active:bg-amber-600'
+                          : 'bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800 disabled:bg-blue-600/50 disabled:text-white/50',
+                      )}
+                    >
+                      <p className={cn("text-xs text-shadow-xs font-bold flex items-center gap-1")}>
+                        Outbid for
+                        <span>
+                          ${company.bid + 1}
+                        </span>
+                      </p>
+                    </button>
+                  </div>
+                </motion.div>
+
               );
             })}
           </div>
-
-          {/* Bottom Mini Safari Status Bar */}
-          <div className="pt-1 px-1 border-t border-black/[0.04] dark:border-white/[0.05] flex items-center justify-between text-[8.5px] text-zinc-400 dark:text-zinc-500 font-mono">
-            <span className="flex items-center gap-1">
-              <IconWorld size={9} />
-              https://www.keybid.lol
-            </span>
-            <span>Total Pool: ${POOL}</span>
-          </div>
         </div>
-      </main>
-    </div>
+      </main >
+
+      {/* Outbid Modal */}
+      <OutbidModal
+        company={selectedCompany}
+        isOpen={!!selectedCompany}
+        onClose={() => setSelectedCompany(null)}
+      />
+    </motion.div >
   );
 }

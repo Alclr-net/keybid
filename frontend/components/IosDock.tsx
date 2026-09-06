@@ -127,7 +127,7 @@ function IconsContainer({
             style={{ width, height, borderRadius }}
             className={cn(
                 "relative flex items-center justify-center cursor-pointer select-none",
-                "bg-white/80 dark:bg-neutral-800/80 backdrop-blur-md",
+                "bg-white/80 dark:bg-neutral-950/80 backdrop-blur-md",
                 "shadow-[0_4px_16px_rgba(0,0,0,0.06),0_1px_3px_rgba(0,0,0,0.04),inset_0_1.5px_1px_0.5px_rgba(255,255,255,0.2),inset_0_-2px_1px_0.05px_rgba(0,0,0,0.1)]",
                 "hover:shadow-[0_6px_14px_rgba(0,0,0,0.25)] transition-shadow duration-150",
             )}

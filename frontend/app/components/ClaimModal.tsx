@@ -115,12 +115,12 @@ export const ClaimModal: React.FC<ClaimModalProps> = ({
               {selectedKey.label}
             </div>
             <div>
-              <h3 className="text-lg font-bold text-white flex items-center gap-2">
+              <h3 className="text-lg font-semibold tracking-tight text-white flex items-center gap-2">
                 {selectedKey.startup ? 'Edit Key Assignment' : 'Claim Keyboard Key'}
                 <IconSparkles size={16} className="text-amber-400" />
               </h3>
-              <p className="text-xs text-zinc-400">
-                Put your startup logo & URL on Key <span className="font-mono text-zinc-200">{selectedKey.label}</span>
+              <p className="text-xs font-normal text-neutral-400">
+                Put your startup logo &amp; URL on Key <span className="font-mono text-zinc-200">{selectedKey.label}</span>
               </p>
             </div>
           </div>
@@ -309,7 +309,7 @@ export const ClaimModal: React.FC<ClaimModalProps> = ({
               </button>
               <button
                 type="submit"
-                className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-lg shadow-indigo-600/30 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:bg-blue-800 disabled:bg-blue-600/50 disabled:text-white/50 text-white text-xs font-bold flex items-center gap-1.5 shadow-lg shadow-blue-600/30 transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
               >
                 <IconCheck size={16} /> Save Startup Key
               </button>
