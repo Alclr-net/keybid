@@ -3,12 +3,13 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { COMPANIES } from '@/app/data/keybidData';
-import { IconArrowLeft, IconArrowUp, IconExternalLink, IconFlame, IconTrophy } from '@tabler/icons-react';
+import { IconArrowLeft, IconArrowUp, IconExternalLink, IconFlame, IconTrophy, IconLock } from '@tabler/icons-react';
 import { ThemeToggle } from '@/app/components/ThemeToggle';
 
 export default function OutbidPage() {
+  const router = useRouter();
   const params = useParams();
   const id = params?.id as string;
 
@@ -16,7 +17,11 @@ export default function OutbidPage() {
   const companyIdx = sorted.findIndex((c) => c.id === id);
   const company = sorted[companyIdx];
 
-  const [bidAmount, setBidAmount] = useState<number>(company ? company.bid + 1 : 2);
+  const above = companyIdx > 0 ? sorted[companyIdx - 1] : null;
+  const minBid = Math.max(10, (above?.bid ?? company?.bid ?? 0) + 1);
+  const rank = companyIdx + 1;
+
+  const [bidAmount, setBidAmount] = useState<number>(company ? Math.max(minBid, company.bid + 1) : 10);
   const [iconErr, setIconErr] = useState(false);
   const [outbid, setOutbid] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -35,17 +40,9 @@ export default function OutbidPage() {
     );
   }
 
-  const above = companyIdx > 0 ? sorted[companyIdx - 1] : null;
-  const minBid = (above?.bid ?? company.bid) + 1;
-  const rank = companyIdx + 1;
-
   const handleOutbid = () => {
     if (bidAmount < minBid) return;
-    setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      setOutbid(true);
-    }, 1800);
+    router.push(`/bid/${encodeURIComponent(company.keySlot)}?amount=${bidAmount}`);
   };
 
   if (outbid) {
@@ -207,15 +204,8 @@ export default function OutbidPage() {
             disabled={loading || bidAmount < minBid}
             className="w-full rounded-xl bg-blue-600 hover:bg-blue-700 active:bg-blue-800 disabled:bg-blue-600/50 disabled:text-white/50 disabled:cursor-not-allowed text-white font-bold py-3.5 text-sm transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-sm"
           >
-            {loading ? (
-              <>
-                <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Processing…
-              </>
-            ) : (
-              <>
-                <IconArrowUp size={15} /> Outbid {company.name} for ${bidAmount}
-              </>
-            )}
+            <IconLock size={15} />
+            <span>Proceed to Razorpay Checkout (${bidAmount}) →</span>
           </button>
         </div>
 

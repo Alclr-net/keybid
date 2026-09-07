@@ -23,7 +23,7 @@ export default function Footer() {
               Hey, I&apos;m Rachit Seth
             </h3>
             <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 font-normal leading-relaxed">
-              Design Engineer building tactile hardware &amp; digital experiences. People bid for keys directly on my daily driver Apple Magic Keyboard. Questions, or want a key?{' '}
+              Design Engineer building tactile hardware and digital experiences. Right now, people bid for keys off my daily-driver Apple Magic Keyboard. Curious, or want in?{' '}
               <a
                 href="https://x.com/seth_rachit_"
                 target="_blank"

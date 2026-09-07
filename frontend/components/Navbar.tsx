@@ -1,18 +1,23 @@
 'use client';
-import React from "react";
+import React from 'react';
 import { KeybidThemeToggleWithTransition } from "./ThemeTransition";
 import { cn } from "@/lib/utils";
-import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 import StackIcon from "./StackIcon";
-import Pannel from "./Pannel";
-import Ping from "./Ping";
-import { motion, useScroll, useTransform } from "motion/react";
+import { IconMenu2, IconX } from '@tabler/icons-react';
+import { AnimatePresence, motion, useScroll, useTransform } from "motion/react";
 
 function Navbar() {
-    const { scrollY } = useScroll();
 
-    // Smoothly and continuously interpolate opacity from 0 to 1 as the user scrolls
+    const { scrollY } = useScroll();
+    const [menuOpen, setMenuOpen] = React.useState(false);
+
     const blurOpacity = useTransform(scrollY, [0, 70], [0, 1]);
+    const navLinks = [
+        { href: "#auction", label: "Auction" },
+        { href: "#how-it-works", label: "How it works" },
+        { href: "#faq", label: "FAQ" },
+    ];
+
 
     return (
         <>
@@ -82,7 +87,7 @@ function Navbar() {
                 </div> */}
 
                 {/* Right: pool total + theme toggle */}
-                <div className=" flex items-center justify-center gap-2 sm:gap-3 ">
+                <div className="hidden sm:flex items-center justify-center gap-2 sm:gap-3 ">
                     <div className="flex items-center gap-4 sm:gap-6 text-xs sm:text-sm font-medium text-neutral-600 dark:text-neutral-400 mr-5">
                         <a href="#auction" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
                             Auction
@@ -99,7 +104,83 @@ function Navbar() {
                     <KeybidThemeToggleWithTransition variant="circle" start="top-center" blur={true} />
                 </div>
 
+                {/* Mobile: theme toggle + hamburger */}
+                <div className="flex sm:hidden items-center gap-2">
+
+                    <button
+                        onClick={() => setMenuOpen((prev) => !prev)}
+                        aria-label={menuOpen ? "Close menu" : "Open menu"}
+                        aria-expanded={menuOpen}
+                        className="relative flex h-9 w-9 items-center justify-center rounded-full text-zinc-700 dark:text-zinc-300"
+                    >
+                        <AnimatePresence mode="wait" initial={false}>
+                            {menuOpen ? (
+                                <motion.span
+                                    key="close"
+                                    initial={{ rotate: -90, opacity: 0 }}
+                                    animate={{ rotate: 0, opacity: 1 }}
+                                    exit={{ rotate: 90, opacity: 0 }}
+                                    transition={{ duration: 0.2 }}
+                                >
+                                    <IconX size={22} stroke={1.75} />
+                                </motion.span>
+                            ) : (
+                                <motion.span
+                                    key="menu"
+                                    initial={{ rotate: 90, opacity: 0 }}
+                                    animate={{ rotate: 0, opacity: 1 }}
+                                    exit={{ rotate: -90, opacity: 0 }}
+                                    transition={{ duration: 0.2 }}
+                                >
+                                    <IconMenu2 size={22} stroke={1.75} />
+                                </motion.span>
+                            )}
+                        </AnimatePresence>
+                    </button>
+                    <KeybidThemeToggleWithTransition variant="circle" start="top-center" blur={true} />
+                </div>
+
+
             </header>
+            {/* Mobile dropdown menu */}
+            <AnimatePresence>
+                {menuOpen && (
+                    <>
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.2 }}
+                            onClick={() => setMenuOpen(false)}
+                            className="fixed inset-0 z-40 bg-black/40 sm:hidden"
+                        />
+
+                        <motion.div
+                            initial={{ opacity: 0, y: -12, scale: 0.98 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: -12, scale: 0.98 }}
+                            transition={{ duration: 0.22, ease: "easeOut" }}
+                            className="fixed left-[2.5%] right-[2.5%] top-[76px] z-50 sm:hidden rounded-2xl border border-neutral-200/80 dark:border-white/10 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-2xl shadow-lg p-3"
+                        >
+                            <nav className="flex flex-col gap-1">
+                                {navLinks.map((link, i) => (
+                                    <motion.a
+                                        key={link.href}
+                                        href={link.href}
+                                        onClick={() => setMenuOpen(false)}
+                                        initial={{ opacity: 0, x: -8 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        transition={{ delay: 0.05 * i, duration: 0.2 }}
+                                        className="rounded-lg px-3 py-2.5 text-sm font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-zinc-800 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                                    >
+                                        {link.label}
+                                    </motion.a>
+                                ))}
+                            </nav>
+                        </motion.div>
+                    </>
+                )}
+            </AnimatePresence>
         </>
     )
 }

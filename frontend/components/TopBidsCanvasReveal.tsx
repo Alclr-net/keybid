@@ -51,10 +51,10 @@ interface PodiumTier {
 const PODIUM_CONFIG: Record<number, PodiumTier> = {
   1: {
     rank: 1,
-    label: "Rank #1 Champion",
-    badgeBg: "bg-amber-500/10 dark:bg-amber-500/20",
-    badgeText: "text-amber-700 dark:text-amber-400",
-    badgeBorder: "border-amber-500/40",
+    label: "Gold Rank",
+    badgeBg: "bg-amber-500/15 dark:bg-amber-500/20",
+    badgeText: "text-amber-800 dark:text-amber-400",
+    badgeBorder: "border-amber-500/50",
     buttonColor: "bg-amber-400 hover:bg-amber-500 text-zinc-950",
     buttonOuterColor: "bg-amber-500/25",
     colors: [
@@ -69,10 +69,10 @@ const PODIUM_CONFIG: Record<number, PodiumTier> = {
   },
   2: {
     rank: 2,
-    label: "Rank #2 Silver",
-    badgeBg: "bg-slate-500/10 dark:bg-slate-400/20",
-    badgeText: "text-slate-700 dark:text-slate-300",
-    badgeBorder: "border-slate-400/40",
+    label: "Silver Rank",
+    badgeBg: "bg-slate-500/15 dark:bg-slate-400/20",
+    badgeText: "text-slate-800 dark:text-slate-300",
+    badgeBorder: "border-slate-400/50",
     buttonColor: "bg-blue-600 hover:bg-blue-500 text-white",
     buttonOuterColor: "bg-blue-600/20",
     colors: [
@@ -87,10 +87,10 @@ const PODIUM_CONFIG: Record<number, PodiumTier> = {
   },
   3: {
     rank: 3,
-    label: "Rank #3 Bronze",
-    badgeBg: "bg-amber-900/10 dark:bg-amber-800/20",
-    badgeText: "text-amber-800 dark:text-amber-500",
-    badgeBorder: "border-amber-700/40",
+    label: "Bronze Rank",
+    badgeBg: "bg-amber-900/15 dark:bg-amber-800/20",
+    badgeText: "text-amber-900 dark:text-amber-400",
+    badgeBorder: "border-amber-700/50",
     buttonColor: "bg-blue-600 hover:bg-blue-500 text-white",
     buttonOuterColor: "bg-blue-600/20",
     colors: [
@@ -124,10 +124,10 @@ function PodiumCard({
       onClick={() => setHovered((prev) => !prev)}
       className={cn(
         "group relative flex flex-col justify-between p-6 sm:p-7 rounded-2xl border transition-all duration-300 overflow-hidden cursor-pointer select-none",
-        "bg-white/95 dark:bg-zinc-900/85 border-zinc-200/90 dark:border-white/10 backdrop-blur-xl",
-        "shadow-[0_4px_24px_rgba(0,0,0,0.05),0_1px_3px_rgba(0,0,0,0.04),inset_0_1px_0.5px_rgba(255,255,255,0.2),inset_0_-1px_0.5px_rgba(0,0,0,0.1)]",
+        "bg-white/95 dark:bg-zinc-900/85 border-zinc-300 dark:border-white/10 backdrop-blur-xl",
+        "shadow-[0_8px_30px_rgba(0,0,0,0.07),0_1px_3px_rgba(0,0,0,0.04),inset_0_1px_0.5px_rgba(255,255,255,0.2),inset_0_-1px_0.5px_rgba(0,0,0,0.1)]",
         config.borderHover,
-        "hover:-translate-y-1 hover:shadow-2xl"
+        " hover:shadow-2xl"
       )}
     >
       {/* Corner crosshairs (Aceternity style) */}
@@ -275,7 +275,7 @@ export default function TopBidsCanvasReveal() {
         {/* Section Header */}
         <ScrollReveal delay={0.05} distance={20}>
           <div className="flex flex-col items-center text-center mb-10 sm:mb-14">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-semibold mb-3 shadow-xs select-none">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-emerald-500/15 border border-emerald-600/40 dark:border-emerald-500/30 text-emerald-800 dark:text-emerald-400 text-xs font-bold mb-3 shadow-2xs select-none">
               <Ping>
                 <span>Live Matrix Reveal</span>
               </Ping>

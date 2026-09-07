@@ -9,7 +9,37 @@ import React, {
 } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { cn } from "@/lib/utils";
-import { COMPANIES } from "@/app/data/keybidData";
+import { COMPANIES, Company } from "@/app/data/keybidData";
+
+export const getKeySlotFromCode = (keyCode: string): string => {
+  if (!keyCode) return "";
+  if (keyCode.startsWith("Key")) return keyCode.slice(3).toUpperCase();
+  if (keyCode.startsWith("Digit")) return keyCode.slice(5);
+  if (keyCode === "Space") return "SPACE";
+  if (keyCode === "Enter") return "RETURN";
+  if (keyCode === "Escape") return "ESC";
+  if (keyCode === "Backspace") return "DELETE";
+  if (keyCode === "Tab") return "TAB";
+  if (keyCode === "CapsLock") return "CAPS";
+  if (keyCode === "ShiftLeft" || keyCode === "ShiftRight") return "SHIFT";
+  if (keyCode === "MetaLeft" || keyCode === "MetaRight") return "CMD";
+  if (keyCode === "AltLeft" || keyCode === "AltRight") return "OPT";
+  if (keyCode === "ControlLeft" || keyCode === "ControlRight") return "CTRL";
+  if (keyCode === "TouchID" || keyCode === "Power") return "TOUCH ID";
+  if (keyCode === "BracketLeft") return "[";
+  if (keyCode === "BracketRight") return "]";
+  if (keyCode === "Backslash") return "\\";
+  if (keyCode === "Semicolon") return ";";
+  if (keyCode === "Quote") return "'";
+  if (keyCode === "Comma") return ",";
+  if (keyCode === "Period") return ".";
+  if (keyCode === "Slash") return "/";
+  if (keyCode === "Minus") return "-";
+  if (keyCode === "Equal") return "=";
+  if (keyCode === "Backquote") return "`";
+  if (keyCode.startsWith("F") && keyCode.length <= 3) return keyCode;
+  return keyCode;
+};
 
 // Map keySlot letter → { iconUrl, name } for claimed keys
 const CLAIMED_KEYS: Record<string, { iconUrl: string; name: string; url: string }> = {};
@@ -267,6 +297,7 @@ interface KeyboardContextType {
   setPressed: (keyCode: string) => void;
   setReleased: (keyCode: string) => void;
   lastPressedKey: string | null;
+  onKeyClick?: (keySlot: string, company: Company | null) => void;
 }
 
 const KeyboardContext = createContext<KeyboardContextType | null>(null);
@@ -284,11 +315,13 @@ const KeyboardProvider = ({
   enableSound = false,
   containerRef,
   syncPhysicalKeyboard = false,
+  onKeyClick,
 }: {
   children: React.ReactNode;
   enableSound?: boolean;
   containerRef: React.RefObject<HTMLDivElement | null>;
   syncPhysicalKeyboard?: boolean;
+  onKeyClick?: (keySlot: string, company: Company | null) => void;
 }) => {
   const audioContextRef = useRef<AudioContext | null>(null);
   const audioBufferRef = useRef<AudioBuffer | null>(null);
@@ -444,6 +477,7 @@ const KeyboardProvider = ({
         setPressed,
         setReleased,
         lastPressedKey,
+        onKeyClick,
       }}
     >
       {children}
@@ -517,11 +551,13 @@ export const Keyboard = ({
   enableSound = false,
   showPreview = false,
   syncPhysicalKeyboard = false,
+  onKeyClick,
 }: {
   className?: string;
   enableSound?: boolean;
   showPreview?: boolean;
   syncPhysicalKeyboard?: boolean;
+  onKeyClick?: (keySlot: string, company: Company | null) => void;
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -530,11 +566,12 @@ export const Keyboard = ({
       enableSound={enableSound}
       containerRef={containerRef}
       syncPhysicalKeyboard={syncPhysicalKeyboard}
+      onKeyClick={onKeyClick}
     >
       <div
         ref={containerRef}
         className={cn(
-          "mx-auto w-fit [zoom:0.8] sm:[zoom:1.25] md:[zoom:1.5] lg:[zoom:1.75] xl:[zoom:2]",
+          "mx-auto w-fit [zoom:0.68] min-[360px]:[zoom:0.75] min-[390px]:[zoom:0.84] min-[440px]:[zoom:0.95] min-[520px]:[zoom:1.1] sm:[zoom:1.25] md:[zoom:1.5] lg:[zoom:1.75] xl:[zoom:2]",
           className,
         )}
       >
@@ -606,7 +643,7 @@ export const Keypad = () => {
           <IconVolume className="h-[6px] w-[6px]" />
           <span className="mt-1">F12</span>
         </Key>
-        <Key containerClassName="rounded-tr-xl" className="rounded-tr-lg">
+        <Key keyCode="TouchID" containerClassName="rounded-tr-xl" className="rounded-tr-lg">
           <div className="h-[17px] w-[17px] rounded-full p-[1px] bg-gradient-to-b from-neutral-300 via-neutral-200 to-neutral-300 dark:from-neutral-600 dark:via-neutral-700 dark:to-neutral-600 shadow-sm flex items-center justify-center">
             <div className="h-full w-full rounded-full overflow-hidden flex items-center justify-center bg-black">
               <img
@@ -850,9 +887,14 @@ const Key = ({
   children?: React.ReactNode;
   keyCode?: string;
 }) => {
-  const { playSoundDown, playSoundUp, pressedKeys, setPressed, setReleased } =
+  const { playSoundDown, playSoundUp, pressedKeys, setPressed, setReleased, onKeyClick } =
     useKeyboardSound();
   const isPressed = keyCode ? pressedKeys.has(keyCode) : false;
+
+  const keySlot = keyCode ? getKeySlotFromCode(keyCode) : "";
+  const claimedCompany = keySlot
+    ? COMPANIES.find((c) => c.keySlot?.toUpperCase() === keySlot.toUpperCase()) || null
+    : null;
 
   const handleMouseDown = () => {
     if (keyCode) {
@@ -874,6 +916,13 @@ const Key = ({
     }
   };
 
+  const handleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onKeyClick && keySlot) {
+      onKeyClick(keySlot, claimedCompany);
+    }
+  };
+
   return (
     <div className={cn("rounded-[4px] p-[0.5px]", containerClassName)}>
       <button
@@ -881,8 +930,19 @@ const Key = ({
         onMouseDown={handleMouseDown}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseLeave}
+        onClick={handleClick}
+        title={
+          claimedCompany
+            ? `${claimedCompany.name} (Key [${keySlot}]) · Current bid $${claimedCompany.bid} · Click to Outbid`
+            : keySlot
+            ? `Key [${keySlot}] · Open · Click to Bid`
+            : undefined
+        }
         className={cn(
           "flex h-6 w-6 cursor-pointer items-center justify-center rounded-[3.5px] bg-white dark:bg-[#23252a] text-neutral-800 dark:text-neutral-200 shadow-[0px_0px_1px_0px_rgba(0,0,0,0.35),0px_1px_1.5px_0px_rgba(0,0,0,0.12),0px_1px_0px_0px_rgba(255,255,255,1)_inset] dark:shadow-[0px_0px_1px_0px_rgba(0,0,0,0.85),0px_1px_1.5px_0px_rgba(0,0,0,0.5),0px_1px_0px_0px_rgba(255,255,255,0.08)_inset] transition-all duration-75 active:scale-[0.98]",
+          claimedCompany
+            ? "hover:ring-1 hover:ring-amber-500/80 hover:brightness-105"
+            : "hover:ring-1 hover:ring-blue-500/60 hover:brightness-105",
           isPressed &&
           "scale-[0.98] bg-neutral-200/90 dark:bg-[#1a1b20] shadow-[0px_0px_1px_0px_rgba(0,0,0,0.2)] dark:shadow-[0px_0px_1px_0px_rgba(0,0,0,0.9)]",
           className,
@@ -913,9 +973,14 @@ const ModifierKey = ({
   children?: React.ReactNode;
   keyCode?: string;
 }) => {
-  const { playSoundDown, playSoundUp, pressedKeys, setPressed, setReleased } =
+  const { playSoundDown, playSoundUp, pressedKeys, setPressed, setReleased, onKeyClick } =
     useKeyboardSound();
   const isPressed = keyCode ? pressedKeys.has(keyCode) : false;
+
+  const keySlot = keyCode ? getKeySlotFromCode(keyCode) : "";
+  const claimedCompany = keySlot
+    ? COMPANIES.find((c) => c.keySlot?.toUpperCase() === keySlot.toUpperCase()) || null
+    : null;
 
   const handleMouseDown = () => {
     if (keyCode) {
@@ -937,6 +1002,13 @@ const ModifierKey = ({
     }
   };
 
+  const handleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onKeyClick && keySlot) {
+      onKeyClick(keySlot, claimedCompany);
+    }
+  };
+
   return (
     <div className={cn("rounded-[4px] p-[0.5px]", containerClassName)}>
       <button
@@ -944,8 +1016,19 @@ const ModifierKey = ({
         onMouseDown={handleMouseDown}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseLeave}
+        onClick={handleClick}
+        title={
+          claimedCompany
+            ? `${claimedCompany.name} (Key [${keySlot}]) · Current bid $${claimedCompany.bid} · Click to Outbid`
+            : keySlot
+            ? `Key [${keySlot}] · Open · Click to Bid`
+            : undefined
+        }
         className={cn(
           "flex h-6 w-6 cursor-pointer items-center justify-center rounded-[3.5px] bg-white dark:bg-[#23252a] text-neutral-800 dark:text-neutral-200 shadow-[0px_0px_1px_0px_rgba(0,0,0,0.35),0px_1px_1.5px_0px_rgba(0,0,0,0.12),0px_1px_0px_0px_rgba(255,255,255,1)_inset] dark:shadow-[0px_0px_1px_0px_rgba(0,0,0,0.85),0px_1px_1.5px_0px_rgba(0,0,0,0.5),0px_1px_0px_0px_rgba(255,255,255,0.08)_inset] transition-all duration-75 active:scale-[0.98]",
+          claimedCompany
+            ? "hover:ring-1 hover:ring-amber-500/80 hover:brightness-105"
+            : "hover:ring-1 hover:ring-blue-500/60 hover:brightness-105",
           isPressed &&
           "scale-[0.98] bg-neutral-200/90 dark:bg-[#1a1b20] shadow-[0px_0px_1px_0px_rgba(0,0,0,0.2)] dark:shadow-[0px_0px_1px_0px_rgba(0,0,0,0.9)]",
           className,

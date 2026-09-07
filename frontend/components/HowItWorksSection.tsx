@@ -6,6 +6,7 @@ import ScrollReveal from "@/components/ui/ScrollReveal";
 import Tabs8 from "@/components/ui/tabs-08";
 import { generateRandomString, Icon } from "@/components/ui/evervault-card";
 import { cn } from "@/lib/utils";
+import Ping from "./Ping";
 
 interface StepItem {
   num: string;
@@ -24,7 +25,7 @@ const STEPS: StepItem[] = [
   {
     num: "02",
     title: "Place your bid",
-    desc: "Enter your bid starting at $1 or outbid the current holder. If someone places a higher bid before the round closes, you'll be alerted instantly.",
+    desc: "Enter your bid starting at $10 or outbid the current holder. If someone places a higher bid before the round closes, you'll be alerted instantly.",
     tag: "Step 2",
   },
   {
@@ -69,8 +70,8 @@ function HowItWorksEvervaultCard({ step }: { step: StepItem }) {
       onMouseMove={onMouseMove}
       className={cn(
         "group/card relative flex flex-col justify-between p-6 sm:p-7 rounded-2xl border transition-all duration-300 overflow-hidden select-none cursor-pointer",
-        "bg-white/90 dark:bg-zinc-900/50 border-zinc-200/80 dark:border-white/10 backdrop-blur-xl",
-        "shadow-[0_4px_24px_rgba(0,0,0,0.04),0_1px_3px_rgba(0,0,0,0.02)] hover:shadow-2xl hover:-translate-y-1 hover:border-zinc-300 dark:hover:border-white/25",
+        "bg-white dark:bg-zinc-900/50 border-zinc-300 dark:border-white/10 backdrop-blur-xl",
+        "shadow-[0_8px_30px_rgba(0,0,0,0.06),0_1px_3px_rgba(0,0,0,0.04)] hover:shadow-2xl hover:scale-108 hover:border-zinc-400 dark:hover:border-white/25",
         "h-full min-h-[340px] sm:min-h-[360px]"
       )}
     >
@@ -138,7 +139,7 @@ export default function HowItWorksSection() {
         {/* Section Header */}
         <ScrollReveal>
           <div className="mb-10 sm:mb-14">
-            <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-zinc-950 dark:text-white leading-tight">
+            <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-zinc-950 dark:text-white leading-tight text-shadow-xs">
               How it works.
             </h2>
             <p className="mt-2.5 text-sm sm:text-base text-zinc-600 dark:text-zinc-400 font-normal">
@@ -149,15 +150,82 @@ export default function HowItWorksSection() {
 
         {/* 4 Cards Grid with Evervault Hover Reveal */}
         <ScrollReveal delay={0.1}>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 items-stretch">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 items-stretch text-shadow-xs">
             {STEPS.map((step) => (
               <HowItWorksEvervaultCard key={step.num} step={step} />
             ))}
           </div>
         </ScrollReveal>
 
+        {/* ── Standalone Visual Break: Hardware UV-Printing & $2,400+ Stat ── */}
+        <ScrollReveal delay={0.12} distance={25}>
+          <div className="my-16 sm:my-20 relative overflow-hidden rounded-3xl bg-[#090b14] border border-blue-500/20 shadow-[0_20px_60px_-15px_rgba(30,58,138,0.25)] p-8 sm:p-12 text-white select-none">
+            {/* Ambient Background Glows & Laser Grid */}
+            <div className="absolute -top-24 -right-24 w-96 h-96 bg-blue-600/20 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-indigo-600/15 rounded-full blur-3xl pointer-events-none" />
+
+            {/* Animated Laser UV Print Beam across top */}
+            <div className="absolute top-0 inset-x-0 h-[2px] bg-gradient-to-r from-transparent via-blue-400 to-transparent opacity-70 animate-pulse" />
+
+            <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-8 lg:gap-12">
+              {/* Left Column: Big Single Stat */}
+              <div className="max-w-md">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/15 border border-blue-400/30 text-blue-400 text-xs font-mono font-bold mb-4">
+                  <Ping color={'bg-blue-400'}>
+
+                    <span>HARDWARE PRODUCTION SPOTLIGHT</span>
+                  </Ping>
+                </div>
+
+                <div className="font-mono text-5xl sm:text-6xl md:text-7xl font-black tracking-tight text-white flex items-baseline gap-1">
+                  <span>$2,400+</span>
+                </div>
+
+                <p className="font-display text-lg sm:text-xl font-bold text-zinc-200 mt-2">
+                  Claimed in active auction volume across 28 keyboard keys.
+                </p>
+
+                <p className="text-xs sm:text-sm text-zinc-400 mt-3 leading-relaxed">
+                  Every winning sponsor decal is custom precision UV-cured at 1200 DPI onto genuine Apple anodized aluminum and matte polycarbonate keycaps. Built for 100,000+ keystrokes per month under live daily engineering workflows.
+                </p>
+              </div>
+
+              {/* Right Column: Physical UV Print Blueprint Spec Card */}
+              <div className="w-full lg:w-auto flex-1 max-w-lg bg-white/5 border border-white/10 rounded-2xl p-5 sm:p-6 backdrop-blur-md">
+                <div className="flex items-center justify-between pb-4 border-b border-white/10 text-xs font-mono text-zinc-400">
+                  <span className="text-blue-400 font-bold uppercase">UV-Decal Precision Specs</span>
+                  <span>Tolerance: ±0.05mm</span>
+                </div>
+
+                <div className="grid grid-cols-3 gap-3 pt-4 text-center">
+                  <div className="p-3 rounded-xl bg-black/40 border border-white/5">
+                    <div className="font-mono text-base sm:text-lg font-extrabold text-white">18×18 mm</div>
+                    <div className="text-[11px] text-zinc-400 mt-0.5">Keycap Area</div>
+                  </div>
+                  <div className="p-3 rounded-xl bg-black/40 border border-white/5">
+                    <div className="font-mono text-base sm:text-lg font-extrabold text-blue-400">1200 DPI</div>
+                    <div className="text-[11px] text-zinc-400 mt-0.5">UV-Cured Resin</div>
+                  </div>
+                  <div className="p-3 rounded-xl bg-black/40 border border-white/5">
+                    <div className="font-mono text-base sm:text-lg font-extrabold text-emerald-400">365 Days</div>
+                    <div className="text-[11px] text-zinc-400 mt-0.5">Daily Live Desk</div>
+                  </div>
+                </div>
+
+                <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-between text-[11px] text-zinc-400 font-mono">
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                    Adhesion: Industrial Grade
+                  </span>
+                  <span>Zero Glare Matte Finish</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </ScrollReveal>
+
         {/* Interactive Placement Explorer */}
-        <div className="mt-16 sm:mt-20 pt-10 sm:pt-14 border-t border-zinc-200/80 dark:border-white/10">
+        <div className="mt-12 sm:mt-16 pt-10 sm:pt-14 border-t border-zinc-200/80 dark:border-white/10">
           <ScrollReveal delay={0.15}>
             <div className="mb-6">
               <span className="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider font-mono">

@@ -1,8 +1,10 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "motion/react";
-import { IconX, IconCheck } from "@tabler/icons-react";
+import { IconX, IconCheck, IconLock } from "@tabler/icons-react";
 import { Company } from "@/app/data/keybidData";
 import { cn } from "@/lib/utils";
 
@@ -11,6 +13,10 @@ interface OutbidModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess?: (bidAmount: number, createdCompany?: Company) => void;
+  initialKeySlot?: string;
+  initialBrandName?: string;
+  initialWebsite?: string;
+  initialLogo?: string;
 }
 
 export default function OutbidModal({
@@ -18,36 +24,46 @@ export default function OutbidModal({
   isOpen,
   onClose,
   onSuccess,
+  initialKeySlot,
+  initialBrandName,
+  initialWebsite,
+  initialLogo,
 }: OutbidModalProps) {
-  const minBid = company ? company.bid + 1 : 1;
+  const router = useRouter();
+  const [mounted, setMounted] = useState(false);
+  const minBid = company ? Math.max(10, company.bid + 1) : 10;
   const [bidAmount, setBidAmount] = useState<number>(minBid);
-  const [keySlot, setKeySlot] = useState(company?.keySlot || "");
+  const [keySlot, setKeySlot] = useState(company?.keySlot || initialKeySlot || "");
   const [brandName, setBrandName] = useState("");
   const [email, setEmail] = useState("");
   const [website, setWebsite] = useState("");
-  const [xHandle, setXHandle] = useState("");
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   // Synchronize initial bid and values when company or isOpen changes
   useEffect(() => {
+    if (!isOpen) return;
+
     if (company) {
-      setBidAmount(company.bid + 1);
+      setBidAmount(Math.max(10, company.bid + 1));
       setKeySlot(company.keySlot);
     } else {
-      setBidAmount(1);
-      setKeySlot("");
+      setBidAmount(10);
+      setKeySlot(initialKeySlot || "");
     }
-    setBrandName("");
+    setBrandName(initialBrandName || "");
     setEmail("");
-    setWebsite("");
-    setXHandle("");
-    setLogoPreview(null);
+    setWebsite(initialWebsite || "");
+    setLogoPreview(initialLogo || null);
     setSubmitted(false);
     setSubmitting(false);
-  }, [company, isOpen]);
+  }, [company, isOpen, initialKeySlot, initialBrandName, initialWebsite, initialLogo]);
 
   // Close on Escape key
   useEffect(() => {
@@ -89,36 +105,20 @@ export default function OutbidModal({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (bidAmount < minBid) return;
-    if (!company && !keySlot.trim()) return;
+    const targetSlot = (company ? company.keySlot : keySlot).trim().toUpperCase();
+    if (!targetSlot) return;
 
-    setSubmitting(true);
-    setTimeout(() => {
-      setSubmitting(false);
-      setSubmitted(true);
-      if (onSuccess) {
-        const createdCompany: Company | undefined = !company
-          ? {
-              id: brandName.toLowerCase().replace(/[^a-z0-9]/g, "-") || `company-${Date.now()}`,
-              name: brandName,
-              url: website || "#",
-              tagline: `Claimed spot for key ${keySlot.trim().toUpperCase()}`,
-              iconUrl: logoPreview || "",
-              bid: bidAmount,
-              clicks: 0,
-              submittedAt: new Date().toISOString().split("T")[0],
-              keySlot: keySlot.trim().toUpperCase(),
-            }
-          : undefined;
-        onSuccess(bidAmount, createdCompany);
-      }
-      setTimeout(() => {
-        onClose();
-        setSubmitted(false);
-      }, 1600);
-    }, 800);
+    onClose();
+    router.push(
+      `/bid/${encodeURIComponent(targetSlot)}?amount=${bidAmount}&brand=${encodeURIComponent(
+        brandName
+      )}&url=${encodeURIComponent(website)}`
+    );
   };
 
-  return (
+  if (!mounted || typeof document === "undefined") return null;
+
+  return createPortal(
     <AnimatePresence>
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto select-none">
@@ -174,21 +174,17 @@ export default function OutbidModal({
                       ? "bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400"
                       : "bg-blue-500/10 border border-blue-500/20 text-blue-600 dark:text-blue-400"
                   )}>
-                    {company ? "Outbid Current Holder" : "Claim an Open Key"}
+                    {company ? "Outbid Current Holder" : keySlot ? `Bid on Key ${keySlot}` : "Claim an Open Key"}
                   </div>
                   <h2 className="text-lg sm:text-xl font-bold tracking-tight text-zinc-950 dark:text-white">
-                    {company ? `Spot ${company.keySlot} · Keycap` : "Claim Your Keycap"}
+                    {company ? `Spot ${company.keySlot} · Keycap` : keySlot ? `Key ${keySlot} · Keycap` : "Claim Your Keycap"}
                   </h2>
                   <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
-                    Magic Keyboard Key · 1.8 × 1.8 cm
+                    1.8 × 1.8 cm
                   </p>
-                  {company ? (
+                  {company && (
                     <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-0.5">
-                      Current bid <strong className="font-bold text-zinc-950 dark:text-white">${company.bid}</strong> by {company.name} · {company.clicks} clicks
-                    </p>
-                  ) : (
-                    <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-0.5">
-                      Starting bid <strong className="font-bold text-zinc-950 dark:text-white">$1</strong> · Claim any available key for your startup
+                      Current bid <strong className="font-bold text-zinc-950 dark:text-white">${company.bid}</strong> by {company.name}
                     </p>
                   )}
                 </div>
@@ -237,20 +233,6 @@ export default function OutbidModal({
                   </div>
                 </div>
 
-                {/* Dynamic Deposit Calculation Card */}
-                <div className="bg-zinc-50 dark:bg-zinc-900/80 border border-zinc-200/70 dark:border-white/10 rounded-xl p-3.5 space-y-2 text-xs">
-                  <div className="flex items-center justify-between text-zinc-600 dark:text-zinc-400">
-                    <span>Deposit, 20% of ${bidAmount}</span>
-                    <span className="font-mono font-medium text-zinc-900 dark:text-zinc-200">${deposit}</span>
-                  </div>
-                  <div className="flex items-center justify-between font-bold text-zinc-950 dark:text-white pt-1.5 border-t border-zinc-200/60 dark:border-white/5">
-                    <span>Due now</span>
-                    <span className="font-mono text-zinc-950 dark:text-white">${deposit}</span>
-                  </div>
-                  <p className="text-[11px] text-zinc-500 dark:text-zinc-400 leading-relaxed font-normal pt-1">
-                    Refunded in full if you don&apos;t win. If you do, the remaining ${remaining} is charged to the same card when the auction closes.
-                  </p>
-                </div>
 
                 {/* 2x2 Fields Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
@@ -261,7 +243,7 @@ export default function OutbidModal({
                     <input
                       type="text"
                       required
-                      placeholder="Microsoft"
+                      placeholder="Your Brand Name"
                       value={brandName}
                       onChange={(e) => setBrandName(e.target.value)}
                       className="w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/60 px-3 py-2 text-xs sm:text-sm text-zinc-900 dark:text-white placeholder:text-zinc-400 dark:placeholder:text-zinc-500 outline-none focus:border-blue-500 transition-colors"
@@ -274,33 +256,21 @@ export default function OutbidModal({
                     <input
                       type="email"
                       required
-                      placeholder="you@microsoft.com"
+                      placeholder="you@handle.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       className="w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/60 px-3 py-2 text-xs sm:text-sm text-zinc-900 dark:text-white placeholder:text-zinc-400 dark:placeholder:text-zinc-500 outline-none focus:border-blue-500 transition-colors"
                     />
                   </div>
-                  <div>
+                  <div className="col-span-2">
                     <label className="block text-xs font-semibold text-zinc-800 dark:text-zinc-200 mb-1">
-                      Website <span className="font-normal text-zinc-400">(optional)</span>
+                      Website
                     </label>
                     <input
                       type="url"
-                      placeholder="https://microsoft.com"
+                      placeholder="https://@yourhandle.com"
                       value={website}
                       onChange={(e) => setWebsite(e.target.value)}
-                      className="w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/60 px-3 py-2 text-xs sm:text-sm text-zinc-900 dark:text-white placeholder:text-zinc-400 dark:placeholder:text-zinc-500 outline-none focus:border-blue-500 transition-colors"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-zinc-800 dark:text-zinc-200 mb-1">
-                      X handle <span className="font-normal text-zinc-400">(optional)</span>
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="@microsoft"
-                      value={xHandle}
-                      onChange={(e) => setXHandle(e.target.value)}
                       className="w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/60 px-3 py-2 text-xs sm:text-sm text-zinc-900 dark:text-white placeholder:text-zinc-400 dark:placeholder:text-zinc-500 outline-none focus:border-blue-500 transition-colors"
                     />
                   </div>
@@ -366,9 +336,6 @@ export default function OutbidModal({
                         <p className="text-xs font-semibold text-zinc-800 dark:text-zinc-200">
                           Upload your logo
                         </p>
-                        <p className="text-[10px] text-zinc-400 dark:text-zinc-500 font-mono">
-                          PNG · JPG · SVG
-                        </p>
                       </div>
                     )}
                   </div>
@@ -378,21 +345,21 @@ export default function OutbidModal({
                 <div className="pt-3 border-t border-zinc-100 dark:border-white/10 space-y-2">
                   <button
                     type="submit"
-                    disabled={submitting || bidAmount < minBid || (!company && !keySlot.trim())}
+                    disabled={bidAmount < minBid || (!company && !keySlot.trim())}
                     className={cn(
-                      "w-full py-3.5 px-6 rounded-xl font-black uppercase tracking-widest text-xs sm:text-sm text-white transition-all shadow-md cursor-pointer",
-                      company
-                        ? "bg-[#ff2453] hover:bg-[#eb1c49] active:bg-[#d6133f]"
-                        : "bg-blue-600 hover:bg-blue-700 active:bg-blue-800",
+                      "w-full py-3.5 px-6 rounded-xl font-black  tracking-widest text-xs sm:text-sm text-white transition-all shadow-md cursor-pointer flex items-center justify-center gap-2",
+                      "shadow-[0_4px_16px_rgba(37,99,235,0.35),inset_0_1px_0.5px_rgba(255,255,255,0.25)]  active:scale-[0.98]",
+                      "bg-blue-600 hover:bg-blue-700 active:bg-blue-800",
                       "active:scale-[0.99]",
                       "disabled:opacity-50 disabled:cursor-not-allowed"
                     )}
                   >
-                    {submitting ? "PROCESSING..." : company ? "OUTBID" : "CLAIM KEY"}
+
+                    <span>Proceed ${bidAmount}</span>
                   </button>
 
                   <p className="text-[11px] text-center text-zinc-500 dark:text-zinc-400 font-normal">
-                    I check every logo by hand before it goes on the lid.
+                    Secure 256-bit encrypted checkout via Razorpay
                   </p>
                 </div>
               </form>
@@ -400,6 +367,7 @@ export default function OutbidModal({
           </motion.div>
         </div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 }

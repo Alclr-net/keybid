@@ -14,14 +14,15 @@ import MacWindow from './MacWindow';
 
 
 
-export type HeroSectionProps = {
+export type MacDisplayProps = {
   className?: string;
   children?: React.ReactNode;
 };
 
-function HeroSection({ className, children }: HeroSectionProps) {
+function MacDisplay({ className, children }: MacDisplayProps) {
   return (
-    <section className={cn("w-full py-4 sm:py-8 flex flex-col items-center justify-center ", className)}>
+    <section className={cn(" hidden  md:flex flex-col items-center justify-center w-full py-4 sm:py-8 ", className)}>
+
       {/* ── Mac Studio Display Monitor Mockup ── */}
       <div className="relative w-full max-w-7xl mx-auto flex flex-col items-center animate-[monitorReveal_0.9s_cubic-bezier(0.16,1,0.3,1)_both]">
         {/* Monitor Screen Frame / Bezel Chassis */}
@@ -171,4 +172,4 @@ function HeroSection({ className, children }: HeroSectionProps) {
   );
 }
 
-export default HeroSection;
+export default MacDisplay;

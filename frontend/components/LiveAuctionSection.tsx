@@ -1,191 +1,255 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import { COMPANIES, Company } from "@/app/data/keybidData";
 import {
-  IconTrophy,
-  IconArrowUp,
-  IconExternalLink,
-  IconPlus,
+  IconArrowRight,
   IconClock,
-  IconSparkles,
-  IconHandClick,
+  IconFlame,
+  IconPlus,
+  IconShieldCheck,
+  IconBolt,
 } from "@tabler/icons-react";
 import Ping from "./Ping";
 import OutbidModal from "@/components/OutbidModal";
 import { cn } from "@/lib/utils";
 
+interface BidEvent {
+  id: string;
+  keySlot: string;
+  companyName: string;
+  companyId: string;
+  event: string;
+  amount: number;
+  timeAgo: string;
+  challenger?: string;
+  iconUrl?: string;
+  type: "outbid" | "new_bidder" | "defended";
+}
+
+const RECENT_EVENTS: BidEvent[] = [
+  {
+    id: "evt-1",
+    keySlot: "S",
+    companyName: "Stripe",
+    companyId: "stripe",
+    event: "Stripe outbid for $32",
+    amount: 32,
+    timeAgo: "2 min ago",
+    challenger: "Square Labs",
+    iconUrl: "https://stripe.com/favicon.ico",
+    type: "outbid",
+  },
+  {
+    id: "evt-2",
+    keySlot: "L",
+    companyName: "Linear",
+    companyId: "linear",
+    event: "New bidder joined on Linear",
+    amount: 23,
+    timeAgo: "8 min ago",
+    challenger: "Sprintly",
+    iconUrl: "https://linear.app/favicon.ico",
+    type: "new_bidder",
+  },
+  {
+    id: "evt-3",
+    keySlot: "V",
+    companyName: "Vercel",
+    companyId: "vercel",
+    event: "Vercel defended Key V with $43 top bid",
+    amount: 43,
+    timeAgo: "24 min ago",
+    iconUrl: "https://assets.vercel.com/image/upload/front/favicon/vercel/favicon.ico",
+    type: "defended",
+  },
+  {
+    id: "evt-4",
+    keySlot: "O",
+    companyName: "OpenAI",
+    companyId: "openai",
+    event: "OpenAI outbid on Key O for $19",
+    amount: 19,
+    timeAgo: "48 min ago",
+    challenger: "Anthropic AI",
+    iconUrl: "https://openai.com/favicon.ico",
+    type: "outbid",
+  },
+  {
+    id: "evt-5",
+    keySlot: "P",
+    companyName: "Supabase",
+    companyId: "supabase",
+    event: "Challenger joined on Key P for $7",
+    amount: 7,
+    timeAgo: "1 hr ago",
+    iconUrl: "https://supabase.com/favicon/favicon.ico",
+    type: "new_bidder",
+  },
+  {
+    id: "evt-6",
+    keySlot: "R",
+    companyName: "Raycast",
+    companyId: "raycast",
+    event: "Raycast locked in new spot on Key R",
+    amount: 9,
+    timeAgo: "2 hr ago",
+    iconUrl: "https://raycast.com/favicon-production.png",
+    type: "defended",
+  },
+];
+
 export default function LiveAuctionSection() {
-  const [companies, setCompanies] = useState(() => [...COMPANIES].sort((a, b) => b.bid - a.bid));
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const leader = companies[0];
-  const totalPool = companies.reduce((s, c) => s + c.bid, 0);
+  const [targetSlot, setTargetSlot] = useState<string>("");
+
+  const handleOpenModalForEvent = (event: BidEvent) => {
+    const comp = COMPANIES.find((c) => c.id === event.companyId) || null;
+    setSelectedCompany(comp);
+    setTargetSlot(event.keySlot);
+    setIsModalOpen(true);
+  };
 
   return (
-    <section id="auction" className="w-full py-20 sm:py-28 px-4 sm:px-6 bg-zinc-50/60 dark:bg-zinc-950/40 border-y border-zinc-200/70 dark:border-white/5">
+    <section id="auction" className="w-full py-16 sm:py-24 px-4 sm:px-6 bg-zinc-50/70 dark:bg-zinc-950/40 border-y border-zinc-300/80 dark:border-white/5">
       <div className="max-w-4xl mx-auto">
         {/* Eyebrow & Title */}
-        <div className="mb-8 sm:mb-10 text-center sm:text-left">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-semibold mb-3">
-            <Ping>
-              <span className="text-xs font-semibold">Live updates of companies</span>
-            </Ping>
+        <div className="mb-8 sm:mb-10 text-center sm:text-left flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+          <div>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-600/40 dark:border-emerald-500/30 text-emerald-700 dark:text-emerald-400 text-xs font-bold mb-3 shadow-2xs">
+              <Ping>
+                <span className="text-xs font-bold">Live Activity Stream</span>
+              </Ping>
+            </div>
+            <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-zinc-950 dark:text-white">
+              Live round activity.
+            </h2>
+            <p className="text-sm sm:text-base text-zinc-600 dark:text-zinc-400 mt-2 font-normal max-w-xl leading-relaxed">
+              Real-time bids, outbid challenges, and slot updates happening live across the Apple Magic Keyboard.
+            </p>
           </div>
-          <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-zinc-950 dark:text-white">
-            The auction, live.
-          </h2>
-          <p className="text-sm sm:text-base text-zinc-600 dark:text-zinc-400 mt-2 font-normal max-w-2xl leading-relaxed">
-            Every key on the keyboard is up for auction. The highest bidder on each key secures permanent hardware placement and a live site backlink.
-          </p>
+
+          <div className="flex items-center justify-center sm:justify-end gap-2 text-xs font-mono text-zinc-500 dark:text-zinc-400">
+            <span className="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+            <span>Updated 2m ago</span>
+          </div>
         </div>
 
-        {/* Full Leaderboard Table */}
-        <div className="rounded-2xl sm:rounded-3xl border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900/60 shadow-xs overflow-hidden">
-          {/* Table Body Rows */}
-          <div className="divide-y divide-zinc-100 dark:divide-white/5">
-            {companies.map((company, idx) => {
-              const isLeader = idx === 0;
-              const isSecond = idx === 1;
-              const isThird = idx === 2;
-              return (
-                <div
-                  key={company.id}
-                  className={cn(
-                    "flex items-center gap-3 sm:gap-4 px-4 sm:px-6 py-3.5 transition-colors",
-                    isLeader
-                      ? "bg-amber-500/[0.05] dark:bg-amber-500/[0.06]"
-                      : "hover:bg-zinc-50/80 dark:hover:bg-white/[0.02]"
-                  )}
-                >
-                  {/* Rank */}
-                  <div className="w-8 text-center shrink-0 flex items-center justify-center">
-                    {isLeader ? (
-                      <span className="font-mono text-xs font-bold px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/30">
-                        #1
-                      </span>
-                    ) : isSecond ? (
-                      <span className="font-mono text-xs font-bold px-1.5 py-0.5 rounded bg-slate-500/15 text-slate-700 dark:text-slate-300 border border-slate-400/30">
-                        #2
-                      </span>
-                    ) : isThird ? (
-                      <span className="font-mono text-xs font-bold px-1.5 py-0.5 rounded bg-amber-900/15 text-amber-800 dark:text-amber-400 border border-amber-700/30">
-                        #3
-                      </span>
-                    ) : (
-                      <span className="font-mono text-xs font-medium text-zinc-400 dark:text-zinc-500">
-                        #{idx + 1}
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Key Slot */}
-                  <div className="w-10 text-center shrink-0">
-                    <span className="font-mono font-bold text-[11px] px-2 py-0.5 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-200 border border-zinc-200/80 dark:border-white/10 shadow-2xs">
-                      {company.keySlot}
+        {/* Live Activity Feed Container */}
+        <div className="rounded-2xl sm:rounded-3xl border border-zinc-300 dark:border-white/10 bg-white dark:bg-zinc-900/70 shadow-[0_8px_30px_rgba(0,0,0,0.06)] overflow-hidden">
+          <div className="divide-y divide-zinc-200 dark:divide-white/5">
+            {RECENT_EVENTS.map((event) => (
+              <div
+                key={event.id}
+                className="flex items-center justify-between gap-3 sm:gap-4 px-4 sm:px-6 py-4 hover:bg-zinc-50/90 dark:hover:bg-white/[0.02] transition-colors"
+              >
+                {/* Left: Key Slot Keycap Badge & Company Icon */}
+                <div className="flex items-center gap-3 min-w-0 flex-1">
+                  <div className="relative shrink-0 flex items-center justify-center">
+                    <span className="font-mono font-extrabold text-xs sm:text-sm px-2.5 py-1 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-950 dark:text-white border border-zinc-300 dark:border-white/15 shadow-xs">
+                      {event.keySlot}
                     </span>
                   </div>
 
-                  {/* Company info */}
-                  <div className="flex items-center gap-2.5 min-w-0 flex-1 pr-2">
-                    {company.iconUrl ? (
-                      /* eslint-disable-next-line @next/next/no-img-element */
-                      <img
-                        src={company.iconUrl}
-                        alt={company.name}
-                        className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg object-contain bg-white dark:bg-zinc-800 border border-zinc-200/80 dark:border-white/10 p-0.5 shrink-0 shadow-2xs"
-                        onError={(e) => {
-                          (e.currentTarget as HTMLImageElement).style.visibility = "hidden";
-                        }}
-                      />
-                    ) : (
-                      <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-blue-600 text-white font-bold text-[10px] flex items-center justify-center shrink-0 shadow-2xs">
-                        {company.name[0]}
-                      </div>
-                    )}
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-1.5">
-                        <span className="font-display font-semibold text-xs sm:text-sm text-zinc-900 dark:text-white truncate">
-                          {company.name}
+                  {event.iconUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={event.iconUrl}
+                      alt={event.companyName}
+                      className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg object-contain bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 p-0.5 shrink-0 shadow-2xs hidden sm:block"
+                      onError={(e) => {
+                        (e.currentTarget as HTMLImageElement).style.visibility = "hidden";
+                      }}
+                    />
+                  ) : null}
+
+                  {/* Middle: Event description & meta */}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-display font-bold text-xs sm:text-sm text-zinc-950 dark:text-white truncate">
+                        {event.event}
+                      </span>
+                      {event.type === "outbid" && (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-700 dark:text-rose-400 border border-rose-500/20">
+                          <IconBolt size={10} /> Outbid
                         </span>
-                        <a
-                          href={company.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-zinc-400 hover:text-zinc-700 dark:text-zinc-500 dark:hover:text-white transition-colors"
-                          title="Visit website"
-                        >
-                          <IconExternalLink size={12} />
-                        </a>
-                      </div>
-                      <p className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate hidden sm:block font-normal">
-                        {company.tagline}
-                      </p>
+                      )}
+                      {event.type === "new_bidder" && (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-700 dark:text-blue-400 border border-blue-500/20">
+                          <IconFlame size={10} /> Challenger
+                        </span>
+                      )}
+                      {event.type === "defended" && (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20">
+                          <IconShieldCheck size={10} /> Defended
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 mt-0.5 text-[11px] text-zinc-500 dark:text-zinc-400">
+                      <span className="flex items-center gap-1">
+                        <IconClock size={11} /> {event.timeAgo}
+                      </span>
+                      <span>·</span>
+                      <span>Key &apos;{event.keySlot}&apos;</span>
+                      {event.challenger && (
+                        <>
+                          <span>·</span>
+                          <span className="truncate hidden md:inline">by {event.challenger}</span>
+                        </>
+                      )}
                     </div>
                   </div>
-
-                  {/* Clicks */}
-                  <div className="hidden md:flex items-center justify-center gap-1.5 font-mono text-xs text-zinc-500 dark:text-zinc-400 bg-zinc-100/70 dark:bg-white/5 px-2.5 py-1 rounded-full border border-zinc-200/60 dark:border-white/5 shrink-0">
-                    <IconHandClick size={12} className="text-zinc-400" />
-                    <span>{company.clicks} clicks</span>
-                  </div>
-
-                  {/* Outbid Button */}
-                  <div className={cn(
-                    "p-[1.5px] rounded-lg transition-all duration-200 ease-out shadow-xs shrink-0",
-                    isLeader ? "bg-amber-500/25" : "bg-blue-600/20"
-                  )}>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSelectedCompany(company);
-                        setIsModalOpen(true);
-                      }}
-                      className={cn(
-                        "w-[105px] sm:w-[118px] flex items-center justify-center gap-1 px-2.5 py-1.5 rounded-[6px] text-xs font-bold transition-all cursor-pointer shadow-2xs",
-                        "shadow-[0_4px_16px_rgba(0,0,0,0.06),0_1px_3px_rgba(0,0,0,0.04),inset_0_1px_0.5px_0.05px_rgba(255,255,255,0.2),inset_0_-1px_0.5px_0.05px_rgba(0,0,0,0.1)]",
-                        isLeader
-                          ? "bg-amber-400 hover:bg-amber-500 text-zinc-950 active:bg-amber-600"
-                          : "bg-blue-600 text-white hover:bg-blue-500 active:bg-blue-700",
-                      )}
-                    >
-                      <span className="text-xs font-bold flex items-center gap-1">
-                        Outbid for
-                        <span className="font-mono">
-                          ${company.bid + 1}
-                        </span>
-                      </span>
-                    </button>
-                  </div>
                 </div>
-              );
-            })}
 
-            {/* Claim Open Key Row */}
-            <div className="px-4 sm:px-6 py-3.5 flex items-center justify-between text-xs bg-zinc-50/50 dark:bg-white/[0.01]">
-              <div className="flex items-center gap-3">
-                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg border border-dashed border-zinc-300 dark:border-zinc-700 flex items-center justify-center text-zinc-400 shrink-0">
-                  <IconPlus size={14} />
-                </div>
-                <div>
-                  <span className="font-semibold text-zinc-800 dark:text-zinc-200">
-                    Want your startup on the keyboard?
-                  </span>
-                  <p className="text-[11px] text-zinc-500 dark:text-zinc-400 hidden sm:block">
-                    Claim any open key starting at just $1
-                  </p>
+                {/* Right: Varied Ghost/Lighter CTA Button */}
+                <div className="shrink-0 flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleOpenModalForEvent(event)}
+                    className={cn(
+                      "flex items-center justify-center gap-1 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer",
+                      "bg-zinc-100 dark:bg-white/5 hover:bg-blue-600 hover:text-white dark:hover:bg-blue-600 dark:hover:text-white",
+                      "text-zinc-800 dark:text-zinc-200 border border-zinc-200/90 dark:border-white/10 hover:border-blue-600",
+                      "shadow-2xs active:scale-[0.98]"
+                    )}
+                  >
+                    <span>Challenge</span>
+                    <span className="font-mono font-bold">${event.amount + 1}</span>
+                  </button>
                 </div>
               </div>
-              <button
-                type="button"
-                onClick={() => {
-                  setSelectedCompany(null);
-                  setIsModalOpen(true);
-                }}
-                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white transition-colors shadow-xs cursor-pointer"
-              >
-                Claim a Key →
-              </button>
+            ))}
+
+            {/* Bottom Action Footer with Link to /auction */}
+            <div className="px-4 sm:px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-3 bg-zinc-50 dark:bg-white/[0.02] border-t border-zinc-200 dark:border-white/5">
+              <div className="flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-400 text-center sm:text-left">
+                <IconPlus size={14} className="text-blue-600 dark:text-blue-400" />
+                <span>Want to claim an unlisted key? Starting at just $1.</span>
+              </div>
+
+              <div className="flex items-center gap-3 w-full sm:w-auto justify-center sm:justify-end">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedCompany(null);
+                    setTargetSlot("");
+                    setIsModalOpen(true);
+                  }}
+                  className="text-xs font-semibold text-zinc-600 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-white transition-colors cursor-pointer"
+                >
+                  + Claim Any Key ($1)
+                </button>
+
+                <Link
+                  href="/auction"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-blue-600 hover:bg-blue-500 text-white transition-all shadow-md active:scale-[0.98]"
+                >
+                  <span>View full leaderboard (10 keys)</span>
+                  <IconArrowRight size={14} />
+                </Link>
+              </div>
             </div>
           </div>
         </div>
@@ -195,22 +259,17 @@ export default function LiveAuctionSection() {
       <OutbidModal
         company={selectedCompany}
         isOpen={isModalOpen}
+        initialKeySlot={targetSlot}
         onClose={() => {
           setIsModalOpen(false);
           setSelectedCompany(null);
+          setTargetSlot("");
         }}
-        onSuccess={(bidAmount, createdCompany) => {
-          if (selectedCompany) {
-            setCompanies((prev) =>
-              prev
-                .map((c) => (c.id === selectedCompany.id ? { ...c, bid: bidAmount } : c))
-                .sort((a, b) => b.bid - a.bid)
-            );
-          } else if (createdCompany) {
-            setCompanies((prev) => [...prev, createdCompany].sort((a, b) => b.bid - a.bid));
-          }
+        onSuccess={() => {
+          setIsModalOpen(false);
         }}
       />
     </section>
   );
 }
+

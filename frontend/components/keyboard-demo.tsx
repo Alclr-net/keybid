@@ -3,8 +3,10 @@
 import React, { useRef, useState, useEffect } from "react";
 import { motion, useScroll, useTransform, useSpring, useReducedMotion } from "motion/react";
 import { Keyboard } from "@/components/ui/keyboard";
-import { IconPerspective, IconRotate3d, IconDeviceDesktop } from "@tabler/icons-react";
+import { IconPerspective, IconRotate3d, IconDeviceDesktop, IconHandClick } from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
+import OutbidModal from "@/components/OutbidModal";
+import { Company } from "@/app/data/keybidData";
 
 export default function KeyboardDemo() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -12,6 +14,25 @@ export default function KeyboardDemo() {
 
   // Mode: "auto" (scroll-driven), "desk" (locked 3D angle), "flat" (locked 0° flat)
   const [perspectiveMode, setPerspectiveMode] = useState<"auto" | "desk" | "flat">("auto");
+
+  // State for interactive key selection (bidding or outbidding)
+  const [selectedKey, setSelectedKey] = useState<{
+    company: Company | null;
+    keySlot: string;
+    isOpen: boolean;
+  }>({
+    company: null,
+    keySlot: "",
+    isOpen: false,
+  });
+
+  const handleKeyClick = (keySlot: string, company: Company | null) => {
+    setSelectedKey({
+      isOpen: true,
+      company,
+      keySlot,
+    });
+  };
 
   // Track viewport width: natural, ergonomic tilt angle (14deg on desktop, 8deg on mobile)
   const [isMobile, setIsMobile] = useState(false);
@@ -110,56 +131,79 @@ export default function KeyboardDemo() {
   return (
     <section
       ref={containerRef}
-      className="relative flex min-h-[540px] sm:min-h-[620px] md:min-h-[700px] w-full flex-col items-center justify-center py-8 sm:py-12 md:py-18 overflow-hidden"
+      className="relative flex min-h-[300px] xs:min-h-[340px] sm:min-h-[520px] md:min-h-[620px] lg:min-h-[700px] w-full flex-col items-center justify-center py-4 sm:py-10 md:py-16 overflow-hidden"
     >
       {/* Perspective Mode Control Pill */}
-      <div className="mb-6 sm:mb-8 flex items-center gap-1.5 rounded-full border border-zinc-200/80 dark:border-white/10 bg-white/70 dark:bg-zinc-900/60 p-1 backdrop-blur-md shadow-xs text-[11px] font-medium text-zinc-600 dark:text-zinc-400 select-none z-20">
+      <div className="mb-3 sm:mb-6 flex items-center gap-1 sm:gap-1.5 rounded-full border border-zinc-200/80 dark:border-white/10 bg-white/70 dark:bg-zinc-900/60 p-0.5 sm:p-1 backdrop-blur-md shadow-xs text-[10px] sm:text-[11px] font-medium text-zinc-600 dark:text-zinc-400 select-none z-20">
         <button
           type="button"
           onClick={() => setPerspectiveMode("auto")}
-          className={cn("flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all cursor-pointer",
+          className={cn("flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full transition-all cursor-pointer",
             `${perspectiveMode === "auto"
               ? "bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800 font-semibold shadow-[0_4px_16px_rgba(0,0,0,0.06),0_1px_3px_rgba(0,0,0,0.04),inset_0_1px_0.5px_0.05px_rgba(255,255,255,0.2),inset_0_-1px_0.5px_0.05px_rgba(0,0,0,0.1)]"
               : "hover:text-blue-600 dark:hover:text-blue-400"
             }`)}
-
         >
-          <IconRotate3d size={13} className={perspectiveMode === "auto" ? "animate-pulse" : ""} />
-          <span>Scroll Dynamic</span>
+          <IconRotate3d size={12} className={perspectiveMode === "auto" ? "animate-pulse" : ""} />
+          <span><span className="hidden sm:inline">Scroll </span>Dynamic</span>
         </button>
 
         <button
           type="button"
           onClick={() => setPerspectiveMode("desk")}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all cursor-pointer ${perspectiveMode === "desk"
+          className={`flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full transition-all cursor-pointer ${perspectiveMode === "desk"
             ? "bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800 font-semibold shadow-[0_4px_16px_rgba(0,0,0,0.06),0_1px_3px_rgba(0,0,0,0.04),inset_0_1px_0.5px_0.05px_rgba(255,255,255,0.2),inset_0_-1px_0.5px_0.05px_rgba(0,0,0,0.1)]"
             : "hover:text-blue-600 dark:hover:text-blue-400"
             }`}
-
         >
-          <IconPerspective size={13} />
-          <span>3D Desk View</span>
+          <IconPerspective size={12} />
+          <span>3D Desk<span className="hidden sm:inline"> View</span></span>
         </button>
 
         <button
           type="button"
           onClick={() => setPerspectiveMode("flat")}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all cursor-pointer ${perspectiveMode === "flat"
+          className={`flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full transition-all cursor-pointer ${perspectiveMode === "flat"
             ? "bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800 font-semibold shadow-[0_4px_16px_rgba(0,0,0,0.06),0_1px_3px_rgba(0,0,0,0.04),inset_0_1px_0.5px_0.05px_rgba(255,255,255,0.2),inset_0_-1px_0.5px_0.05px_rgba(0,0,0,0.1)]"
             : "hover:text-blue-600 dark:hover:text-blue-400"
             }`}
-
         >
-          <IconDeviceDesktop size={13} />
-          <span>Flat View</span>
+          <IconDeviceDesktop size={12} />
+          <span>Flat<span className="hidden sm:inline"> View</span></span>
         </button>
+      </div>
+
+      {/* Interactive Helper Hint */}
+      <div className="mb-3 sm:mb-6 flex items-center gap-1.5 px-1 py-0.5 sm:py-1 rounded-full bg-blue-500/10 dark:bg-blue-500/15 border border-blue-500/20 text-blue-600 dark:text-blue-400 text-[10px] sm:text-[11px] font-semibold select-none z-20 text-center">
+        <span className={cn("bg-blue-600 text-white px-1 py-1 rounded-full")}>
+          <IconHandClick size={15} stroke={2} />
+        </span>
+        <motion.span
+          variants={{
+            hidden: {},
+            visible: { transition: { staggerChildren: 0.035 } },
+          }}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.8 }}
+          className="mr-2 text-shadow-xs whitespace-pre"
+        >
+          {"Click any key to place your bid".split("").map((letter, i) => (
+            <motion.span
+              key={i}
+              variants={{ hidden: { opacity: 0 }, visible: { opacity: 1 } }}
+            >
+              {letter}
+            </motion.span>
+          ))}
+        </motion.span>
       </div>
 
       {/* 3D Perspective Stage Container */}
       <div
-        className="relative flex w-full items-center justify-center px-4"
+        className="relative flex w-full items-center justify-center px-1 sm:px-4"
         style={{
-          perspective: isMobile ? 1000 : 1400,
+          perspective: isMobile ? 900 : 1400,
           perspectiveOrigin: "50% 40%",
         }}
       >
@@ -178,7 +222,7 @@ export default function KeyboardDemo() {
           }}
           className="relative z-10 flex flex-col items-center justify-center will-change-transform"
         >
-          <Keyboard enableSound />
+          <Keyboard enableSound onKeyClick={handleKeyClick} />
 
           {/* ── Tabletop Desk Contact Shadow Rig (Directly anchored to bottom of keyboard) ── */}
           <div className="pointer-events-none absolute  inset-x-0 flex flex-col items-center justify-center select-none -z-10">
@@ -223,6 +267,14 @@ export default function KeyboardDemo() {
           </div>
         </motion.div>
       </div>
+
+      {/* Interactive Key Bidding & Outbidding Modal */}
+      <OutbidModal
+        company={selectedKey.company}
+        isOpen={selectedKey.isOpen}
+        initialKeySlot={selectedKey.keySlot}
+        onClose={() => setSelectedKey((prev) => ({ ...prev, isOpen: false }))}
+      />
     </section>
   );
 }

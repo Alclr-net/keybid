@@ -11,6 +11,8 @@
   "dependencies": {
     "@radix-ui/react-tooltip": "^1.2.16",
     "@react-three/fiber": "^9.7.0",
+    "@supabase/ssr": "^0.12.6",
+    "@supabase/supabase-js": "^2.115.0",
     "@tabler/icons-react": "^3.46.0",
     "@types/three": "^0.185.4",
     "clsx": "^2.1.1",

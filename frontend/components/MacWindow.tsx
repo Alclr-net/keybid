@@ -37,15 +37,16 @@ const TOP5 = [...COMPANIES].sort((a, b) => b.bid - a.bid).slice(0, 5);
 const POOL = COMPANIES.reduce((s, c) => s + c.bid, 0);
 
 /* ─────────────────────────── Traffic lights ─────────────────────────── */
-function TrafficLights() {
+export function TrafficLights({ size }: { size: 'sm' | 'md' | 'lg' }) {
   return (
     <div className="flex items-center gap-[7px]">
       <motion.button
         initial={{ scale: 0, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ type: "spring", stiffness: 420, damping: 20, delay: 0.35 }}
-        className={cn("w-3 h-3 rounded-full bg-[#ff5f57] flex items-center justify-center hover:brightness-90 transition-all cursor-pointer",
-          "shadow-[0_4px_16px_rgba(0,0,0,0.06),0_1px_3px_rgba(0,0,0,0.04),inset_0_1.5px_1px_0.5px_rgba(255,255,255,0.2),inset_0_-2px_1px_0.05px_rgba(0,0,0,0.1)]"
+        className={cn(" rounded-full bg-[#ff5f57] flex items-center justify-center hover:brightness-90 transition-all cursor-pointer",
+          "shadow-[0_4px_16px_rgba(0,0,0,0.06),0_1px_3px_rgba(0,0,0,0.04),inset_0_1.5px_1px_0.5px_rgba(255,255,255,0.2),inset_0_-2px_1px_0.05px_rgba(0,0,0,0.1)]",
+          size === 'sm' ? 'w-2 h-2' : size === 'md' ? 'w-3 h-3' : 'w-4 h-4',
         )}
         title="Close"
       />
@@ -53,8 +54,9 @@ function TrafficLights() {
         initial={{ scale: 0, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ type: "spring", stiffness: 420, damping: 20, delay: 0.40 }}
-        className={cn("w-3 h-3 rounded-full bg-[#ffbd2e] flex items-center justify-center hover:brightness-90 transition-all cursor-pointer",
-          "shadow-[0_4px_16px_rgba(0,0,0,0.06),0_1px_3px_rgba(0,0,0,0.04),inset_0_1.5px_1px_0.5px_rgba(255,255,255,0.2),inset_0_-2px_1px_0.05px_rgba(0,0,0,0.1)]"
+        className={cn(" rounded-full bg-[#ffbd2e] flex items-center justify-center hover:brightness-90 transition-all cursor-pointer",
+          "shadow-[0_4px_16px_rgba(0,0,0,0.06),0_1px_3px_rgba(0,0,0,0.04),inset_0_1.5px_1px_0.5px_rgba(255,255,255,0.2),inset_0_-2px_1px_0.05px_rgba(0,0,0,0.1)]",
+          size === 'sm' ? 'w-2 h-2' : size === 'md' ? 'w-3 h-3' : 'w-4 h-4',
         )}
         title="Minimize"
       />
@@ -62,8 +64,9 @@ function TrafficLights() {
         initial={{ scale: 0, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ type: "spring", stiffness: 420, damping: 20, delay: 0.45 }}
-        className={cn("w-3 h-3 rounded-full bg-[#28c840] flex items-center justify-center hover:brightness-90 transition-all cursor-pointer",
-          "shadow-[0_4px_16px_rgba(0,0,0,0.06),0_1px_3px_rgba(0,0,0,0.04),inset_0_1.5px_1px_0.5px_rgba(255,255,255,0.2),inset_0_-2px_1px_0.05px_rgba(0,0,0,0.1)]"
+        className={cn(" rounded-full bg-[#28c840] flex items-center justify-center hover:brightness-90 transition-all cursor-pointer",
+          "shadow-[0_4px_16px_rgba(0,0,0,0.06),0_1px_3px_rgba(0,0,0,0.04),inset_0_1.5px_1px_0.5px_rgba(255,255,255,0.2),inset_0_-2px_1px_0.05px_rgba(0,0,0,0.1)]",
+          size === 'sm' ? 'w-2 h-2' : size === 'md' ? 'w-3 h-3' : 'w-4 h-4',
         )}
         title="Zoom"
       />
@@ -126,7 +129,7 @@ export default function MacWindow({ className }: { className?: string }) {
           {/* Top section: Traffic lights + Sidebar controls */}
           <div>
             <div className="h-9 px-3 pt-1 flex items-center justify-between">
-              <TrafficLights />
+              <TrafficLights size="md" />
               <div className="flex items-center gap-0.5">
                 <button
                   onClick={() => setSidebarOpen(false)}
@@ -212,7 +215,7 @@ export default function MacWindow({ className }: { className?: string }) {
           {/* If sidebar is closed, show traffic lights & toggle on toolbar */}
           {!sidebarOpen && (
             <div className="flex items-center gap-2 mr-1">
-              <TrafficLights />
+              <TrafficLights size="md" />
               <button
                 onClick={() => setSidebarOpen(true)}
                 className="p-1 rounded-md text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 hover:bg-black/[0.05] dark:hover:bg-white/[0.05] transition-colors ml-1 cursor-pointer"
