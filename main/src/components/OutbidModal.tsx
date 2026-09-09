@@ -10,17 +10,17 @@ import {
   IconUpload,
 } from "@tabler/icons-react";
 import type { Key } from "@/types/database";
-import { Company } from "@/src/app/data/keybidData";
+import { useKeysStore } from "@/lib/store/keysStore";
 import { cn } from "@/src/lib/utils";
 import TermsModal from "@/src/components/TermsModal";
 
-export type OutbidTarget = Key | Company;
+export type OutbidTarget = Key;
 
 interface OutbidModalProps {
-  company: OutbidTarget | null;
+  company: OutbidTarget | any | null;
   isOpen: boolean;
   onClose: () => void;
-  onSuccess?: (bidAmount: number, createdCompany?: Company, createdKey?: Key) => void;
+  onSuccess?: (bidAmount: number, createdCompany?: any, createdKey?: Key) => void;
   initialKeySlot?: string;
   initialBrandName?: string;
   initialWebsite?: string;
@@ -81,84 +81,103 @@ export default function OutbidModal({
   initialLogo,
 }: OutbidModalProps) {
   const [mounted, setMounted] = useState(false);
+  const storeKeys = useKeysStore((state) => state.keys);
+  const updateStoreKey = useKeysStore((state) => state.updateKey);
 
-  const getCompanyBid = (c: OutbidTarget | null): number => {
-    if (!c) return 0;
-    if ("current_bid_amount" in c && typeof c.current_bid_amount === "number") {
-      return c.current_bid_amount;
+  const getKeyBid = (k: Key | any | null): number => {
+    if (!k) return 0;
+    if (typeof k.current_bid_amount === "number") {
+      return k.current_bid_amount;
     }
-    if ("bid" in c && typeof c.bid === "number") {
-      return c.bid;
+    if (typeof k.bid === "number") {
+      return k.bid;
     }
     return 0;
   };
 
-  const getCompanySlot = (c: OutbidTarget | null): string => {
-    if (!c) return "";
-    if ("keyboard_key" in c && typeof c.keyboard_key === "string" && c.keyboard_key) return c.keyboard_key;
-    if ("key_name" in c && typeof c.key_name === "string" && c.key_name) return c.key_name;
-    if ("submitted_url" in c && typeof c.submitted_url === "string" && c.submitted_url) {
+  const getKeySlot = (k: Key | any | null): string => {
+    if (!k) return "";
+    if (typeof k.keyboard_key === "string" && k.keyboard_key) return k.keyboard_key.trim().toUpperCase();
+    if (typeof k.keySlot === "string" && k.keySlot) return k.keySlot.trim().toUpperCase();
+    if (typeof k.key_name === "string" && k.key_name.trim().length === 1) return k.key_name.trim().toUpperCase();
+    if (typeof k.submitted_url === "string" && k.submitted_url) {
       try {
-        const domain = c.submitted_url.replace(/^(https?:\/\/)?(www\.)?/, "").split("/")[0].split(":")[0];
+        const domain = k.submitted_url.replace(/^(https?:\/\/)?(www\.)?/, "").split("/")[0].split(":")[0];
         const firstChar = domain.match(/[a-zA-Z0-9]/)?.[0]?.toUpperCase();
         if (firstChar) return firstChar;
       } catch {
         // fallback
       }
     }
-    if ("id" in c && typeof c.id === "string" && c.id && c.id.length <= 10) return c.id;
+    if (typeof k.id === "string" && k.id && k.id.length <= 10) return k.id;
     return "";
   };
 
-  const getCompanyName = (c: OutbidTarget | null): string => {
-    if (!c) return "";
-    if ("name" in c && typeof c.name === "string" && c.name) return c.name;
-    if ("submitted_url" in c && typeof c.submitted_url === "string" && c.submitted_url) {
+  const getKeyName = (k: Key | any | null): string => {
+    if (!k) return "";
+    if (typeof k.key_name === "string" && k.key_name) return k.key_name;
+    if (typeof k.name === "string" && k.name) return k.name;
+    if (typeof k.submitted_url === "string" && k.submitted_url) {
       try {
-        const domain = c.submitted_url.replace(/^(https?:\/\/)?(www\.)?/, "").split("/")[0].split(":")[0];
+        const domain = k.submitted_url.replace(/^(https?:\/\/)?(www\.)?/, "").split("/")[0].split(":")[0];
         const raw = domain.split(".")[0];
         if (raw) return raw.charAt(0).toUpperCase() + raw.slice(1);
       } catch {
         // fallback
       }
     }
-    if ("key_name" in c && typeof c.key_name === "string" && c.key_name) return c.key_name;
     return "";
   };
 
-  const getCompanyLogo = (c: OutbidTarget | null): string => {
-    if (!c) return "";
-    if ("iconUrl" in c && typeof c.iconUrl === "string") return c.iconUrl;
-    if ("key_logo" in c && typeof c.key_logo === "string") return c.key_logo;
+  const getKeyLogo = (k: Key | any | null): string => {
+    if (!k) return "";
+    if (typeof k.key_logo === "string" && k.key_logo) return k.key_logo;
+    if (typeof k.iconUrl === "string" && k.iconUrl) return k.iconUrl;
     return "";
   };
 
-  const getCompanyUrl = (c: OutbidTarget | null): string => {
-    if (!c) return "";
-    if ("url" in c && typeof c.url === "string") return c.url;
-    if ("submitted_url" in c && typeof c.submitted_url === "string") return c.submitted_url;
+  const getKeyUrl = (k: Key | any | null): string => {
+    if (!k) return "";
+    if (typeof k.submitted_url === "string" && k.submitted_url) return k.submitted_url;
+    if (typeof k.url === "string" && k.url) return k.url;
     return "";
   };
 
-  const getCompanyTagline = (c: OutbidTarget | null): string => {
-    if (!c) return "";
-    if ("tagline" in c && typeof c.tagline === "string") return c.tagline;
-    if ("about" in c && typeof c.about === "string") return c.about;
+  const getKeyTagline = (k: Key | any | null): string => {
+    if (!k) return "";
+    if (typeof k.about === "string" && k.about) return k.about;
+    if (typeof k.tagline === "string" && k.tagline) return k.tagline;
     return "";
   };
 
   const [keySlot, setKeySlot] = useState(
-    (company ? getCompanySlot(company) : "") || initialKeySlot || ""
+    (company ? getKeySlot(company) : "") || initialKeySlot || ""
   );
 
   const rawBase = Number(process.env.NEXT_PUBLIC_BASE_PRICE || process.env.BASE_PRICE || 10);
   const BASE_PRICE = !isNaN(rawBase) && rawBase > 0 ? rawBase : 10;
 
   const targetSlot = keySlot.trim().toUpperCase();
-  const isTargetingCompanySlot = Boolean(
-    company && targetSlot && targetSlot === getCompanySlot(company).trim().toUpperCase()
-  );
-  const currentHighest = isTargetingCompanySlot ? getCompanyBid(company) : 0;
+
+  // Fetch the latest active key from the store
+  const activeKey: Key | null = React.useMemo(() => {
+    if (company?.id) {
+      const match = storeKeys.find((k) => k.id === company.id);
+      if (match) return match;
+    }
+    if (targetSlot) {
+      const match = storeKeys.find(
+        (k) =>
+          k.keyboard_key?.trim().toUpperCase() === targetSlot ||
+          k.key_name?.trim().toUpperCase() === targetSlot ||
+          k.id.toUpperCase() === targetSlot
+      );
+      if (match) return match;
+    }
+    return (company as Key) || null;
+  }, [storeKeys, targetSlot, company]);
+
+  const currentHighest = activeKey ? getKeyBid(activeKey) : 0;
   const minBid = currentHighest > 0 ? Math.max(BASE_PRICE, currentHighest + 1) : BASE_PRICE;
 
   const [outbidAlert, setOutbidAlert] = useState<{
@@ -203,15 +222,28 @@ export default function OutbidModal({
     }
   }, []);
 
-  // Synchronize initial bid and values when company or isOpen changes
+  // Synchronize initial bid and values when company, store, or isOpen changes
   useEffect(() => {
     if (!isOpen) return;
 
-    const slot = (company ? getCompanySlot(company) : "") || initialKeySlot || "";
+    const slot = (company ? getKeySlot(company) : "") || initialKeySlot || "";
     setKeySlot(slot);
 
-    const companyBid = getCompanyBid(company);
-    const minCalculated = companyBid > 0 ? Math.max(BASE_PRICE, companyBid + 1) : BASE_PRICE;
+    const target = slot.trim().toUpperCase();
+    const liveKey =
+      (company?.id ? storeKeys.find((k) => k.id === company.id) : null) ||
+      (target
+        ? storeKeys.find(
+          (k) =>
+            k.keyboard_key?.trim().toUpperCase() === target ||
+            k.key_name?.trim().toUpperCase() === target ||
+            k.id.toUpperCase() === target
+        )
+        : null) ||
+      (company as Key | null);
+
+    const keyBid = getKeyBid(liveKey);
+    const minCalculated = keyBid > 0 ? Math.max(BASE_PRICE, keyBid + 1) : BASE_PRICE;
     setBidAmount(minCalculated);
 
     setBrandName(initialBrandName || "");
@@ -222,7 +254,7 @@ export default function OutbidModal({
     setIsSubmitting(false);
     setOutbidAlert(null);
     setPaymentSuccess(null);
-  }, [company, isOpen, initialKeySlot, initialBrandName, initialWebsite, initialLogo]);
+  }, [company, isOpen, initialKeySlot, initialBrandName, initialWebsite, initialLogo, storeKeys, BASE_PRICE]);
 
   // Close on Escape key
   useEffect(() => {
@@ -411,36 +443,26 @@ export default function OutbidModal({
         orderId,
       });
 
-      // Notify parent callers to update keyboard/leaderboard state
-      const updatedCompany: Company = {
-        id: company ? company.id : `comp_${Date.now()}`,
-        name: brandName.trim(),
-        url: website.trim() || getCompanyUrl(company) || "#",
-        tagline: getCompanyTagline(company) || "Winning Keybid Sponsor",
-        iconUrl: logoUrl || getCompanyLogo(company) || "",
-        bid: bidAmount,
-        keySlot: targetSlot,
-        clicks: (company && "clicks" in company && typeof company.clicks === "number") ? company.clicks : 0,
-        submittedAt: (company && "submittedAt" in company && typeof company.submittedAt === "string") ? company.submittedAt : new Date().toISOString().split("T")[0],
-      };
-
       const updatedKey: Key = {
-        id: company && "id" in company ? company.id : `key_${Date.now()}`,
-        submitted_url: website.trim() || getCompanyUrl(company) || "",
+        id: activeKey?.id || (company && "id" in company ? company.id : `key_${Date.now()}`),
+        submitted_url: website.trim() || getKeyUrl(activeKey) || "",
         keyboard_key: targetSlot,
-        key_name: brandName.trim() || (company && "key_name" in company ? (company as Key).key_name : null),
-        about: getCompanyTagline(company) || `Winning bid by ${brandName.trim()}`,
-        key_logo: logoUrl || getCompanyLogo(company) || null,
+        key_name: brandName.trim() || activeKey?.key_name || null,
+        about: getKeyTagline(activeKey) || `Winning bid by ${brandName.trim()}`,
+        key_logo: logoUrl || getKeyLogo(activeKey) || null,
         fetch_status: "fetched",
         fetched_at: new Date().toISOString(),
         current_bid_id: `bid_${orderId}`,
-        click_count: 0,
+        click_count: activeKey?.click_count || 0,
         current_bid_amount: bidAmount,
-        created_at: new Date().toISOString(),
+        created_at: activeKey?.created_at || new Date().toISOString(),
         updated_at: new Date().toISOString(),
       };
 
-      onSuccess?.(bidAmount, updatedCompany, updatedKey);
+      // Directly update the store so all components (keyboard, leaderboard, etc.) refresh instantly
+      updateStoreKey(updatedKey.id, updatedKey);
+
+      onSuccess?.(bidAmount, undefined, updatedKey);
     } catch (err: unknown) {
       const e = err as { message?: string };
       alert(`Verification error: ${e?.message || "Payment verification failed"}`);
@@ -581,7 +603,7 @@ export default function OutbidModal({
                     {currentHighest > 0 ? (
                       <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-1">
                         Current leading bid <strong className="font-bold text-zinc-950 dark:text-white">${currentHighest}</strong>
-                        {getCompanyName(company) ? ` by ${getCompanyName(company)}` : ""}
+                        {getKeyName(activeKey) ? ` by ${getKeyName(activeKey)}` : ""}
                       </p>
                     ) : (
                       <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
