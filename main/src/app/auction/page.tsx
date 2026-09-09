@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo } from "react";
 import Link from "next/link";
-import type { Key } from "@/lib/types/database";
-import { getAllKeys, subscribeToKeyUpdates, trackKeyClick } from "@/lib/helpers/keys";
+import type { Key } from "@/types/database";
+import { trackKeyClick } from "@/lib/helpers/keys";
+import { useKeysStore } from "@/lib/store/keysStore";
 import OutbidModal from "@/src/components/OutbidModal";
 import KeyLogo from "@/src/components/ui/KeyLogo";
 import Ping from "@/src/components/Ping";
@@ -16,7 +17,6 @@ import {
   IconTrophy,
   IconPlus,
   IconAlertCircle,
-  IconRefresh,
   IconHandClick,
 } from "@tabler/icons-react";
 
@@ -25,44 +25,9 @@ export default function AuctionLeaderboardPage() {
   const [sortBy, setSortBy] = useState<"bid-desc" | "bid-asc" | "clicks-desc">("bid-desc");
   const [selectedKey, setSelectedKey] = useState<Key | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [keysList, setKeysList] = useState<Key[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
-  const fetchKeys = async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const data = await getAllKeys();
-      setKeysList(data);
-    } catch (err: unknown) {
-      const e = err as { message?: string };
-      setError(e?.message || "Failed to load keys from database");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchKeys();
-
-    // Realtime live price updates
-    const channel = subscribeToKeyUpdates((updatedKey) => {
-      setKeysList((prev) => {
-        const index = prev.findIndex((k) => k.id === updatedKey.id);
-        if (index !== -1) {
-          const next = [...prev];
-          next[index] = updatedKey;
-          return next;
-        }
-        return [updatedKey, ...prev];
-      });
-    });
-
-    return () => {
-      channel.unsubscribe();
-    };
-  }, []);
+  const keysList = useKeysStore((state) => state.keys);
+  const isLoading = useKeysStore((state) => state.isLoading);
 
   const totalPool = useMemo(
     () => keysList.reduce((acc, k) => acc + (k.current_bid_amount || 0), 0),
@@ -109,7 +74,7 @@ export default function AuctionLeaderboardPage() {
             className="inline-flex items-center gap-2 text-xs sm:text-sm font-semibold text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white transition-colors"
           >
             <IconArrowLeft size={16} />
-            <span>Back to KeyBid</span>
+            <span>Back</span>
           </Link>
         </div>
 
@@ -207,20 +172,6 @@ export default function AuctionLeaderboardPage() {
                     <div className="w-24 h-8 bg-zinc-200 dark:bg-zinc-800 rounded-xl" />
                   </div>
                 ))}
-              </div>
-            ) : error ? (
-              /* Error State */
-              <div className="py-12 flex flex-col items-center justify-center text-center px-4 space-y-3">
-                <IconAlertCircle size={32} className="text-rose-500" />
-                <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{error}</p>
-                <button
-                  type="button"
-                  onClick={fetchKeys}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-900 dark:text-white transition-colors cursor-pointer"
-                >
-                  <IconRefresh size={14} />
-                  <span>Try Again</span>
-                </button>
               </div>
             ) : filteredKeys.length === 0 ? (
               /* Empty State */
@@ -326,11 +277,7 @@ export default function AuctionLeaderboardPage() {
                               onClick={(e) => {
                                 e.stopPropagation();
                                 trackKeyClick(key.id);
-                                setKeysList((prev) =>
-                                  prev.map((k) =>
-                                    k.id === key.id ? { ...k, click_count: (k.click_count || 0) + 1 } : k
-                                  )
-                                );
+                                useKeysStore.getState().incrementClickCount(key.id);
                               }}
                               className="text-zinc-400 hover:text-blue-600 dark:text-zinc-500 dark:hover:text-blue-400 transition-colors p-0.5"
                               title={`Visit ${keyName}`}
@@ -464,11 +411,7 @@ export default function AuctionLeaderboardPage() {
         }}
         onSuccess={(bidAmount) => {
           if (selectedKey) {
-            setKeysList((prev) =>
-              prev.map((k) =>
-                k.id === selectedKey.id ? { ...k, current_bid_amount: bidAmount } : k
-              )
-            );
+            useKeysStore.getState().updateKey(selectedKey.id, { current_bid_amount: bidAmount });
           }
         }}
       />

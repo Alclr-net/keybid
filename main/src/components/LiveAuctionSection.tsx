@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import Link from "next/link";
-import type { Key } from "@/lib/types/database";
-import { getAllKeys, subscribeToKeyUpdates, trackKeyClick } from "@/lib/helpers/keys";
+import type { Key } from "@/types/database";
+import { trackKeyClick } from "@/lib/helpers/keys";
+import { useKeysStore } from "@/lib/store/keysStore";
 import {
   IconArrowRight,
   IconPlus,
@@ -21,44 +22,9 @@ export default function LiveAuctionSection() {
   const [selectedKey, setSelectedKey] = useState<Key | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [targetSlot, setTargetSlot] = useState<string>("");
-  const [keysList, setKeysList] = useState<Key[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
-  const loadData = async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const keys = await getAllKeys();
-      setKeysList(keys);
-    } catch (err: unknown) {
-      const e = err as { message?: string };
-      setError(e?.message || "Failed to load live auction data");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadData();
-
-    // Subscribe to realtime key updates
-    const channel = subscribeToKeyUpdates((updatedKey) => {
-      setKeysList((prev) => {
-        const index = prev.findIndex((k) => k.id === updatedKey.id);
-        if (index !== -1) {
-          const next = [...prev];
-          next[index] = updatedKey;
-          return next;
-        }
-        return [updatedKey, ...prev];
-      });
-    });
-
-    return () => {
-      channel.unsubscribe();
-    };
-  }, []);
+  const keysList = useKeysStore((state) => state.keys);
+  const isLoading = useKeysStore((state) => state.isLoading);
 
   // Rows with bids sort to the top (highest first), rows without bids sort below
   const sortedKeys = [...keysList].sort((a, b) => {
@@ -95,11 +61,6 @@ export default function LiveAuctionSection() {
               Real-time bids, outbid challenges, and slot updates happening live across the Apple Magic Keyboard.
             </p>
           </div>
-
-          <div className="flex items-center justify-center sm:justify-end gap-2 text-xs font-mono text-zinc-500 dark:text-zinc-400">
-            <span className="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
-            <span>Live Sync Active</span>
-          </div>
         </div>
 
         {/* Live Activity Feed Container */}
@@ -119,11 +80,6 @@ export default function LiveAuctionSection() {
                   <div className="w-20 h-8 bg-zinc-200 dark:bg-zinc-800 rounded-xl" />
                 </div>
               ))
-            ) : error ? (
-              <div className="py-12 flex flex-col items-center justify-center text-center px-4 space-y-2">
-                <IconAlertCircle size={28} className="text-rose-500" />
-                <p className="text-xs text-zinc-500 dark:text-zinc-400">{error}</p>
-              </div>
             ) : sortedKeys.length === 0 ? (
               /* Empty state: zero keys in database */
               <div className="py-16 px-6 flex flex-col items-center justify-center text-center space-y-4">
@@ -196,11 +152,7 @@ export default function LiveAuctionSection() {
                               onClick={(e) => {
                                 e.stopPropagation();
                                 trackKeyClick(keyItem.id);
-                                setKeysList((prev) =>
-                                  prev.map((k) =>
-                                    k.id === keyItem.id ? { ...k, click_count: (k.click_count || 0) + 1 } : k
-                                  )
-                                );
+                                useKeysStore.getState().incrementClickCount(keyItem.id);
                               }}
                               className="text-zinc-400 hover:text-blue-600 dark:text-zinc-500 dark:hover:text-blue-400 transition-colors p-0.5"
                               title={`Visit ${keyName}`}
@@ -318,19 +270,7 @@ export default function LiveAuctionSection() {
         }}
         onSuccess={(_bidAmount, _createdCompany, createdKey) => {
           if (createdKey) {
-            setKeysList((prev) => {
-              const idx = prev.findIndex(
-                (k) =>
-                  k.id === createdKey.id ||
-                  (k.key_name && k.key_name.toUpperCase() === createdKey.key_name?.toUpperCase())
-              );
-              if (idx !== -1) {
-                const next = [...prev];
-                next[idx] = createdKey;
-                return next;
-              }
-              return [createdKey, ...prev];
-            });
+            useKeysStore.getState().updateKey(createdKey.id, createdKey);
           }
         }}
       />

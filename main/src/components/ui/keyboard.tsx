@@ -9,8 +9,8 @@ import React, {
 } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { cn } from "@/src/lib/utils";
-import type { Key } from "@/lib/types/database";
-import { getAllKeys, subscribeToKeyUpdates } from "@/lib/helpers/keys";
+import type { Key } from "@/types/database";
+import { useKeysStore } from "@/lib/store/keysStore";
 import {
   IconBrightnessDown,
   IconBrightnessUp,
@@ -32,170 +32,6 @@ import {
   IconCaretLeftFilled,
   IconCaretDownFilled,
 } from "@tabler/icons-react";
-
-// Sound sprite definitions from config.json [startMs, durationMs]
-// Key down sounds - half duration for a snappy press sound
-const SOUND_DEFINES_DOWN: Record<string, [number, number]> = {
-  Escape: [2894, 113],
-  F1: [3610, 98],
-  F2: [4210, 90],
-  F3: [4758, 90],
-  F4: [5250, 100],
-  F5: [5831, 105],
-  F6: [6396, 105],
-  F7: [6900, 105],
-  F8: [7443, 111],
-  F9: [7955, 91],
-  F10: [8504, 105],
-  F11: [9046, 94],
-  F12: [9582, 96],
-  Backquote: [12476, 100],
-  Digit1: [12946, 96],
-  Digit2: [13470, 95],
-  Digit3: [13963, 100],
-  Digit4: [14481, 102],
-  Digit5: [14994, 94],
-  Digit6: [15505, 109],
-  Digit7: [15990, 97],
-  Digit8: [16529, 92],
-  Digit9: [17012, 103],
-  Digit0: [17550, 87],
-  Minus: [18052, 93],
-  Equal: [18553, 89],
-  Backspace: [19065, 110],
-  Tab: [21734, 119],
-  KeyQ: [22245, 95],
-  KeyW: [22790, 89],
-  KeyE: [23317, 83],
-  KeyR: [23817, 92],
-  KeyT: [24297, 92],
-  KeyY: [24811, 93],
-  KeyU: [25313, 95],
-  KeyI: [25795, 91],
-  KeyO: [26309, 84],
-  KeyP: [26804, 83],
-  BracketLeft: [27330, 85],
-  BracketRight: [27883, 99],
-  Backslash: [28393, 100],
-  CapsLock: [31011, 126],
-  KeyA: [31542, 85],
-  KeyS: [32031, 88],
-  KeyD: [32492, 85],
-  KeyF: [32973, 87],
-  KeyG: [33453, 94],
-  KeyH: [33986, 93],
-  KeyJ: [34425, 88],
-  KeyK: [34932, 90],
-  KeyL: [35410, 95],
-  Semicolon: [35914, 95],
-  Quote: [36428, 87],
-  Enter: [36902, 117],
-  ShiftLeft: [38136, 133],
-  KeyZ: [38694, 80],
-  KeyX: [39148, 76],
-  KeyC: [39632, 95],
-  KeyV: [40136, 94],
-  KeyB: [40621, 107],
-  KeyN: [41103, 90],
-  KeyM: [41610, 93],
-  Comma: [42110, 92],
-  Period: [42594, 90],
-  Slash: [43105, 95],
-  ShiftRight: [43565, 137],
-  Fn: [44251, 110],
-  ControlLeft: [45327, 83],
-  AltLeft: [45750, 82],
-  MetaLeft: [46199, 100],
-  Space: [51541, 144],
-  MetaRight: [47929, 75],
-  AltRight: [49329, 82],
-  ArrowUp: [44251, 110],
-  ArrowLeft: [49837, 88],
-  ArrowDown: [50333, 90],
-  ArrowRight: [50783, 111],
-};
-
-// Key up sounds - shorter duration, offset for the release "thock"
-// Uses the tail end of each sound sample for a lighter release effect
-const SOUND_DEFINES_UP: Record<string, [number, number]> = {
-  Escape: [2894 + 120, 100],
-  F1: [3610 + 100, 90],
-  F2: [4210 + 95, 80],
-  F3: [4758 + 95, 80],
-  F4: [5250 + 105, 90],
-  F5: [5831 + 110, 95],
-  F6: [6396 + 110, 95],
-  F7: [6900 + 110, 95],
-  F8: [7443 + 115, 100],
-  F9: [7955 + 95, 80],
-  F10: [8504 + 110, 95],
-  F11: [9046 + 100, 85],
-  F12: [9582 + 100, 85],
-  Backquote: [12476 + 105, 90],
-  Digit1: [12946 + 100, 85],
-  Digit2: [13470 + 100, 85],
-  Digit3: [13963 + 105, 90],
-  Digit4: [14481 + 110, 90],
-  Digit5: [14994 + 100, 85],
-  Digit6: [15505 + 115, 100],
-  Digit7: [15990 + 100, 90],
-  Digit8: [16529 + 95, 85],
-  Digit9: [17012 + 110, 90],
-  Digit0: [17550 + 90, 80],
-  Minus: [18052 + 100, 85],
-  Equal: [18553 + 90, 85],
-  Backspace: [19065 + 115, 100],
-  Tab: [21734 + 125, 110],
-  KeyQ: [22245 + 100, 85],
-  KeyW: [22790 + 90, 85],
-  KeyE: [23317 + 85, 80],
-  KeyR: [23817 + 95, 85],
-  KeyT: [24297 + 95, 85],
-  KeyY: [24811 + 100, 85],
-  KeyU: [25313 + 100, 85],
-  KeyI: [25795 + 95, 85],
-  KeyO: [26309 + 85, 80],
-  KeyP: [26804 + 85, 80],
-  BracketLeft: [27330 + 85, 80],
-  BracketRight: [27883 + 105, 90],
-  Backslash: [28393 + 105, 90],
-  CapsLock: [31011 + 135, 110],
-  KeyA: [31542 + 90, 80],
-  KeyS: [32031 + 90, 80],
-  KeyD: [32492 + 85, 80],
-  KeyF: [32973 + 90, 80],
-  KeyG: [33453 + 100, 85],
-  KeyH: [33986 + 95, 85],
-  KeyJ: [34425 + 90, 85],
-  KeyK: [34932 + 95, 85],
-  KeyL: [35410 + 100, 85],
-  Semicolon: [35914 + 100, 85],
-  Quote: [36428 + 90, 80],
-  Enter: [36902 + 125, 105],
-  ShiftLeft: [38136 + 140, 120],
-  KeyZ: [38694 + 85, 75],
-  KeyX: [39148 + 80, 70],
-  KeyC: [39632 + 100, 85],
-  KeyV: [40136 + 100, 85],
-  KeyB: [40621 + 115, 95],
-  KeyN: [41103 + 95, 85],
-  KeyM: [41610 + 100, 85],
-  Comma: [42110 + 95, 85],
-  Period: [42594 + 95, 85],
-  Slash: [43105 + 100, 85],
-  ShiftRight: [43565 + 145, 125],
-  Fn: [44251 + 115, 100],
-  ControlLeft: [45327 + 85, 80],
-  AltLeft: [45750 + 85, 80],
-  MetaLeft: [46199 + 105, 90],
-  Space: [51541 + 150, 130],
-  MetaRight: [47929 + 75, 70],
-  AltRight: [49329 + 85, 80],
-  ArrowUp: [44251 + 115, 100],
-  ArrowLeft: [49837 + 90, 85],
-  ArrowDown: [50333 + 95, 80],
-  ArrowRight: [50783 + 115, 100],
-};
 
 // Map key codes to display labels
 const KEY_DISPLAY_LABELS: Record<string, string> = {
@@ -269,8 +105,6 @@ export const getKeySlotFromCode = (keyCode: string): string => {
 };
 
 interface KeyboardContextType {
-  playSoundDown: (keyCode: string) => void;
-  playSoundUp: (keyCode: string) => void;
   pressedKeys: Set<string>;
   setPressed: (keyCode: string) => void;
   setReleased: (keyCode: string) => void;
@@ -375,7 +209,6 @@ function deriveKeySlot(k: Key): string {
 
 const KeyboardProvider = ({
   children,
-  enableSound = false,
   containerRef,
   syncPhysicalKeyboard = false,
   onKeyClick,
@@ -389,145 +222,22 @@ const KeyboardProvider = ({
   /** Optional pre-fetched keys — if supplied, internal fetch is skipped */
   keys?: Key[];
 }) => {
-  const audioContextRef = useRef<AudioContext | null>(null);
-  const audioBufferRef = useRef<AudioBuffer | null>(null);
   const [pressedKeys, setPressedKeys] = useState<Set<string>>(new Set());
   const [lastPressedKey, setLastPressedKey] = useState<string | null>(null);
-  const [soundLoaded, setSoundLoaded] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
-  const [keysMap, setKeysMap] = useState<Map<string, Key>>(new Map());
-  const [isLoading, setIsLoading] = useState(externalKeys === undefined);
+  const storeKeys = useKeysStore((state) => state.keys);
+  const storeLoading = useKeysStore((state) => state.isLoading);
+  const activeKeys = externalKeys !== undefined ? externalKeys : storeKeys;
+  const isLoading = externalKeys !== undefined ? false : storeLoading;
 
-  // Build keysMap from external keys (passed from parent) whenever they change
-  useEffect(() => {
-    if (externalKeys !== undefined) {
-      const map = new Map<string, Key>();
-      externalKeys.forEach((k) => {
-        const slot = deriveKeySlot(k);
-        if (slot) map.set(slot, k);
-      });
-      setKeysMap(map);
-      setIsLoading(false);
-    }
-  }, [externalKeys]);
-
-  // Only fetch internally when no external keys are provided
-  useEffect(() => {
-    if (externalKeys !== undefined) return; // parent is managing keys
-
-    let isMounted = true;
-    async function load() {
-      setIsLoading(true);
-      try {
-        const keys = await getAllKeys();
-        if (isMounted) {
-          const map = new Map<string, Key>();
-          keys.forEach((k) => {
-            const slot = deriveKeySlot(k);
-            if (slot) map.set(slot, k);
-          });
-          setKeysMap(map);
-        }
-      } catch (err) {
-        console.error("Failed to load keyboard keys:", err);
-      } finally {
-        if (isMounted) setIsLoading(false);
-      }
-    }
-    load();
-
-    const channel = subscribeToKeyUpdates((updatedKey) => {
-      setKeysMap((prev) => {
-        const next = new Map(prev);
-        const slot = deriveKeySlot(updatedKey);
-        if (slot) next.set(slot, updatedKey);
-        return next;
-      });
+  const keysMap = React.useMemo(() => {
+    const map = new Map<string, Key>();
+    activeKeys.forEach((k) => {
+      const slot = deriveKeySlot(k);
+      if (slot) map.set(slot, k);
     });
-
-    return () => {
-      isMounted = false;
-      channel.unsubscribe();
-    };
-  }, [externalKeys]);
-
-  useEffect(() => {
-    if (!enableSound) return;
-
-    // Initialize AudioContext and load sound file
-    const initAudio = async () => {
-      try {
-        audioContextRef.current = new AudioContext();
-        const response = await fetch("/sounds/sound.ogg");
-        if (!response.ok) {
-          console.warn("Sound file not available");
-          return;
-        }
-        const arrayBuffer = await response.arrayBuffer();
-        audioBufferRef.current =
-          await audioContextRef.current.decodeAudioData(arrayBuffer);
-        setSoundLoaded(true);
-      } catch (error) {
-        console.warn("Failed to load sound:", error);
-      }
-    };
-
-    initAudio();
-
-    return () => {
-      audioContextRef.current?.close();
-    };
-  }, [enableSound]);
-
-  const playSoundDown = useCallback(
-    (keyCode: string) => {
-      if (!enableSound || !soundLoaded) return;
-      if (!audioContextRef.current || !audioBufferRef.current) return;
-
-      const soundDef = SOUND_DEFINES_DOWN[keyCode];
-      if (!soundDef) return;
-
-      const [startMs, durationMs] = soundDef;
-      const startTime = startMs / 1000;
-      const duration = durationMs / 1000;
-
-      // Resume audio context if suspended (browser autoplay policy)
-      if (audioContextRef.current.state === "suspended") {
-        audioContextRef.current.resume();
-      }
-
-      const source = audioContextRef.current.createBufferSource();
-      source.buffer = audioBufferRef.current;
-      source.connect(audioContextRef.current.destination);
-      source.start(0, startTime, duration);
-    },
-    [enableSound, soundLoaded],
-  );
-
-  const playSoundUp = useCallback(
-    (keyCode: string) => {
-      if (!enableSound || !soundLoaded) return;
-      if (!audioContextRef.current || !audioBufferRef.current) return;
-
-      const soundDef = SOUND_DEFINES_UP[keyCode];
-      if (!soundDef) return;
-
-      const [startMs, durationMs] = soundDef;
-      const startTime = startMs / 1000;
-      const duration = durationMs / 1000;
-
-      // Resume audio context if suspended (browser autoplay policy)
-      if (audioContextRef.current.state === "suspended") {
-        audioContextRef.current.resume();
-      }
-
-      const source = audioContextRef.current.createBufferSource();
-      source.buffer = audioBufferRef.current;
-      source.connect(audioContextRef.current.destination);
-      source.start(0, startTime, duration);
-    },
-    [enableSound, soundLoaded],
-  );
+    return map;
+  }, [activeKeys]);
 
   const setPressed = useCallback((keyCode: string) => {
     setPressedKeys((prev) => new Set(prev).add(keyCode));
@@ -570,13 +280,11 @@ const KeyboardProvider = ({
       if (e.repeat) return;
 
       const keyCode = e.code;
-      playSoundDown(keyCode);
       setPressed(keyCode);
     };
 
     const handleKeyUp = (e: KeyboardEvent) => {
       const keyCode = e.code;
-      playSoundUp(keyCode);
       setReleased(keyCode);
     };
 
@@ -587,13 +295,11 @@ const KeyboardProvider = ({
       document.removeEventListener("keydown", handleKeyDown);
       document.removeEventListener("keyup", handleKeyUp);
     };
-  }, [syncPhysicalKeyboard, isVisible, playSoundDown, playSoundUp, setPressed, setReleased]);
+  }, [syncPhysicalKeyboard, isVisible, setPressed, setReleased]);
 
   return (
     <KeyboardContext.Provider
       value={{
-        playSoundDown,
-        playSoundUp,
         pressedKeys,
         setPressed,
         setReleased,
@@ -672,7 +378,6 @@ const KeystrokePreview = () => {
 
 export const Keyboard = ({
   className,
-  enableSound = false,
   showPreview = false,
   syncPhysicalKeyboard = false,
   onKeyClick,
@@ -690,7 +395,6 @@ export const Keyboard = ({
 
   return (
     <KeyboardProvider
-      enableSound={enableSound}
       containerRef={containerRef}
       syncPhysicalKeyboard={syncPhysicalKeyboard}
       onKeyClick={onKeyClick}
@@ -1015,7 +719,7 @@ const Key = ({
   children?: React.ReactNode;
   keyCode?: string;
 }) => {
-  const { playSoundDown, playSoundUp, pressedKeys, setPressed, setReleased, onKeyClick, keysMap } =
+  const { pressedKeys, setPressed, setReleased, onKeyClick, keysMap } =
     useKeyboardSound();
   const isPressed = keyCode ? pressedKeys.has(keyCode) : false;
 
@@ -1026,14 +730,12 @@ const Key = ({
 
   const handleMouseDown = () => {
     if (keyCode) {
-      playSoundDown(keyCode);
       setPressed(keyCode);
     }
   };
 
   const handleMouseUp = () => {
     if (keyCode && isPressed) {
-      playSoundUp(keyCode);
       setReleased(keyCode);
     }
   };
@@ -1116,7 +818,7 @@ const ModifierKey = ({
   children?: React.ReactNode;
   keyCode?: string;
 }) => {
-  const { playSoundDown, playSoundUp, pressedKeys, setPressed, setReleased, onKeyClick, keysMap } =
+  const { pressedKeys, setPressed, setReleased, onKeyClick, keysMap } =
     useKeyboardSound();
   const isPressed = keyCode ? pressedKeys.has(keyCode) : false;
 
@@ -1127,14 +829,12 @@ const ModifierKey = ({
 
   const handleMouseDown = () => {
     if (keyCode) {
-      playSoundDown(keyCode);
       setPressed(keyCode);
     }
   };
 
   const handleMouseUp = () => {
     if (keyCode && isPressed) {
-      playSoundUp(keyCode);
       setReleased(keyCode);
     }
   };

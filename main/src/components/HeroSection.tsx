@@ -1,16 +1,16 @@
 "use client";
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { CanvasText } from './ui/canvas-text';
 import ScrollReveal from './ui/ScrollReveal';
 import { InputToClaim } from './InputToClaim';
 import { cn } from '@/src/lib/utils';
 import OutbidModal from './OutbidModal';
-import type { Key } from '@/lib/types/database';
-import { getAllKeys, subscribeToKeyUpdates } from '@/lib/helpers/keys';
+import type { Key } from '@/types/database';
+import { useKeysStore } from '@/lib/store/keysStore';
 import Ping from './Ping';
 
 function HeroSection() {
-    const [keysList, setKeysList] = useState<Key[]>([]);
+    const keysList = useKeysStore((state) => state.keys);
     const [claimModalState, setClaimModalState] = useState<{
         isOpen: boolean;
         keyData: Key | null;
@@ -23,36 +23,6 @@ function HeroSection() {
         keyData: null,
         keySlot: "",
     });
-
-    useEffect(() => {
-        let isMounted = true;
-        async function load() {
-            try {
-                const keys = await getAllKeys();
-                if (isMounted) setKeysList(keys);
-            } catch (err) {
-                console.error("HeroSection load error:", err);
-            }
-        }
-        load();
-
-        const channel = subscribeToKeyUpdates((updatedKey) => {
-            setKeysList((prev) => {
-                const idx = prev.findIndex((k) => k.id === updatedKey.id);
-                if (idx !== -1) {
-                    const next = [...prev];
-                    next[idx] = updatedKey;
-                    return next;
-                }
-                return [updatedKey, ...prev];
-            });
-        });
-
-        return () => {
-            isMounted = false;
-            channel.unsubscribe();
-        };
-    }, []);
 
     const handleClaim = (uri: string, info?: { domain: string; logo: string } | null) => {
         const targetUri = uri.startsWith('http') ? uri : `https://${uri}`;
@@ -181,19 +151,7 @@ function HeroSection() {
                 onClose={() => setClaimModalState((prev) => ({ ...prev, isOpen: false }))}
                 onSuccess={(_bidAmount, _createdCompany, createdKey) => {
                     if (createdKey) {
-                        setKeysList((prev) => {
-                            const idx = prev.findIndex(
-                                (k) =>
-                                    k.id === createdKey.id ||
-                                    (k.key_name && k.key_name.toUpperCase() === createdKey.key_name?.toUpperCase())
-                            );
-                            if (idx !== -1) {
-                                const next = [...prev];
-                                next[idx] = createdKey;
-                                return next;
-                            }
-                            return [createdKey, ...prev];
-                        });
+                        useKeysStore.getState().updateKey(createdKey.id, createdKey);
                     }
                 }}
             />

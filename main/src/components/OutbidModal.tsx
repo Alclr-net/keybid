@@ -6,12 +6,10 @@ import { AnimatePresence, motion } from "motion/react";
 import {
   IconX,
   IconCheck,
-  IconShieldCheck,
   IconAlertCircle,
-  IconRotate,
   IconUpload,
 } from "@tabler/icons-react";
-import type { Key } from "@/lib/types/database";
+import type { Key } from "@/types/database";
 import { Company } from "@/src/app/data/keybidData";
 import { cn } from "@/src/lib/utils";
 import TermsModal from "@/src/components/TermsModal";
@@ -97,7 +95,7 @@ export default function OutbidModal({
 
   const getCompanySlot = (c: OutbidTarget | null): string => {
     if (!c) return "";
-    if ("keySlot" in c && typeof c.keySlot === "string" && c.keySlot) return c.keySlot;
+    if ("keyboard_key" in c && typeof c.keyboard_key === "string" && c.keyboard_key) return c.keyboard_key;
     if ("key_name" in c && typeof c.key_name === "string" && c.key_name) return c.key_name;
     if ("submitted_url" in c && typeof c.submitted_url === "string" && c.submitted_url) {
       try {
@@ -153,12 +151,15 @@ export default function OutbidModal({
     (company ? getCompanySlot(company) : "") || initialKeySlot || ""
   );
 
+  const rawBase = Number(process.env.NEXT_PUBLIC_BASE_PRICE || process.env.BASE_PRICE || 10);
+  const BASE_PRICE = !isNaN(rawBase) && rawBase > 0 ? rawBase : 10;
+
   const targetSlot = keySlot.trim().toUpperCase();
   const isTargetingCompanySlot = Boolean(
     company && targetSlot && targetSlot === getCompanySlot(company).trim().toUpperCase()
   );
   const currentHighest = isTargetingCompanySlot ? getCompanyBid(company) : 0;
-  const minBid = currentHighest > 0 ? Math.max(10, currentHighest + 1) : 10;
+  const minBid = currentHighest > 0 ? Math.max(BASE_PRICE, currentHighest + 1) : BASE_PRICE;
 
   const [outbidAlert, setOutbidAlert] = useState<{
     highestBid: number;
@@ -169,7 +170,6 @@ export default function OutbidModal({
   const effectiveMinBid = outbidAlert ? outbidAlert.minNext : minBid;
   const [bidAmount, setBidAmount] = useState<number>(effectiveMinBid);
   const [brandName, setBrandName] = useState("");
-  const [email, setEmail] = useState("");
   const [website, setWebsite] = useState("");
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
@@ -211,11 +211,10 @@ export default function OutbidModal({
     setKeySlot(slot);
 
     const companyBid = getCompanyBid(company);
-    const minCalculated = companyBid > 0 ? companyBid + 1 : 10;
+    const minCalculated = companyBid > 0 ? Math.max(BASE_PRICE, companyBid + 1) : BASE_PRICE;
     setBidAmount(minCalculated);
 
     setBrandName(initialBrandName || "");
-    setEmail("");
     setWebsite(initialWebsite || "");
     setLogoPreview(initialLogo || null);
     setLogoUrl(initialLogo || null);
@@ -267,7 +266,6 @@ export default function OutbidModal({
     termsAgreed &&
     isBidAmountValid &&
     brandName.trim().length > 0 &&
-    email.includes("@") &&
     targetSlot.length > 0;
 
   // Complete in-modal Razorpay payment flow
@@ -287,7 +285,7 @@ export default function OutbidModal({
           keySlot: targetSlot,
           bidAmount,
           brandName: brandName.trim(),
-          email: email.trim(),
+          email: "bidder@keybid.net",
           website: website.trim(),
           iconUrl: logoUrl,
           lastSeenHighestBid: currentHighest,
@@ -300,12 +298,12 @@ export default function OutbidModal({
       if (orderRes.status === 409 || orderData.code === "OUTBID") {
         setOutbidAlert({
           highestBid: orderData.currentHighestBid || currentHighest,
-          minNext: orderData.minimumNextBid || Math.max(10, currentHighest + 1),
+          minNext: orderData.minimumNextBid || Math.max(BASE_PRICE, currentHighest + 1),
           message:
             orderData.error ||
             `This key was just outbid at $${orderData.currentHighestBid} — minimum next bid updated.`,
         });
-        setBidAmount(orderData.minimumNextBid || Math.max(10, currentHighest + 1));
+        setBidAmount(orderData.minimumNextBid || Math.max(BASE_PRICE, currentHighest + 1));
         setIsSubmitting(false);
         return;
       }
@@ -328,7 +326,6 @@ export default function OutbidModal({
           order_id: orderId,
           prefill: {
             name: brandName,
-            email: email,
           },
           theme: {
             color: "#2563eb",
@@ -394,7 +391,7 @@ export default function OutbidModal({
           keySlot: targetSlot,
           bidAmount,
           brandName: brandName.trim(),
-          email: email.trim(),
+          email: "bidder@keybid.net",
           website: website.trim(),
           iconUrl: logoUrl,
         }),
@@ -532,11 +529,18 @@ export default function OutbidModal({
                     </div>
                   </div>
 
-                  {/* Guarantee Note */}
-                  <div className="p-3 rounded-xl bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 text-blue-900 dark:text-blue-300 text-[11px] text-left flex items-start gap-2 leading-relaxed">
-                    <IconShieldCheck size={16} className="shrink-0 text-blue-600 dark:text-blue-400 mt-0.5" />
+                  {/* Non-Refundable Notice */}
+                  <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-900 dark:text-amber-300 text-[11px] text-left flex items-start gap-2 leading-relaxed">
+                    <IconAlertCircle size={16} className="shrink-0 text-amber-600 dark:text-amber-400 mt-0.5" />
                     <span>
-                      <strong>Automatic Refund Guarantee:</strong> If another sponsor outbids you before the auction round closes, your full ${paymentSuccess.bidAmount} will be refunded automatically to your card within 5–7 business days.
+                      All bid payments are final and non-refundable, including if you are later outbid. View our{" "}
+                      <button
+                        type="button"
+                        onClick={() => setTermsModalOpen(true)}
+                        className="underline font-semibold hover:text-amber-950 dark:hover:text-amber-200 cursor-pointer"
+                      >
+                        Terms and Conditions
+                      </button>.
                     </span>
                   </div>
 
@@ -569,7 +573,7 @@ export default function OutbidModal({
                           : "Claim an Open Key"}
                     </div>
                     <h2 className="text-lg sm:text-xl font-bold tracking-tight text-zinc-950 dark:text-white">
-                      {targetSlot ? `Key [${targetSlot}]` : "Claim Your Keycap"}
+                      {targetSlot ? `Key ${targetSlot}` : "Claim Your Keycap"}
                     </h2>
                     <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
                       Apple Magic Keyboard · 1.8 × 1.8 cm Hardware Placement
@@ -581,7 +585,7 @@ export default function OutbidModal({
                       </p>
                     ) : (
                       <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
-                        No active bids on this slot · Minimum starting bid <strong className="font-bold text-blue-600 dark:text-blue-400">$10</strong>
+                        No active bids on this slot · Minimum starting bid <strong className="font-bold text-blue-600 dark:text-blue-400">${BASE_PRICE}</strong>
                       </p>
                     )}
                   </div>
@@ -597,28 +601,19 @@ export default function OutbidModal({
                     </div>
                   )}
 
-                  {/* Desired Key Slot Input */}
+                  {/* Read-Only Keycap Slot Field */}
                   <div>
                     <div className="flex items-center justify-between mb-1">
                       <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300">
-                        Keycap Slot <span className="text-red-500">*</span>
+                        Keycap Slot
                       </label>
-                      <span className="text-[10px] font-mono text-zinc-400">
-                        {targetSlot ? `Key [${targetSlot}] selected` : "e.g. K, ESC, CMD, SPACE"}
+
+                    </div>
+                    <div className="w-full rounded-xl border border-zinc-200 dark:border-zinc-700/80 bg-zinc-100/80 dark:bg-zinc-800/50 px-3.5 py-2.5 flex items-center justify-between">
+                      <span className="text-xs sm:text-sm font-mono font-bold text-zinc-900 dark:text-white truncate">
+                        {targetSlot}
                       </span>
                     </div>
-                    <input
-                      type="text"
-                      required
-                      maxLength={10}
-                      placeholder="e.g. K, ESC, CMD, SPACE"
-                      value={keySlot}
-                      onChange={(e) => {
-                        setKeySlot(e.target.value.toUpperCase());
-                        if (outbidAlert) setOutbidAlert(null);
-                      }}
-                      className="w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/60 px-3 py-2 text-xs sm:text-sm font-mono font-bold uppercase text-zinc-900 dark:text-white placeholder:text-zinc-400 dark:placeholder:text-zinc-500 outline-none focus:border-blue-500 transition-colors"
-                    />
                   </div>
 
                   {/* Bid Amount Input & Quick Bid Increments */}
@@ -677,6 +672,7 @@ export default function OutbidModal({
                   </div>
 
                   {/* 2x2 Fields Grid: Sponsor Details */}
+                  {/* Sponsor Details: Brand Name & Website */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
                     <div>
                       <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
@@ -693,20 +689,7 @@ export default function OutbidModal({
                     </div>
                     <div>
                       <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
-                        Email <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="email"
-                        required
-                        placeholder="alerts@company.com"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        className="w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/60 px-3 py-2 text-xs sm:text-sm text-zinc-900 dark:text-white placeholder:text-zinc-400 dark:placeholder:text-zinc-500 outline-none focus:border-blue-500 focus:bg-white dark:focus:bg-zinc-900 transition-colors"
-                      />
-                    </div>
-                    <div className="col-span-1 sm:col-span-2">
-                      <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
-                        Website URL <span className="text-zinc-400 dark:text-zinc-500 font-normal">(Optional · for backlink)</span>
+                        Website URL <span className="text-zinc-400 dark:text-zinc-500 font-normal">(Optional)</span>
                       </label>
                       <input
                         type="url"
@@ -767,11 +750,18 @@ export default function OutbidModal({
                     </div>
                   </div>
 
-                  {/* 100% Outbid Refund Guarantee */}
-                  <div className="p-3 rounded-xl bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 text-[11px] text-blue-900 dark:text-blue-300 flex items-start gap-2">
-                    <IconRotate size={15} className="shrink-0 text-blue-600 dark:text-blue-400 mt-0.5" />
+                  {/* Non-Refundable Notice */}
+                  <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-[11px] text-amber-900 dark:text-amber-300 flex items-start gap-2 leading-relaxed">
+                    <IconAlertCircle size={15} className="shrink-0 text-amber-600 dark:text-amber-400 mt-0.5" />
                     <span>
-                      <strong>Automatic Refund Guarantee:</strong> If another sponsor outbids you before round close, your full ${bidAmount} will be refunded automatically to your payment method.
+                      All bid payments are final. View our{" "}
+                      <button
+                        type="button"
+                        onClick={() => setTermsModalOpen(true)}
+                        className="underline font-semibold hover:text-amber-950 dark:hover:text-amber-200 cursor-pointer"
+                      >
+                        Terms
+                      </button>.
                     </span>
                   </div>
 
@@ -795,9 +785,9 @@ export default function OutbidModal({
                           }}
                           className="text-blue-600 dark:text-blue-400 hover:underline font-semibold cursor-pointer"
                         >
-                          365-day placement rules
+                          Terms &amp; Conditions
                         </button>{" "}
-                        and automated refund policy.
+                        and understand that all bid payments are final.
                       </span>
                     </label>
                   </div>
@@ -824,7 +814,7 @@ export default function OutbidModal({
                             <span>Preparing Secure Checkout…</span>
                           </>
                         ) : (
-                          <span>Pay ${bidAmount} USD</span>
+                          <span>Pay ${bidAmount}</span>
                         )}
                       </button>
                     </div>
@@ -835,13 +825,11 @@ export default function OutbidModal({
                           ? "Please specify a keycap slot"
                           : !brandName.trim()
                             ? "Please enter your brand name"
-                            : !email.includes("@")
-                              ? "Please enter a valid email address"
-                              : !isBidAmountValid
-                                ? `Bid must be at least $${effectiveMinBid}`
-                                : !termsAgreed
-                                  ? "Please agree to the placement rules"
-                                  : ""}
+                            : !isBidAmountValid
+                              ? `Bid must be at least $${effectiveMinBid}`
+                              : !termsAgreed
+                                ? "Please agree to the placement rules"
+                                : ""}
                       </p>
                     )}
 

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
+import KeysProvider from "@/src/app/KeysProvider";
 import Navbar from "@/src/components/Navbar";
 
 const plusJakarta = Plus_Jakarta_Sans({
@@ -37,9 +38,11 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col font-[family-name:var(--font-apple)] antialiased selection:bg-blue-600 selection:text-white" suppressHydrationWarning>
         <Providers>
-          <Navbar />
-
-          {children}</Providers>
+          <KeysProvider>
+            <Navbar />
+            {children}
+          </KeysProvider>
+        </Providers>
       </body>
     </html>
   );

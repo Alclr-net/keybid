@@ -2,8 +2,9 @@
 
 import React, { useState, useEffect } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import type { Key } from "@/lib/types/database";
-import { getAllKeys, subscribeToKeyUpdates, trackKeyClick } from "@/lib/helpers/keys";
+import type { Key } from "@/types/database";
+import { trackKeyClick } from "@/lib/helpers/keys";
+import { useKeysStore } from "@/lib/store/keysStore";
 import { CanvasRevealEffect } from "@/src/components/ui/canvas-reveal-effect";
 import ScrollReveal from "@/src/components/ui/ScrollReveal";
 import Ping from "@/src/components/Ping";
@@ -12,7 +13,6 @@ import KeyLogo from "@/src/components/ui/KeyLogo";
 import { cn } from "@/src/lib/utils";
 import {
   IconExternalLink,
-  IconAlertCircle,
   IconTrophy,
   IconArrowRight,
   IconHandClick,
@@ -203,6 +203,7 @@ function PodiumCard({
                   onClick={(e) => {
                     e.stopPropagation();
                     trackKeyClick(keyData.id);
+                    useKeysStore.getState().incrementClickCount(keyData.id);
                   }}
                 >
                   <IconExternalLink size={14} />
@@ -267,53 +268,10 @@ function PodiumCard({
 }
 
 export default function TopBidsCanvasReveal() {
-  const [keysList, setKeysList] = useState<Key[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const keysList = useKeysStore((state) => state.keys);
+  const isLoading = useKeysStore((state) => state.isLoading);
   const [selectedKey, setSelectedKey] = useState<Key | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-
-  useEffect(() => {
-    let isMounted = true;
-    async function load() {
-      setIsLoading(true);
-      setError(null);
-      try {
-        const data = await getAllKeys();
-        if (isMounted) {
-          setKeysList(data);
-        }
-      } catch (err: unknown) {
-        if (isMounted) {
-          const e = err as { message?: string };
-          setError(e?.message || "Failed to load top auction keys");
-        }
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
-      }
-    }
-    load();
-
-    // Subscribe to realtime updates
-    const channel = subscribeToKeyUpdates((updatedKey) => {
-      setKeysList((prev) => {
-        const index = prev.findIndex((k) => k.id === updatedKey.id);
-        if (index !== -1) {
-          const next = [...prev];
-          next[index] = updatedKey;
-          return next;
-        }
-        return [updatedKey, ...prev];
-      });
-    });
-
-    return () => {
-      isMounted = false;
-      channel.unsubscribe();
-    };
-  }, []);
 
   // Only keys that actually have an active bid > 0
   const keysWithBids = keysList.filter((k) => (k.current_bid_amount || 0) > 0);
@@ -368,11 +326,6 @@ export default function TopBidsCanvasReveal() {
                   <div className="w-full h-10 bg-zinc-200 dark:bg-zinc-800 rounded-md" />
                 </div>
               ))}
-            </div>
-          ) : error ? (
-            <div className="py-12 flex flex-col items-center justify-center text-center space-y-2">
-              <IconAlertCircle size={30} className="text-rose-500" />
-              <p className="text-sm font-medium text-zinc-600 dark:text-zinc-400">{error}</p>
             </div>
           ) : topBids.length === 0 ? (
             <div className="py-14 sm:py-16 px-6 sm:px-10 rounded-3xl border border-zinc-200 dark:border-white/10 bg-white/70 dark:bg-zinc-900/60 backdrop-blur-xl flex flex-col items-center justify-center text-center max-w-lg mx-auto shadow-sm">
@@ -434,11 +387,7 @@ export default function TopBidsCanvasReveal() {
         }}
         onSuccess={(bidAmount) => {
           if (selectedKey) {
-            setKeysList((prev) =>
-              prev.map((k) =>
-                k.id === selectedKey.id ? { ...k, current_bid_amount: bidAmount } : k
-              )
-            );
+            useKeysStore.getState().updateKey(selectedKey.id, { current_bid_amount: bidAmount });
           }
         }}
       />

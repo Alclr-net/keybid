@@ -4,8 +4,9 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { motion } from 'motion/react';
 import { cn } from '@/src/lib/utils';
-import type { Key } from '@/lib/types/database';
-import { getAllKeys, subscribeToKeyUpdates, trackKeyClick } from '@/lib/helpers/keys';
+import type { Key } from '@/types/database';
+import { trackKeyClick } from '@/lib/helpers/keys';
+import { useKeysStore } from '@/lib/store/keysStore';
 import OutbidModal from '@/src/components/OutbidModal';
 import KeyLogo from '@/src/components/ui/KeyLogo';
 import {
@@ -101,41 +102,8 @@ function ReadingGlassesIcon({ className }: { className?: string }) {
 export default function MacWindow({ className }: { className?: string }) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [selectedKey, setSelectedKey] = useState<Key | null>(null);
-  const [keysList, setKeysList] = useState<Key[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    let isMounted = true;
-    async function load() {
-      setIsLoading(true);
-      try {
-        const data = await getAllKeys();
-        if (isMounted) setKeysList(data);
-      } catch (err) {
-        console.error("MacWindow load error:", err);
-      } finally {
-        if (isMounted) setIsLoading(false);
-      }
-    }
-    load();
-
-    const channel = subscribeToKeyUpdates((updatedKey) => {
-      setKeysList((prev) => {
-        const idx = prev.findIndex((k) => k.id === updatedKey.id);
-        if (idx !== -1) {
-          const next = [...prev];
-          next[idx] = updatedKey;
-          return next;
-        }
-        return [updatedKey, ...prev];
-      });
-    });
-
-    return () => {
-      isMounted = false;
-      channel.unsubscribe();
-    };
-  }, []);
+  const keysList = useKeysStore((state) => state.keys);
+  const isLoading = useKeysStore((state) => state.isLoading);
 
   const top5 = [...keysList]
     .sort((a, b) => (b.current_bid_amount || 0) - (a.current_bid_amount || 0))
@@ -465,11 +433,7 @@ export default function MacWindow({ className }: { className?: string }) {
                             onClick={(e) => {
                               e.stopPropagation();
                               trackKeyClick(keyItem.id);
-                              setKeysList((prev) =>
-                                prev.map((k) =>
-                                  k.id === keyItem.id ? { ...k, click_count: (k.click_count || 0) + 1 } : k
-                                )
-                              );
+                              useKeysStore.getState().incrementClickCount(keyItem.id);
                             }}
                             className="text-zinc-400 hover:text-blue-600 dark:text-zinc-500 dark:hover:text-blue-400 transition-colors p-0.5"
                             title={`Visit ${keyName}`}
@@ -534,11 +498,7 @@ export default function MacWindow({ className }: { className?: string }) {
         onClose={() => setSelectedKey(null)}
         onSuccess={(bidAmount) => {
           if (selectedKey) {
-            setKeysList((prev) =>
-              prev.map((k) =>
-                k.id === selectedKey.id ? { ...k, current_bid_amount: bidAmount } : k
-              )
-            );
+            useKeysStore.getState().updateKey(selectedKey.id, { current_bid_amount: bidAmount });
           }
         }}
       />

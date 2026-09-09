@@ -123,8 +123,11 @@ function BidFormContent({ keySlot }: { keySlot: string }) {
   const [loadingLive, setLoadingLive] = useState(true);
   const [liveError, setLiveError] = useState<string | null>(null);
 
+  const rawBase = Number(process.env.NEXT_PUBLIC_BASE_PRICE || process.env.BASE_PRICE || 10);
+  const BASE_PRICE = !isNaN(rawBase) && rawBase > 0 ? rawBase : 10;
+
   // Form states
-  const [bidAmount, setBidAmount] = useState<number>(10);
+  const [bidAmount, setBidAmount] = useState<number>(BASE_PRICE);
   const [brandName, setBrandName] = useState(initialBrandParam);
   const [email, setEmail] = useState("");
   const [website, setWebsite] = useState(initialWebsiteParam);
@@ -220,13 +223,13 @@ function BidFormContent({ keySlot }: { keySlot: string }) {
 
   // Minimum valid next bid calculation
   const currentHighest = liveData?.currentHighestBid || 0;
-  const minimumAllowedBid = Math.max(10, currentHighest + 1);
+  const minimumAllowedBid = currentHighest > 0 ? Math.max(BASE_PRICE, currentHighest + 1) : BASE_PRICE;
 
   // Client-side validation
-  const isBidAmountValid = bidAmount >= 10 && bidAmount > currentHighest;
+  const isBidAmountValid = bidAmount >= BASE_PRICE && bidAmount > currentHighest;
   const bidValidationError =
-    bidAmount < 10
-      ? "Minimum bid amount for every key is $10."
+    bidAmount < BASE_PRICE
+      ? `Minimum bid amount for every key is $${BASE_PRICE}.`
       : bidAmount <= currentHighest
         ? `Must exceed current leading bid of $${currentHighest}. Minimum valid bid is $${minimumAllowedBid}.`
         : null;
@@ -269,10 +272,10 @@ function BidFormContent({ keySlot }: { keySlot: string }) {
       if (orderRes.status === 409 || orderData.code === "OUTBID") {
         setOutbidAlert({
           highestBid: orderData.currentHighestBid || currentHighest,
-          minNext: orderData.minimumNextBid || Math.max(10, currentHighest + 1),
+          minNext: orderData.minimumNextBid || Math.max(BASE_PRICE, currentHighest + 1),
           message: orderData.error || `This key was just outbid at $${orderData.currentHighestBid} — refresh to see the new minimum`,
         });
-        setBidAmount(orderData.minimumNextBid || Math.max(10, currentHighest + 1));
+        setBidAmount(orderData.minimumNextBid || Math.max(BASE_PRICE, currentHighest + 1));
         setIsSubmitting(false);
         return;
       }
@@ -463,11 +466,18 @@ function BidFormContent({ keySlot }: { keySlot: string }) {
               </div>
             </div>
 
-            {/* Guarantee Note */}
-            <div className="p-3 rounded-xl bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 text-blue-900 dark:text-blue-300 text-xs text-left flex items-start gap-2">
-              <IconShieldCheck size={18} className="shrink-0 text-blue-600 dark:text-blue-400 mt-0.5" />
+            {/* Policy Notice */}
+            <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-900 dark:text-amber-300 text-xs text-left flex items-start gap-2">
+              <IconAlertCircle size={18} className="shrink-0 text-amber-600 dark:text-amber-400 mt-0.5" />
               <span>
-                <strong>Next Step:</strong> You will be notified immediately if challenged. If someone outbids you, your full ${paymentSuccess.bidAmount} will be refunded automatically to your card within 5–7 business days.
+                All bid payments are final and non-refundable, including if you are later outbid. View our{" "}
+                <button
+                  type="button"
+                  onClick={() => setTermsModalOpen(true)}
+                  className="underline font-semibold hover:text-amber-950 dark:hover:text-amber-200 cursor-pointer"
+                >
+                  Terms and Conditions
+                </button>.
               </span>
             </div>
 
@@ -783,14 +793,14 @@ function BidFormContent({ keySlot }: { keySlot: string }) {
                 </div>
               </div>
 
-              {/* 6. Trust & Policy Microcopy + Refund Guarantee (Requirement 4) */}
-              <div className="p-4 rounded-2xl bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 text-xs text-blue-900 dark:text-blue-300 space-y-1">
-                <div className="font-bold flex items-center gap-1.5 text-blue-900 dark:text-blue-200">
-                  <IconRotate size={14} className="text-blue-600 dark:text-blue-400" />
-                  100% Outbid Refund Guarantee
+              {/* 6. Trust & Non-Refundable Policy Notice */}
+              <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-900 dark:text-amber-300 space-y-1">
+                <div className="font-bold flex items-center gap-1.5 text-amber-900 dark:text-amber-200">
+                  <IconAlertCircle size={14} className="text-amber-600 dark:text-amber-400" />
+                  Non-Refundable Placement Policy
                 </div>
-                <p className="text-[11px] leading-relaxed text-blue-800/90 dark:text-blue-300/90 font-normal">
-                  You&apos;ll be automatically refunded within 5–7 business days if someone outbids you before round close. Your funds are protected.
+                <p className="text-[11px] leading-relaxed text-amber-800/90 dark:text-amber-300/90 font-normal">
+                  All bid payments are final and non-refundable, including if you are later outbid. Please review our terms before submitting.
                 </p>
               </div>
 
@@ -805,7 +815,7 @@ function BidFormContent({ keySlot }: { keySlot: string }) {
                     className="mt-0.5 h-4 w-4 rounded border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-blue-600 focus:ring-blue-500 cursor-pointer"
                   />
                   <span>
-                    I agree to the KeyBid{" "}
+                    I agree to the{" "}
                     <button
                       type="button"
                       onClick={(e) => {
@@ -814,9 +824,9 @@ function BidFormContent({ keySlot }: { keySlot: string }) {
                       }}
                       className="text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 underline font-semibold cursor-pointer"
                     >
-                      Auction Rules, 365-day placement terms
-                    </button>
-                    , and understand outbid refunds are issued automatically within 5–7 business days.
+                      KeyBid Terms &amp; Conditions
+                    </button>{" "}
+                    and understand that all bid payments are final.
                   </span>
                 </label>
               </div>

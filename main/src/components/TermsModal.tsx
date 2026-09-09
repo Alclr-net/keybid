@@ -1,9 +1,10 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "motion/react";
-import { IconX, IconShieldCheck, IconClock, IconRotate, IconPrinter } from "@tabler/icons-react";
+import { IconX, IconShieldCheck, IconAlertTriangle, IconCreditCard, IconExternalLink } from "@tabler/icons-react";
 
 interface TermsModalProps {
   isOpen: boolean;
@@ -48,8 +49,8 @@ export default function TermsModal({ isOpen, onClose }: TermsModalProps) {
                   <IconShieldCheck size={18} />
                 </div>
                 <div>
-                  <h3 className="font-display text-base sm:text-lg font-bold">KeyBid Auction Rules & Terms</h3>
-                  <p className="text-[11px] font-mono text-zinc-500">Official Placement & Refund Agreement</p>
+                  <h3 className="font-display text-base sm:text-lg font-bold">Terms</h3>
+                  <p className="text-[11px] font-mono text-zinc-500">Placement, Payment & Non-Refundable Agreement</p>
                 </div>
               </div>
               <button
@@ -64,48 +65,69 @@ export default function TermsModal({ isOpen, onClose }: TermsModalProps) {
 
             {/* Scrollable Terms Content */}
             <div className="overflow-y-auto py-4 space-y-4 text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed pr-1">
-              <div className="p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-800 dark:text-emerald-300 space-y-1">
-                <div className="font-bold flex items-center gap-1.5 text-xs uppercase tracking-wider">
-                  <IconRotate size={14} />
-                  1. Automatic Outbid Refund Guarantee
+              {/* Critical Rule Callout: All Payments Final */}
+              <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/25 text-amber-950 dark:text-amber-200 space-y-1">
+                <div className="font-bold flex items-center gap-1.5 text-xs uppercase tracking-wider text-amber-800 dark:text-amber-300">
+                  <IconAlertTriangle size={15} />
+                  All Bid Payments Are Final
                 </div>
-                <p className="text-xs">
-                  If another sponsor places a higher qualifying bid on your key before the round closes, your payment is <strong>automatically refunded in full (100%)</strong> to your original payment method via Razorpay within <strong>5–7 business days</strong>. No manual claim or ticket is required.
+                <p className="text-xs leading-relaxed">
+                  Once payment is confirmed as captured, it is <strong>non-refundable under any circumstance</strong>, including being outbid immediately after payment, losing your position at any later time, or changing your mind.
                 </p>
               </div>
 
               <div className="space-y-1">
                 <h4 className="font-bold text-zinc-900 dark:text-white flex items-center gap-1.5">
-                  <IconPrinter size={15} className="text-blue-500" />
-                  2. Physical Hardware Placement
+                  <IconShieldCheck size={15} className="text-blue-500" />
+                  1. The Service & Placement Slot
                 </h4>
                 <p>
-                  Each winning keycap decal is precision UV-cured directly onto genuine Apple anodized aluminum and matte polycarbonate keycaps on the creator&apos;s daily-driver Apple Magic Keyboard. Placement is guaranteed for a minimum of 365 calendar days.
+                  Each accepted payment purchases a bidding position on a Key on our virtual keyboard representing a claimed company/startup. The highest bidder holds that position, logo display, and outbound link until outbid. The service offers <strong>no ownership interest, equity, cash return, or deposit/holding fee</strong>.
                 </p>
               </div>
 
               <div className="space-y-1">
                 <h4 className="font-bold text-zinc-900 dark:text-white flex items-center gap-1.5">
-                  <IconClock size={15} className="text-blue-500" />
-                  3. Bidding Rules & Floor
+                  <IconCreditCard size={15} className="text-emerald-500" />
+                  2. Payments and Continuous Bidding
                 </h4>
                 <p>
-                  The minimum starting bid for every keyboard key is <strong>$10 USD</strong>. Each subsequent bid must exceed the current highest bid by at least $1.00 USD. Bids are finalized upon successful payment confirmation.
+                  Bids are one-time payments processed through Razorpay. A bid is valid only after successful payment capture. There is no fixed end time — positions can be challenged and outbid at any time, indefinitely.
                 </p>
               </div>
 
               <div className="space-y-1">
-                <h4 className="font-bold text-zinc-900 dark:text-white">4. Brand & Content Standards</h4>
+                <h4 className="font-bold text-zinc-900 dark:text-white">3. Technical Error Exception</h4>
                 <p>
-                  Every logo is hand-inspected before physical UV printing. Logos must represent legitimate projects, brands, or open-source software. Submissions containing illegal, hateful, malicious, or deceptive content will be rejected and refunded immediately.
+                  If a payment is captured by Razorpay but, due to a technical error on our end, is not reflected as a bid on our platform, contact us on X (
+                  <a
+                    href="https://x.com/seth_rachit_"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-semibold text-blue-600 dark:text-blue-400 hover:underline"
+                  >
+                    @seth_rachit_
+                  </a>
+                  ) with your payment reference. Confirmed technical errors will be refunded for that specific transaction only.
                 </p>
               </div>
 
               <div className="space-y-1">
-                <h4 className="font-bold text-zinc-900 dark:text-white">5. Live Traffic & SEO Backlink</h4>
+                <h4 className="font-bold text-zinc-900 dark:text-white">4. Submissions & Content</h4>
                 <p>
-                  Winning sponsors receive a verified, permanent sponsor card with live backlink indexing on Keybid for the duration of the hardware placement. Real-time click metrics are tracked transparently.
+                  You confirm you control or are authorized to represent the submitted company or URL. We reserve the right to remove listings that are illegal, unsafe, deceptive, or noncompliant without entitlement to a refund.
                 </p>
+              </div>
+
+              <div className="pt-1">
+                <Link
+                  href="/terms"
+                  onClick={onClose}
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline"
+                >
+                  <span>Read complete Terms and Conditions document</span>
+                  <IconExternalLink size={13} />
+                </Link>
               </div>
             </div>
 
@@ -117,7 +139,7 @@ export default function TermsModal({ isOpen, onClose }: TermsModalProps) {
                 onClick={onClose}
                 className="px-5 py-2 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-500 text-white transition-all shadow-sm cursor-pointer"
               >
-                I Understand
+                I Understand & Agree
               </button>
             </div>
           </motion.div>

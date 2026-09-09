@@ -7,8 +7,8 @@ import Tabs8 from "@/src/components/ui/tabs-08";
 import { generateRandomString, Icon } from "@/src/components/ui/evervault-card";
 import { cn } from "@/src/lib/utils";
 import Ping from "./Ping";
-import { getAllKeys, subscribeToKeyUpdates } from "@/lib/helpers/keys";
-import type { Key } from "@/types/Database";
+import { useKeysStore } from "@/lib/store/keysStore";
+
 
 interface StepItem {
   num: string;
@@ -135,20 +135,7 @@ function HowItWorksEvervaultCard({ step }: { step: StepItem }) {
 }
 
 export default function HowItWorksSection() {
-  const [keysList, setKeysList] = useState<Key[]>([]);
-
-  useEffect(() => {
-    let isMounted = true;
-    getAllKeys().then((data) => { if (isMounted) setKeysList(data); }).catch(() => {});
-    const channel = subscribeToKeyUpdates((updatedKey) => {
-      setKeysList((prev) => {
-        const idx = prev.findIndex((k) => k.id === updatedKey.id);
-        if (idx !== -1) { const next = [...prev]; next[idx] = updatedKey; return next; }
-        return [updatedKey, ...prev];
-      });
-    });
-    return () => { isMounted = false; channel.unsubscribe(); };
-  }, []);
+  const keysList = useKeysStore((state) => state.keys);
 
   const totalPool = keysList.reduce((acc, k) => acc + (k.current_bid_amount || 0), 0);
   const claimedCount = keysList.length;

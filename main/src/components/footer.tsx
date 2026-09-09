@@ -49,6 +49,12 @@ export default function Footer() {
               Spots
             </a>
             <Link
+              href="/terms"
+              className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+            >
+              Terms &amp; Conditions
+            </Link>
+            <Link
               href="/policy"
               className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
             >

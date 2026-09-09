@@ -11,8 +11,8 @@ import {
   IconArrowRight,
 } from "@tabler/icons-react";
 import { cn } from "@/src/lib/utils";
-import type { Key } from "@/lib/types/database";
-import { getAllKeys, subscribeToKeyUpdates } from "@/lib/helpers/keys";
+import type { Key } from "@/types/database";
+import { useKeysStore } from "@/lib/store/keysStore";
 import OutbidModal from "@/src/components/OutbidModal";
 
 export default function KeyboardDemo() {
@@ -22,42 +22,9 @@ export default function KeyboardDemo() {
   // Mode: "auto" (scroll-driven), "desk" (locked 3D angle), "flat" (locked 0° flat)
   const [perspectiveMode, setPerspectiveMode] = useState<"auto" | "desk" | "flat">("auto");
 
-  // Track live keys from database
-  const [keysList, setKeysList] = useState<Key[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    let isMounted = true;
-    async function load() {
-      setIsLoading(true);
-      try {
-        const data = await getAllKeys();
-        if (isMounted) setKeysList(data);
-      } catch (err) {
-        console.error("Failed to load keys in keyboard demo:", err);
-      } finally {
-        if (isMounted) setIsLoading(false);
-      }
-    }
-    load();
-
-    const channel = subscribeToKeyUpdates((updatedKey) => {
-      setKeysList((prev) => {
-        const idx = prev.findIndex((k) => k.id === updatedKey.id);
-        if (idx !== -1) {
-          const next = [...prev];
-          next[idx] = updatedKey;
-          return next;
-        }
-        return [updatedKey, ...prev];
-      });
-    });
-
-    return () => {
-      isMounted = false;
-      channel.unsubscribe();
-    };
-  }, []);
+  // Track live keys from store
+  const keysList = useKeysStore((state) => state.keys);
+  const isLoading = useKeysStore((state) => state.isLoading);
 
   // State for interactive key selection (bidding or outbidding)
   const [selectedKey, setSelectedKey] = useState<{
@@ -232,7 +199,7 @@ export default function KeyboardDemo() {
           viewport={{ once: true, amount: 0.8 }}
           className="mr-2 text-shadow-xs whitespace-pre"
         >
-          {"Click any key to place your bid".split("").map((letter, i) => (
+          {"Click any key to place a bid".split("").map((letter, i) => (
             <motion.span
               key={i}
               variants={{ hidden: { opacity: 0 }, visible: { opacity: 1 } }}
@@ -266,7 +233,7 @@ export default function KeyboardDemo() {
           }}
           className="relative z-10 flex flex-col items-center justify-center will-change-transform"
         >
-          <Keyboard enableSound onKeyClick={handleKeyClick} keys={keysList} />
+          <Keyboard onKeyClick={handleKeyClick} keys={keysList} />
 
           {/* ── Tabletop Desk Contact Shadow Rig (Directly anchored to bottom of keyboard) ── */}
           <div className="pointer-events-none absolute  inset-x-0 flex flex-col items-center justify-center select-none -z-10">
@@ -332,13 +299,6 @@ export default function KeyboardDemo() {
         </motion.div>
       )}
 
-      {/* Claimed keys count indicator when keys exist */}
-      {!isLoading && keysList.length > 0 && (
-        <div className="mt-4 sm:mt-6 flex items-center justify-center gap-2 text-xs text-zinc-500 dark:text-zinc-400 select-none z-20">
-          <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-          <span>{keysList.length} {keysList.length === 1 ? "key" : "keys"} claimed · Click any key to place a bid</span>
-        </div>
-      )}
 
       {/* Interactive Key Bidding & Outbidding Modal */}
       <OutbidModal
@@ -348,19 +308,7 @@ export default function KeyboardDemo() {
         onClose={() => setSelectedKey((prev) => ({ ...prev, isOpen: false }))}
         onSuccess={(_bidAmount, _createdCompany, createdKey) => {
           if (createdKey) {
-            setKeysList((prev) => {
-              const idx = prev.findIndex(
-                (k) =>
-                  k.id === createdKey.id ||
-                  (k.key_name && k.key_name.toUpperCase() === createdKey.key_name?.toUpperCase())
-              );
-              if (idx !== -1) {
-                const next = [...prev];
-                next[idx] = createdKey;
-                return next;
-              }
-              return [createdKey, ...prev];
-            });
+            useKeysStore.getState().updateKey(createdKey.id, createdKey);
           }
         }}
       />

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getKeyLiveState } from "@/src/lib/serverStore";
+import { getKeyLiveState } from "@/types/serverStore";
 
 export async function GET(
   request: NextRequest,
