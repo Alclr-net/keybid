@@ -1,0 +1,14 @@
+{
+  "name": "keybid",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "main"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace=main",
+    "build": "npm run build --workspace=main",
+    "start": "npm run start --workspace=main",
+    "lint": "npm run lint --workspace=main"
+  }
+}
