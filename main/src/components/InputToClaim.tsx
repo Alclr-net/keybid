@@ -158,12 +158,12 @@ export function UriClaimInput({
             </div>
 
             {/* ── 3. Separated Claim Button (Never dims or shifts color on disable) ── */}
-            <div className="p-[2px] rounded-md transition-all duration-200 ease-out shadow-xs bg-blue-600/20 shrink-0">
+            <div className="w-full sm:w-auto p-[2px] rounded-2xl transition-all duration-200 ease-out shadow-xs bg-blue-600/20 shrink-0">
                 <button
                     type="button"
                     onClick={handleClaimClick}
                     className={cn(
-                        "h-12 sm:h-14 px-7 sm:px-9 rounded-[6px] text-sm sm:text-base font-bold tracking-wide transition-all cursor-pointer select-none flex items-center justify-center gap-2",
+                        "w-full sm:w-auto h-12 sm:h-14 px-7 sm:px-9 rounded-[14px] text-sm sm:text-base font-bold tracking-wide transition-all cursor-pointer select-none flex items-center justify-center gap-2",
                         "bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white",
                         "shadow-[0_4px_16px_rgba(37,99,235,0.35),inset_0_1px_0.5px_rgba(255,255,255,0.25)] hover:shadow-[0_6px_22px_rgba(37,99,235,0.45)]"
                     )}
