@@ -4,40 +4,7 @@ import * as React from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { IconChevronDown } from "@tabler/icons-react";
 import { cn } from "@/src/lib/utils";
-
-interface AccordionContextValue {
-  value: string | string[];
-  onItemToggle: (itemValue: string) => void;
-  isItemOpen: (itemValue: string) => boolean;
-}
-
-const AccordionContext = React.createContext<AccordionContextValue | undefined>(
-  undefined
-);
-
-function useAccordion() {
-  const context = React.useContext(AccordionContext);
-  if (!context) {
-    throw new Error("Accordion components must be used within an Accordion");
-  }
-  return context;
-}
-
-interface AccordionItemContextValue {
-  value: string;
-}
-
-const AccordionItemContext = React.createContext<
-  AccordionItemContextValue | undefined
->(undefined);
-
-function useAccordionItem() {
-  const context = React.useContext(AccordionItemContext);
-  if (!context) {
-    throw new Error("AccordionItem components must be used within an AccordionItem");
-  }
-  return context;
-}
+import { useAccordionStore } from "@/lib/store/accordionStore";
 
 export interface AccordionProps extends React.HTMLAttributes<HTMLDivElement> {
   type?: "single" | "multiple";
@@ -57,65 +24,26 @@ export function Accordion({
   children,
   ...props
 }: AccordionProps) {
-  const [internalValue, setInternalValue] = React.useState<string | string[]>(
-    () => {
-      if (defaultValue !== undefined) return defaultValue;
-      return type === "multiple" ? [] : "";
+  const initValue = useAccordionStore((state) => state.initValue);
+
+  React.useEffect(() => {
+    if (defaultValue !== undefined) {
+      initValue(defaultValue);
     }
-  );
+  }, [defaultValue, initValue]);
 
-  const isControlled = controlledValue !== undefined;
-  const activeValue = isControlled ? controlledValue : internalValue;
-
-  const isItemOpen = React.useCallback(
-    (itemValue: string) => {
-      if (Array.isArray(activeValue)) {
-        return activeValue.includes(itemValue);
-      }
-      return activeValue === itemValue;
-    },
-    [activeValue]
-  );
-
-  const onItemToggle = React.useCallback(
-    (itemValue: string) => {
-      let nextValue: string | string[];
-
-      if (type === "multiple") {
-        const currentList = Array.isArray(activeValue) ? activeValue : [];
-        if (currentList.includes(itemValue)) {
-          nextValue = currentList.filter((v) => v !== itemValue);
-        } else {
-          nextValue = [...currentList, itemValue];
-        }
-      } else {
-        if (activeValue === itemValue) {
-          nextValue = collapsible ? "" : itemValue;
-        } else {
-          nextValue = itemValue;
-        }
-      }
-
-      if (!isControlled) {
-        setInternalValue(nextValue);
-      }
-      onValueChange?.(nextValue);
-    },
-    [type, collapsible, activeValue, isControlled, onValueChange]
-  );
+  React.useEffect(() => {
+    if (controlledValue !== undefined) {
+      useAccordionStore.setState({
+        activeItems: Array.isArray(controlledValue) ? controlledValue : [controlledValue],
+      });
+    }
+  }, [controlledValue]);
 
   return (
-    <AccordionContext.Provider
-      value={{
-        value: activeValue,
-        onItemToggle,
-        isItemOpen,
-      }}
-    >
-      <div className={cn("divide-y divide-zinc-200 dark:divide-white/10", className)} {...props}>
-        {children}
-      </div>
-    </AccordionContext.Provider>
+    <div className={cn("divide-y divide-zinc-200 dark:divide-white/10", className)} {...props}>
+      {children}
+    </div>
   );
 }
 
@@ -130,37 +58,53 @@ export function AccordionItem({
   children,
   ...props
 }: AccordionItemProps) {
+  const isOpen = useAccordionStore((state) => state.activeItems.includes(value));
+
   return (
-    <AccordionItemContext.Provider value={{ value }}>
-      <div
-        data-state={useAccordion().isItemOpen(value) ? "open" : "closed"}
-        className={cn("border-b border-zinc-200 dark:border-white/10 last:border-b-0", className)}
-        {...props}
-      >
-        {children}
-      </div>
-    </AccordionItemContext.Provider>
+    <div
+      data-state={isOpen ? "open" : "closed"}
+      data-value={value}
+      className={cn("border-b border-zinc-200 dark:border-white/10 last:border-b-0", className)}
+      {...props}
+    >
+      {React.Children.map(children, (child) => {
+        if (React.isValidElement(child)) {
+          return React.cloneElement(child as React.ReactElement<{ itemValue?: string }>, {
+            itemValue: value,
+          });
+        }
+        return child;
+      })}
+    </div>
   );
 }
 
 export interface AccordionTriggerProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement> { }
+  extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  itemValue?: string;
+}
 
 export function AccordionTrigger({
   className,
   children,
+  itemValue,
+  onClick,
   ...props
 }: AccordionTriggerProps) {
-  const { onItemToggle, isItemOpen } = useAccordion();
-  const { value } = useAccordionItem();
-  const isOpen = isItemOpen(value);
+  const isOpen = useAccordionStore((state) =>
+    itemValue ? state.activeItems.includes(itemValue) : false
+  );
+  const toggleItem = useAccordionStore((state) => state.toggleItem);
 
   return (
     <div className="flex">
       <button
         type="button"
         data-state={isOpen ? "open" : "closed"}
-        onClick={() => onItemToggle(value)}
+        onClick={(e) => {
+          if (itemValue) toggleItem(itemValue);
+          onClick?.(e);
+        }}
         className={cn(
           "flex flex-1 items-center justify-between py-4 sm:py-5 font-semibold text-sm sm:text-base text-zinc-900 dark:text-zinc-100 transition-all hover:text-blue-600 dark:hover:text-blue-400 text-left cursor-pointer group",
           className
@@ -181,16 +125,19 @@ export function AccordionTrigger({
 }
 
 export interface AccordionContentProps
-  extends React.HTMLAttributes<HTMLDivElement> { }
+  extends React.HTMLAttributes<HTMLDivElement> {
+  itemValue?: string;
+}
 
 export function AccordionContent({
   className,
   children,
+  itemValue,
   ...props
 }: AccordionContentProps) {
-  const { isItemOpen } = useAccordion();
-  const { value } = useAccordionItem();
-  const isOpen = isItemOpen(value);
+  const isOpen = useAccordionStore((state) =>
+    itemValue ? state.activeItems.includes(itemValue) : false
+  );
 
   return (
     <AnimatePresence initial={false}>

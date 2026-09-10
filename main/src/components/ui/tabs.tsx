@@ -2,21 +2,7 @@
 
 import * as React from "react";
 import { cn } from "@/src/lib/utils";
-
-interface TabsContextValue {
-  value: string;
-  onValueChange: (val: string) => void;
-}
-
-const TabsContext = React.createContext<TabsContextValue | undefined>(undefined);
-
-function useTabs() {
-  const context = React.useContext(TabsContext);
-  if (!context) {
-    throw new Error("Tabs components must be used within a <Tabs> provider");
-  }
-  return context;
-}
+import { useTabsStore } from "@/lib/store/tabsStore";
 
 interface TabsProps extends React.HTMLAttributes<HTMLDivElement> {
   defaultValue?: string;
@@ -32,26 +18,31 @@ export function Tabs({
   children,
   ...props
 }: TabsProps) {
-  const [uncontrolledValue, setUncontrolledValue] = React.useState(defaultValue || "");
-  const isControlled = controlledValue !== undefined;
-  const activeValue = isControlled ? controlledValue : uncontrolledValue;
+  const activeTab = useTabsStore((state) => state.activeTab);
+  const setActiveTab = useTabsStore((state) => state.setActiveTab);
 
-  const handleValueChange = React.useCallback(
-    (nextValue: string) => {
-      if (!isControlled) {
-        setUncontrolledValue(nextValue);
-      }
-      onValueChange?.(nextValue);
-    },
-    [isControlled, onValueChange]
-  );
+  React.useEffect(() => {
+    if (defaultValue && !activeTab) {
+      setActiveTab(defaultValue);
+    }
+  }, [defaultValue, activeTab, setActiveTab]);
+
+  React.useEffect(() => {
+    if (controlledValue !== undefined) {
+      setActiveTab(controlledValue);
+    }
+  }, [controlledValue, setActiveTab]);
+
+  React.useEffect(() => {
+    if (activeTab && onValueChange) {
+      onValueChange(activeTab);
+    }
+  }, [activeTab, onValueChange]);
 
   return (
-    <TabsContext.Provider value={{ value: activeValue, onValueChange: handleValueChange }}>
-      <div className={cn("flex flex-col", className)} {...props}>
-        {children}
-      </div>
-    </TabsContext.Provider>
+    <div className={cn("flex flex-col", className)} {...props}>
+      {children}
+    </div>
   );
 }
 
@@ -64,7 +55,7 @@ export function TabsList({
     <div
       role="tablist"
       className={cn(
-        "inline-flex items-center justify-center rounded-lg p-1 text-muted-foreground",
+        "inline-flex max-w-full items-center justify-center rounded-lg p-1 text-muted-foreground",
         className
       )}
       {...props}
@@ -82,10 +73,12 @@ export function TabsTrigger({
   value,
   className,
   children,
+  onClick,
   ...props
 }: TabsTriggerProps) {
-  const { value: activeValue, onValueChange } = useTabs();
-  const isActive = activeValue === value;
+  const activeTab = useTabsStore((state) => state.activeTab);
+  const setActiveTab = useTabsStore((state) => state.setActiveTab);
+  const isActive = activeTab === value;
 
   return (
     <button
@@ -93,10 +86,12 @@ export function TabsTrigger({
       role="tab"
       aria-selected={isActive}
       data-state={isActive ? "active" : "inactive"}
-      onClick={() => onValueChange(value)}
+      onClick={(e) => {
+        setActiveTab(value);
+        onClick?.(e);
+      }}
       className={cn(
         "inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium transition-all focus-visible:outline-hidden disabled:pointer-events-none disabled:opacity-50 cursor-pointer select-none",
-
         className
       )}
       {...props}
@@ -116,8 +111,8 @@ export function TabsContent({
   children,
   ...props
 }: TabsContentProps) {
-  const { value: activeValue } = useTabs();
-  const isActive = activeValue === value;
+  const activeTab = useTabsStore((state) => state.activeTab);
+  const isActive = activeTab === value;
 
   if (!isActive) return null;
 

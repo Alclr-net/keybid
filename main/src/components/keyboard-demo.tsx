@@ -14,6 +14,7 @@ import { cn } from "@/src/lib/utils";
 import type { Key } from "@/types/database";
 import { useKeysStore } from "@/lib/store/keysStore";
 import OutbidModal from "@/src/components/OutbidModal";
+import { TextHoverEffect } from "@/src/components/ui/text-hover-effect";
 
 export default function KeyboardDemo() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -61,7 +62,6 @@ export default function KeyboardDemo() {
     target: containerRef,
     offset: ["start end", "center 55%"],
   });
-
   // Spring physics for butter-smooth trackpad/wheel scroll response
   const smoothProgress = useSpring(scrollYProgress, {
     stiffness: 120,
@@ -141,11 +141,12 @@ export default function KeyboardDemo() {
 
   return (
     <section
-      ref={containerRef}
+
       className="relative flex min-h-[300px] xs:min-h-[340px] sm:min-h-[520px] md:min-h-[620px] lg:min-h-[700px] w-full flex-col items-center justify-center py-4 sm:py-10 md:py-16 overflow-hidden"
+      ref={containerRef}
     >
       {/* Perspective Mode Control Pill */}
-      <div className="mb-3 sm:mb-6 flex items-center gap-1 sm:gap-1.5 rounded-full border border-zinc-200/80 dark:border-white/10 bg-white/70 dark:bg-zinc-900/60 p-0.5 sm:p-1 backdrop-blur-md shadow-xs text-[10px] sm:text-[11px] font-medium text-zinc-600 dark:text-zinc-400 select-none z-20">
+      <div className="mb-3 sm:mb-6 flex items-center gap-1 sm:gap-1.5 rounded-full border border-zinc-200/80 dark:border-white/10 bg-white/70 dark:bg-zinc-900/60 p-0.5 sm:p-1 backdrop-blur-md shadow-xs text-[10px] sm:text-[11px] font-medium text-zinc-600 dark:text-zinc-400 select-none z-20 ">
         <button
           type="button"
           onClick={() => setPerspectiveMode("auto")}
@@ -184,30 +185,15 @@ export default function KeyboardDemo() {
         </button>
       </div>
 
-      {/* Interactive Helper Hint */}
-      <div className="mb-3 sm:mb-6 flex items-center gap-1.5 px-1 py-0.5 sm:py-1 rounded-full bg-blue-500/10 dark:bg-blue-500/15 border border-blue-500/20 text-blue-600 dark:text-blue-400 text-[10px] sm:text-[11px] font-semibold select-none z-20 text-center">
-        <span className={cn("bg-blue-600 text-white px-1 py-1 rounded-full")}>
-          <IconHandClick size={15} stroke={2} />
-        </span>
-        <motion.span
-          variants={{
-            hidden: {},
-            visible: { transition: { staggerChildren: 0.035 } },
-          }}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, amount: 0.8 }}
-          className="mr-2 text-shadow-xs whitespace-pre"
-        >
-          {"Click any key to place a bid".split("").map((letter, i) => (
-            <motion.span
-              key={i}
-              variants={{ hidden: { opacity: 0 }, visible: { opacity: 1 } }}
-            >
-              {letter}
-            </motion.span>
-          ))}
-        </motion.span>
+      {/* Interactive Helper Hint with TextHoverEffect */}
+      <div className="absolute bottom-0 sm:bottom-1 md:bottom-2 inset-x-0 w-full flex justify-center items-center px-4 z-20 pointer-events-auto">
+        <div className="w-full max-w-5xl h-20 sm:h-28 md:h-36 lg:h-40 flex items-center justify-center">
+          <TextHoverEffect
+            text="CLICK ANY KEY TO CLAIM"
+            containerRef={containerRef}
+
+          />
+        </div>
       </div>
 
       {/* 3D Perspective Stage Container */}

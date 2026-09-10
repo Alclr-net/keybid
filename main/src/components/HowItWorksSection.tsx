@@ -3,46 +3,11 @@
 import React, { useState, useEffect } from "react";
 import { useMotionValue, useMotionTemplate, motion } from "motion/react";
 import ScrollReveal from "@/src/components/ui/ScrollReveal";
-import Tabs8 from "@/src/components/ui/tabs-08";
 import { generateRandomString, Icon } from "@/src/components/ui/evervault-card";
 import { cn } from "@/src/lib/utils";
 import Ping from "./Ping";
 import { useKeysStore } from "@/lib/store/keysStore";
-
-
-interface StepItem {
-  num: string;
-  title: string;
-  desc: string;
-  tag: string;
-}
-
-const STEPS: StepItem[] = [
-  {
-    num: "01",
-    title: "Pick a key",
-    desc: "Browse every available key on the Apple Magic Keyboard. Each key has its location, current top bid, and click analytics. Choose the key that represents your brand.",
-    tag: "Step 1",
-  },
-  {
-    num: "02",
-    title: "Place your bid",
-    desc: "Enter your bid starting at $10 or outbid the current holder. If someone places a higher bid before the round closes, you'll be alerted instantly.",
-    tag: "Step 2",
-  },
-  {
-    num: "03",
-    title: "Win & send your logo",
-    desc: "When the auction closes, top bidders win their slot. Send your vector logo and I'll have custom precision decals printed and applied to my Apple Magic Keyboard.",
-    tag: "Step 3",
-  },
-  {
-    num: "04",
-    title: "Build with me",
-    desc: "Your brand lives right under my fingertips every day as I build and ship design engineering projects, recorded demos, and desk setup showcases.",
-    tag: "Step 4",
-  },
-];
+import { HOW_IT_WORKS_STEPS, type StepItem } from "@/lib/constant";
 
 function HowItWorksEvervaultCard({ step }: { step: StepItem }) {
   const mouseX = useMotionValue(0);
@@ -74,7 +39,7 @@ function HowItWorksEvervaultCard({ step }: { step: StepItem }) {
         "group/card relative flex flex-col justify-between p-6 sm:p-7 rounded-2xl border transition-all duration-300 overflow-hidden select-none cursor-pointer",
         "bg-white dark:bg-zinc-900/50 border-zinc-300 dark:border-white/10 backdrop-blur-xl",
         "shadow-[0_8px_30px_rgba(0,0,0,0.06),0_1px_3px_rgba(0,0,0,0.04)] hover:shadow-2xl hover:scale-108 hover:border-zinc-400 dark:hover:border-white/25",
-        "h-full min-h-[340px] sm:min-h-[360px]"
+        "h-full min-h-[240px] sm:min-h-[360px]"
       )}
     >
       {/* Corner crosshair icons */}
@@ -157,8 +122,8 @@ export default function HowItWorksSection() {
 
         {/* 4 Cards Grid with Evervault Hover Reveal */}
         <ScrollReveal delay={0.1}>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 items-stretch text-shadow-xs">
-            {STEPS.map((step) => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 items-stretch text-shadow-xs ">
+            {HOW_IT_WORKS_STEPS.map((step) => (
               <HowItWorksEvervaultCard key={step.num} step={step} />
             ))}
           </div>
@@ -231,20 +196,6 @@ export default function HowItWorksSection() {
           </div>
         </ScrollReveal>
 
-        {/* Interactive Placement Explorer */}
-        <div className="mt-12 sm:mt-16 pt-10 sm:pt-14 border-t border-zinc-200/80 dark:border-white/10">
-          <ScrollReveal delay={0.15}>
-            <div className="mb-6">
-              <span className="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider font-mono">
-                Placement Explorer
-              </span>
-              <h3 className="font-display text-xl sm:text-2xl font-bold tracking-tight text-zinc-950 dark:text-white mt-1">
-                Explore your sponsorship options.
-              </h3>
-            </div>
-            <Tabs8 />
-          </ScrollReveal>
-        </div>
       </div>
     </section>
   );

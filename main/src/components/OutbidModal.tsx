@@ -550,22 +550,6 @@ export default function OutbidModal({
                       <span className="text-zinc-700 dark:text-zinc-300 truncate max-w-[180px]">{paymentSuccess.orderId}</span>
                     </div>
                   </div>
-
-                  {/* Non-Refundable Notice */}
-                  <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-900 dark:text-amber-300 text-[11px] text-left flex items-start gap-2 leading-relaxed">
-                    <IconAlertCircle size={16} className="shrink-0 text-amber-600 dark:text-amber-400 mt-0.5" />
-                    <span>
-                      All bid payments are final and non-refundable, including if you are later outbid. View our{" "}
-                      <button
-                        type="button"
-                        onClick={() => setTermsModalOpen(true)}
-                        className="underline font-semibold hover:text-amber-950 dark:hover:text-amber-200 cursor-pointer"
-                      >
-                        Terms and Conditions
-                      </button>.
-                    </span>
-                  </div>
-
                   {/* Close CTA */}
                   <div className="p-[2px] w-full rounded-md transition-all duration-200 ease-out shadow-xs bg-blue-600/20">
                     <button
@@ -597,9 +581,6 @@ export default function OutbidModal({
                     <h2 className="text-lg sm:text-xl font-bold tracking-tight text-zinc-950 dark:text-white">
                       {targetSlot ? `Key ${targetSlot}` : "Claim Your Keycap"}
                     </h2>
-                    <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
-                      Apple Magic Keyboard · 1.8 × 1.8 cm Hardware Placement
-                    </p>
                     {currentHighest > 0 ? (
                       <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-1">
                         Current leading bid <strong className="font-bold text-zinc-950 dark:text-white">${currentHighest}</strong>
@@ -770,21 +751,6 @@ export default function OutbidModal({
                         </div>
                       )}
                     </div>
-                  </div>
-
-                  {/* Non-Refundable Notice */}
-                  <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-[11px] text-amber-900 dark:text-amber-300 flex items-start gap-2 leading-relaxed">
-                    <IconAlertCircle size={15} className="shrink-0 text-amber-600 dark:text-amber-400 mt-0.5" />
-                    <span>
-                      All bid payments are final. View our{" "}
-                      <button
-                        type="button"
-                        onClick={() => setTermsModalOpen(true)}
-                        className="underline font-semibold hover:text-amber-950 dark:hover:text-amber-200 cursor-pointer"
-                      >
-                        Terms
-                      </button>.
-                    </span>
                   </div>
 
                   {/* Terms Agreement Checkbox */}

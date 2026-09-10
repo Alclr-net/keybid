@@ -8,6 +8,7 @@ import OutbidModal from './OutbidModal';
 import type { Key } from '@/types/database';
 import { useKeysStore } from '@/lib/store/keysStore';
 import Ping from './Ping';
+import { CANVAS_TEXT_COLORS } from '@/lib/constant';
 
 function HeroSection() {
     const keysList = useKeysStore((state) => state.keys);
@@ -53,13 +54,13 @@ function HeroSection() {
         <section className="w-full pt-12 sm:pt-24 md:pt-28 pb-10 sm:pb-16 px-4 flex flex-col items-center text-center">
             {/* Live Pool Pill */}
             <ScrollReveal delay={0.05} distance={15}>
-                <button className={cn("group inline-flex items-center gap-2 px-1.5 py-1 mb-4 rounded-full bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-white/10 transition-all text-xs sm:text-sm font-medium text-zinc-700 dark:text-zinc-300 shadow-2xs hover:border-zinc-300 dark:hover:border-white/20")}>
+                <button className={cn("group inline-flex items-center gap-2 px-1  py-1 mb-4 rounded-full bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-white/10 transition-all text-xs sm:text-sm font-medium text-zinc-700 dark:text-zinc-300 shadow-2xs hover:border-zinc-300 dark:hover:border-white/20")}>
                     <span className="flex items-center gap-2">
                         <span className={cn(
-                            "text-xs font-semibold bg-blue-600 rounded-full text-white py-0.5 px-2.5 shadow-xs",
+                            "text-xs font-semibold bg-red-500 rounded-full text-white py-1 px-2.5 shadow-xs ",
                             "shadow-[0_2px_8px_rgba(37,99,235,0.25)]"
-                        )}>New</span>
-                        <span className="pr-2 text-zinc-700 dark:text-zinc-300">Bidding on a Key is here!</span>
+                        )}>Hot</span>
+                        <span className="pr-1 sm:pr-2 text-zinc-700 dark:text-zinc-300 text-sm">Bidding just went live!</span>
                     </span>
                 </button>
             </ScrollReveal>
@@ -71,18 +72,7 @@ function HeroSection() {
                     <CanvasText
                         text="the key"
                         backgroundClassName="bg-blue-600 dark:bg-blue-500"
-                        colors={[
-                            "rgba(0, 153, 255, 1)",
-                            "rgba(0, 153, 255, 0.9)",
-                            "rgba(0, 153, 255, 0.8)",
-                            "rgba(0, 153, 255, 0.7)",
-                            "rgba(0, 153, 255, 0.6)",
-                            "rgba(0, 153, 255, 0.5)",
-                            "rgba(0, 153, 255, 0.4)",
-                            "rgba(0, 153, 255, 0.3)",
-                            "rgba(0, 153, 255, 0.2)",
-                            "rgba(0, 153, 255, 0.1)",
-                        ]}
+                        colors={CANVAS_TEXT_COLORS}
                         lineGap={4}
                         animationDuration={20}
                     />{" "}
@@ -90,18 +80,7 @@ function HeroSection() {
                     <CanvasText
                         text="company name"
                         backgroundClassName="bg-blue-600 dark:bg-blue-500"
-                        colors={[
-                            "rgba(0, 153, 255, 1)",
-                            "rgba(0, 153, 255, 0.9)",
-                            "rgba(0, 153, 255, 0.8)",
-                            "rgba(0, 153, 255, 0.7)",
-                            "rgba(0, 153, 255, 0.6)",
-                            "rgba(0, 153, 255, 0.5)",
-                            "rgba(0, 153, 255, 0.4)",
-                            "rgba(0, 153, 255, 0.3)",
-                            "rgba(0, 153, 255, 0.2)",
-                            "rgba(0, 153, 255, 0.1)",
-                        ]}
+                        colors={CANVAS_TEXT_COLORS}
                         lineGap={4}
                         animationDuration={20}
                     />
@@ -124,17 +103,17 @@ function HeroSection() {
                     />
 
                     {/* Near-the-fold Credibility & Social Proof line */}
-                    <div className="mt-4 flex items-center justify-center gap-2 sm:gap-3 text-xs text-zinc-500 dark:text-zinc-400 font-mono select-none">
+                    <div className="mt-4 flex items-center justify-center gap-2 sm:gap-2  text-[10px] sm:text-xs  text-zinc-500 dark:text-zinc-400 font-mono select-none">
                         <Ping>
-                            <span>{keysList.length > 0 ? `${keysList.length} keys claimed` : "Live keys registry"}</span>
+                            <span className='text-nowrap'>{keysList.length > 0 ? `${keysList.length} keys claimed` : "Live keys registry"}</span>
                         </Ping>
                         <Ping color={"bg-blue-600"}>
-                            <span className="text-zinc-700 dark:text-zinc-300 font-semibold">
+                            <span className="text-zinc-700 dark:text-zinc-300 font-semibold text-nowrap">
                                 ${keysList.reduce((acc, k) => acc + (k.current_bid_amount || 0), 0)} in active bids
                             </span>
                         </Ping>
                         <Ping color={"bg-red-500"}>
-                            <span>Daily live desk placement</span>
+                            <span className='text-nowrap'>Daily live desk placement</span>
                         </Ping>
                     </div>
                 </div>

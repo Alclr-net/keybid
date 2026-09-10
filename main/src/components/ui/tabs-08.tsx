@@ -66,7 +66,7 @@ const keybidStudio: TabItem[] = [
         </div>
 
         {/* 3D Keycap Visual */}
-        <div className="py-4 flex items-center justify-center gap-6">
+        <div className="py-4 flex items-center justify-center gap-4 sm:gap-6">
           <div className="relative flex flex-col items-center">
 
             {/* Caliper measurement lines */}
@@ -276,19 +276,18 @@ const Tabs8 = ({
   return (
     <Tabs defaultValue={defaultValue} className={`w-full gap-6 ${className || ""}`}>
       {/* Tab Navigation Pill Bar */}
-      <div className="w-fit max-w-full overflow-x-auto overflow-y-hidden scrollbar-hide py-1">
-        <TabsList className="bg-transparent flex w-max justify-start gap-2 p-0">
+      <div className="w-full sm:w-fit max-w-full py-1">
+        <TabsList className="bg-transparent flex flex-col sm:flex-row w-full sm:w-auto justify-start gap-2 p-0">
           {items.map((tab) => (
             <TabsTrigger
               key={tab.value}
               value={tab.value}
               className={cn(
-                "rounded-full px-5 py-2.5 text-xs font-semibold uppercase tracking-wider transition-all cursor-pointer select-none",
-                "bg-zinc-100 dark:bg-zinc-900 text-zinc-600  dark:text-zinc-200",
+                "w-full sm:w-auto justify-center text-center rounded-full px-5 py-2.5 text-xs font-semibold uppercase tracking-wider transition-all cursor-pointer select-none",
+                "bg-zinc-100 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-200",
                 "data-[state=active]:bg-blue-600 data-[state=active]:text-white",
                 "border border-zinc-200/90 dark:border-white/10 data-[state=active]:border-blue-600",
-                "data-[state=active]:shadow-[0_4px_16px_rgba(37,99,235,0),inset_0_1px_0.5px_rgba(255,255,255,0.25)] "
-
+                "data-[state=active]:shadow-[0_4px_16px_rgba(37,99,235,0),inset_0_1px_0.5px_rgba(255,255,255,0.25)]"
               )}
             >
               {tab.name}

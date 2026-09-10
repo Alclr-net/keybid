@@ -5,6 +5,7 @@ import { cn } from "@/src/lib/utils";
 import StackIcon from "./StackIcon";
 import { IconMenu2, IconX } from '@tabler/icons-react';
 import { AnimatePresence, motion, useScroll, useTransform } from "motion/react";
+import Ping from './Ping';
 
 function Navbar() {
 

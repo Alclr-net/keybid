@@ -34,77 +34,7 @@ export const CornerIcon = ({ className, ...rest }: React.SVGProps<SVGSVGElement>
   );
 };
 
-interface PodiumTier {
-  rank: number;
-  label: string;
-  badgeBg: string;
-  badgeText: string;
-  badgeBorder: string;
-  buttonColor: string;
-  buttonOuterColor: string;
-  colors: number[][];
-  containerBg: string;
-  animationSpeed: number;
-  dotSize: number;
-  borderHover: string;
-}
-
-const PODIUM_CONFIG: Record<number, PodiumTier> = {
-  1: {
-    rank: 1,
-    label: "Gold Rank",
-    badgeBg: "bg-amber-500/15 dark:bg-amber-500/20",
-    badgeText: "text-amber-800 dark:text-amber-400",
-    badgeBorder: "border-amber-500/50",
-    buttonColor: "bg-amber-400 hover:bg-amber-500 text-zinc-950",
-    buttonOuterColor: "bg-amber-500/25",
-    colors: [
-      [245, 158, 11],
-      [251, 191, 36],
-      [217, 119, 6],
-    ],
-    containerBg: "bg-amber-950/80 dark:bg-black",
-    animationSpeed: 3.2,
-    dotSize: 2.5,
-    borderHover: "hover:border-amber-500/60 dark:hover:border-amber-500/70",
-  },
-  2: {
-    rank: 2,
-    label: "Silver Rank",
-    badgeBg: "bg-slate-500/15 dark:bg-slate-400/20",
-    badgeText: "text-slate-800 dark:text-slate-300",
-    badgeBorder: "border-slate-400/50",
-    buttonColor: "bg-blue-600 hover:bg-blue-500 text-white",
-    buttonOuterColor: "bg-blue-600/20",
-    colors: [
-      [203, 213, 225],
-      [148, 163, 184],
-      [226, 232, 240],
-    ],
-    containerBg: "bg-slate-950/80 dark:bg-black",
-    animationSpeed: 3.2,
-    dotSize: 2.3,
-    borderHover: "hover:border-slate-400/60 dark:hover:border-slate-400/70",
-  },
-  3: {
-    rank: 3,
-    label: "Bronze Rank",
-    badgeBg: "bg-amber-900/15 dark:bg-amber-800/20",
-    badgeText: "text-amber-900 dark:text-amber-400",
-    badgeBorder: "border-amber-700/50",
-    buttonColor: "bg-blue-600 hover:bg-blue-500 text-white",
-    buttonOuterColor: "bg-blue-600/20",
-    colors: [
-      [180, 83, 9],
-      [217, 119, 6],
-      [146, 64, 14],
-    ],
-    containerBg: "bg-amber-950/80 dark:bg-black",
-    animationSpeed: 3.0,
-    dotSize: 2.5,
-    borderHover: "hover:border-amber-700/60 dark:hover:border-amber-700/70",
-  },
-};
+import { PODIUM_CONFIG, type PodiumTier } from "@/lib/constant";
 
 function PodiumCard({
   keyData,

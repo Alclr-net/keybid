@@ -1,7 +1,5 @@
 "use client";
 import React, {
-  createContext,
-  useContext,
   useEffect,
   useRef,
   useState,
@@ -11,6 +9,12 @@ import { motion, AnimatePresence } from "motion/react";
 import { cn } from "@/src/lib/utils";
 import type { Key } from "@/types/database";
 import { useKeysStore } from "@/lib/store/keysStore";
+import { KEY_DISPLAY_LABELS } from "@/lib/constant";
+import {
+  useKeyboardStore,
+  useKeyboardSound,
+  useKeyboardContext,
+} from "@/lib/store/keyboardStore";
 import {
   IconBrightnessDown,
   IconBrightnessUp,
@@ -32,39 +36,6 @@ import {
   IconCaretLeftFilled,
   IconCaretDownFilled,
 } from "@tabler/icons-react";
-
-// Map key codes to display labels
-const KEY_DISPLAY_LABELS: Record<string, string> = {
-  Escape: "esc",
-  Backspace: "delete",
-  Tab: "tab",
-  Enter: "return",
-  ShiftLeft: "shift",
-  ShiftRight: "shift",
-  ControlLeft: "control",
-  ControlRight: "control",
-  AltLeft: "option",
-  AltRight: "option",
-  MetaLeft: "command",
-  MetaRight: "command",
-  Space: "space",
-  CapsLock: "caps",
-  ArrowUp: "↑",
-  ArrowDown: "↓",
-  ArrowLeft: "←",
-  ArrowRight: "→",
-  Backquote: "`",
-  Minus: "-",
-  Equal: "=",
-  BracketLeft: "[",
-  BracketRight: "]",
-  Backslash: "\\",
-  Semicolon: ";",
-  Quote: "'",
-  Comma: ",",
-  Period: ".",
-  Slash: "/",
-};
 
 const getKeyDisplayLabel = (keyCode: string): string => {
   if (KEY_DISPLAY_LABELS[keyCode]) return KEY_DISPLAY_LABELS[keyCode];
@@ -103,29 +74,6 @@ export const getKeySlotFromCode = (keyCode: string): string => {
   if (keyCode.startsWith("F") && keyCode.length <= 3) return keyCode;
   return keyCode;
 };
-
-interface KeyboardContextType {
-  pressedKeys: Set<string>;
-  setPressed: (keyCode: string) => void;
-  setReleased: (keyCode: string) => void;
-  lastPressedKey: string | null;
-  onKeyClick?: (keySlot: string, keyData: Key | null) => void;
-  keysMap: Map<string, Key>;
-  isLoading: boolean;
-  keysCount: number;
-}
-
-const KeyboardContext = createContext<KeyboardContextType | null>(null);
-
-export const useKeyboardSound = () => {
-  const context = useContext(KeyboardContext);
-  if (!context) {
-    throw new Error("useKeyboardSound must be used within KeyboardProvider");
-  }
-  return context;
-};
-
-export const useKeyboardContext = useKeyboardSound;
 
 function KeyLogoContent({
   logo,
@@ -222,13 +170,14 @@ const KeyboardProvider = ({
   /** Optional pre-fetched keys — if supplied, internal fetch is skipped */
   keys?: Key[];
 }) => {
-  const [pressedKeys, setPressedKeys] = useState<Set<string>>(new Set());
-  const [lastPressedKey, setLastPressedKey] = useState<string | null>(null);
   const [isVisible, setIsVisible] = useState(false);
   const storeKeys = useKeysStore((state) => state.keys);
   const storeLoading = useKeysStore((state) => state.isLoading);
   const activeKeys = externalKeys !== undefined ? externalKeys : storeKeys;
   const isLoading = externalKeys !== undefined ? false : storeLoading;
+
+  const setPressed = useKeyboardStore((state) => state.setPressed);
+  const setReleased = useKeyboardStore((state) => state.setReleased);
 
   const keysMap = React.useMemo(() => {
     const map = new Map<string, Key>();
@@ -239,18 +188,14 @@ const KeyboardProvider = ({
     return map;
   }, [activeKeys]);
 
-  const setPressed = useCallback((keyCode: string) => {
-    setPressedKeys((prev) => new Set(prev).add(keyCode));
-    setLastPressedKey(keyCode);
-  }, []);
+  useEffect(() => {
+    useKeyboardStore.getState().setOnKeyClick(onKeyClick);
+  }, [onKeyClick]);
 
-  const setReleased = useCallback((keyCode: string) => {
-    setPressedKeys((prev) => {
-      const next = new Set(prev);
-      next.delete(keyCode);
-      return next;
-    });
-  }, []);
+  useEffect(() => {
+    useKeyboardStore.getState().setKeysMap(keysMap);
+    useKeyboardStore.getState().setIsLoading(isLoading);
+  }, [keysMap, isLoading]);
 
   // Track visibility with IntersectionObserver
   useEffect(() => {
@@ -297,22 +242,7 @@ const KeyboardProvider = ({
     };
   }, [syncPhysicalKeyboard, isVisible, setPressed, setReleased]);
 
-  return (
-    <KeyboardContext.Provider
-      value={{
-        pressedKeys,
-        setPressed,
-        setReleased,
-        lastPressedKey,
-        onKeyClick,
-        keysMap,
-        isLoading,
-        keysCount: keysMap.size,
-      }}
-    >
-      {children}
-    </KeyboardContext.Provider>
-  );
+  return <>{children}</>;
 };
 
 const KeystrokePreview = () => {

@@ -1,6 +1,7 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { useTheme } from 'next-themes';
 import { cn } from '@/src/lib/utils';
 import { DitherShader } from '@/src/components/ui/dither-shader';
 import imgSrc from '@/public/imgSrc.jpg';
@@ -11,8 +12,7 @@ import { FaWifi } from "react-icons/fa";
 import RealTimeClock from './DateTime';
 import { IosDock } from './IosDock';
 import MacWindow from './MacWindow';
-
-
+import { DITHER_SHADER_CONFIG } from '@/lib/constant';
 
 export type MacDisplayProps = {
   className?: string;
@@ -20,6 +20,16 @@ export type MacDisplayProps = {
 };
 
 function MacDisplay({ className, children }: MacDisplayProps) {
+  const { theme, resolvedTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const isDark = mounted ? (resolvedTheme || theme) === 'dark' : false;
+  const shaderConfig = isDark ? DITHER_SHADER_CONFIG.dark : DITHER_SHADER_CONFIG.light;
+
   return (
     <section className={cn(" hidden  md:flex flex-col items-center justify-center w-full py-4 sm:py-8 ", className)}>
 
@@ -47,13 +57,15 @@ function MacDisplay({ className, children }: MacDisplayProps) {
               src={imgSrc.src}
               gridSize={2}
               ditherMode="bayer"
-              colorMode="original"
+              colorMode={shaderConfig.colorMode}
               invert={false}
               animated={false}
               animationSpeed={0.02}
-              primaryColor="#000000"
-              secondaryColor="#f5f5f5"
-              threshold={0.5}
+              primaryColor={shaderConfig.primaryColor}
+              secondaryColor={shaderConfig.secondaryColor}
+              brightness={shaderConfig.brightness}
+              contrast={shaderConfig.contrast}
+              threshold={shaderConfig.threshold}
               objectFit="cover"
               className="absolute inset-0 w-full h-full"
             />
@@ -118,7 +130,7 @@ function MacDisplay({ className, children }: MacDisplayProps) {
             )}
           >
             {/* Cable Pass-Through Hole (Top Center, partially intersecting top edge like real Studio Display) */}
-            <div className="relative -top-2 sm:-top-10 w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 flex items-center justify-center">
+            <div className="relative -top-2 sm:-top-10 w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 flex items-center justify-center ">
               {/* Outer Chamfer / Milled Aluminum Rim */}
               <div
                 className={cn(
@@ -131,7 +143,7 @@ function MacDisplay({ className, children }: MacDisplayProps) {
                 <div
                   className={cn(
                     "w-full h-full rounded-full",
-                    "bg-white"
+                    "bg-white dark:bg-black"
                   )}
                 />
               </div>
@@ -159,8 +171,8 @@ function MacDisplay({ className, children }: MacDisplayProps) {
 
             {/* Dual Black Rubber Feet underneath at corners (as seen in reference image) */}
             <div className="absolute -bottom-1 inset-x-2 sm:inset-x-3 flex justify-between">
-              <div className="w-3.5 sm:w-5 h-1 sm:h-1.5 rounded-b-sm bg-neutral-900 shadow-sm" />
-              <div className="w-3.5 sm:w-5 h-1 sm:h-1.5 rounded-b-sm bg-neutral-900 shadow-sm" />
+              <div className="w-8 sm:w-10 h-0.5 sm:h-1 rounded-b-sm bg-neutral-900 dark:bg-neutral-600 shadow-sm" />
+              <div className="w-8 sm:w-10 h-0.5 sm:h-1 rounded-b-sm bg-neutral-900 dark:bg-neutral-600 shadow-sm" />
             </div>
           </div>
 

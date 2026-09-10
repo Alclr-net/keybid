@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { IconWorld, IconAlertCircle } from "@tabler/icons-react";
 import { cn } from "@/src/lib/utils";
+import { getFaviconProviders } from "@/lib/constant";
 
 interface CompanyInfo {
     domain: string;
@@ -44,11 +45,7 @@ export function UriClaimInput({
     const resolveCompany = useCallback((domain: string) => {
         setStatus("loading");
 
-        const providers = [
-            `https://www.google.com/s2/favicons?domain=${domain}&sz=128`,
-            `https://icons.duckduckgo.com/ip3/${domain}.ico`,
-            `https://${domain}/favicon.ico`,
-        ];
+        const providers = getFaviconProviders(domain);
 
         const loadImage = (url: string): Promise<HTMLImageElement> => {
             return new Promise((resolve, reject) => {
