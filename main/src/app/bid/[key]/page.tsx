@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback, use, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import Image from "next/image";
+import axios from "axios";
 import {
   IconArrowLeft,
   IconShieldCheck,
@@ -22,6 +23,7 @@ import TermsModal from "@/src/components/TermsModal";
 import Ping from "@/src/components/Ping";
 import { ThemeToggle } from "@/src/components/ThemeToggle";
 import { cn } from "@/src/lib/utils";
+import { extractValidDomain } from "@/lib/constant";
 
 interface KeyLiveData {
   keySlot: string;
@@ -40,46 +42,24 @@ interface KeyLiveData {
   lastUpdated: string;
 }
 
-interface RazorpayOptions {
-  key: string;
-  amount: number;
-  currency: string;
-  name: string;
-  description: string;
-  image?: string;
-  order_id: string;
-  prefill?: {
-    name?: string;
-    email?: string;
-  };
-  theme?: {
-    color?: string;
-  };
-  handler: (response: {
-    razorpay_payment_id: string;
-    razorpay_order_id: string;
-    razorpay_signature: string;
-  }) => void | Promise<void>;
-  modal?: {
-    ondismiss?: () => void;
-  };
+interface CashfreeCheckoutOptions {
+  paymentSessionId: string;
+  redirectTarget?: "_self" | "_blank" | "_modal" | "_top" | HTMLElement;
+  [key: string]: any;
 }
 
-interface RazorpayErrorResponse {
-  error: {
-    description?: string;
-    code?: string;
-  };
-}
-
-interface RazorpayInstance {
-  open: () => void;
-  on: (event: string, callback: (response: RazorpayErrorResponse) => void) => void;
+interface CashfreeInstance {
+  checkout: (options: CashfreeCheckoutOptions) => Promise<any> | void;
+  [key: string]: any;
 }
 
 declare global {
   interface Window {
-    Razorpay?: new (options: RazorpayOptions) => RazorpayInstance;
+    Cashfree?: {
+      (config?: { mode?: "sandbox" | "production" }): CashfreeInstance;
+      new(config?: { mode?: "sandbox" | "production" }): CashfreeInstance;
+      checkout?: (options: CashfreeCheckoutOptions) => Promise<any> | void;
+    };
   }
 }
 
@@ -151,12 +131,12 @@ function BidFormContent({ keySlot }: { keySlot: string }) {
     orderId: string;
   } | null>(null);
 
-  // Load Razorpay checkout script
+  // Load Cashfree checkout script
   useEffect(() => {
-    if (typeof window !== "undefined" && !document.getElementById("razorpay-sdk")) {
+    if (typeof window !== "undefined" && !document.getElementById("cashfree-sdk")) {
       const script = document.createElement("script");
-      script.id = "razorpay-sdk";
-      script.src = "https://checkout.razorpay.com/v1/checkout.js";
+      script.id = "cashfree-sdk";
+      script.src = "https://sdk.cashfree.com/js/v3/cashfree.js";
       script.async = true;
       document.body.appendChild(script);
     }
@@ -167,10 +147,10 @@ function BidFormContent({ keySlot }: { keySlot: string }) {
     if (!silent) setLoadingLive(true);
     setLiveError(null);
     try {
-      const res = await fetch(`/api/keys/${encodeURIComponent(keySlot)}`, {
-        cache: "no-store",
+      const res = await axios.get(`/api/keys/${encodeURIComponent(keySlot)}`, {
+        headers: { "Cache-Control": "no-cache" },
       });
-      const json = await res.json();
+      const json = res.data;
       if (json.success && json.data) {
         const data: KeyLiveData = json.data;
         setLiveData(data);
@@ -198,7 +178,7 @@ function BidFormContent({ keySlot }: { keySlot: string }) {
         setLiveError(json.error || "Failed to load live key details");
       }
     } catch (err: any) {
-      setLiveError(err?.message || "Failed to contact KeyBid server");
+      setLiveError(err?.response?.data?.error || err?.message || "Failed to contact KeyBid server");
     } finally {
       if (!silent) setLoadingLive(false);
     }
@@ -242,7 +222,7 @@ function BidFormContent({ keySlot }: { keySlot: string }) {
     email.includes("@") &&
     !outbidAlert;
 
-  // Handle Razorpay Payment Flow
+  // Handle Payment Flow
   const handleInitiatePayment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!canSubmit) return;
@@ -251,92 +231,73 @@ function BidFormContent({ keySlot }: { keySlot: string }) {
     setOutbidAlert(null);
 
     try {
+      // Validate website URL if provided
+      const trimmedWebsite = website.trim();
+      let sanitizedWebsite = "";
+      let effectiveIconUrl = logoUrl;
+      if (trimmedWebsite) {
+        const validDomain = extractValidDomain(trimmedWebsite);
+        if (!validDomain) {
+          alert("Please enter a valid, well-formed website URL (e.g. https://yourcompany.com)");
+          setIsSubmitting(false);
+          return;
+        }
+        sanitizedWebsite = trimmedWebsite.startsWith("http://") || trimmedWebsite.startsWith("https://")
+          ? trimmedWebsite
+          : `https://${trimmedWebsite}`;
+        if (!effectiveIconUrl) {
+          effectiveIconUrl = `https://www.google.com/s2/favicons?domain=${encodeURIComponent(validDomain)}&sz=128`;
+        }
+      }
+
       // 1. Live Outbid Protection: Check server-side order creation
-      const orderRes = await fetch("/api/payment/create-order", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      const orderRes = await axios.post(
+        "/api/payments/create-order",
+        {
           keySlot,
           bidAmount,
           brandName: brandName.trim(),
           email: email.trim(),
-          website: website.trim(),
-          iconUrl: logoUrl,
+          website: sanitizedWebsite || trimmedWebsite,
+          iconUrl: effectiveIconUrl,
           lastSeenHighestBid: currentHighest,
-        }),
-      });
+        },
+        {
+          validateStatus: (status) => status < 500,
+        }
+      );
 
-      const orderData = await orderRes.json();
+      const orderData = orderRes.data;
 
       // If outbid occurred while filling form, server returns 409 Conflict
-      if (orderRes.status === 409 || orderData.code === "OUTBID") {
+      if (orderRes.status === 409 || orderData?.code === "OUTBID") {
         setOutbidAlert({
-          highestBid: orderData.currentHighestBid || currentHighest,
-          minNext: orderData.minimumNextBid || Math.max(BASE_PRICE, currentHighest + 1),
-          message: orderData.error || `This key was just outbid at $${orderData.currentHighestBid} — refresh to see the new minimum`,
+          highestBid: orderData?.currentHighestBid || currentHighest,
+          minNext: orderData?.minimumNextBid || Math.max(BASE_PRICE, currentHighest + 1),
+          message: orderData?.error || `This key was just outbid at $${orderData?.currentHighestBid} — refresh to see the new minimum`,
         });
-        setBidAmount(orderData.minimumNextBid || Math.max(BASE_PRICE, currentHighest + 1));
+        setBidAmount(orderData?.minimumNextBid || Math.max(BASE_PRICE, currentHighest + 1));
         setIsSubmitting(false);
         return;
       }
 
-      if (!orderRes.ok || !orderData.success) {
-        throw new Error(orderData.error || "Failed to generate payment order");
+      if (orderRes.status >= 400 || !orderData?.success) {
+        throw new Error(orderData?.error || "Failed to generate payment order");
       }
 
-      const { orderId, amount, keyId, isLiveRazorpay } = orderData;
+      const { orderId } = orderData;
 
-      // 2. Open Razorpay Checkout or Sandbox Simulator
-      if (typeof window.Razorpay === "function" && isLiveRazorpay) {
-        const options = {
-          key: keyId,
-          amount: amount,
-          currency: "USD",
-          name: "KeyBid Hardware Auction",
-          description: `Leading Bid for Key [${keySlot}] · Apple Magic Keyboard`,
-          image: "/icon_no_border.svg",
-          order_id: orderId,
-          prefill: {
-            name: brandName,
-            email: email,
-          },
-          theme: {
-            color: "#2563eb",
-          },
-          handler: async function (response: any) {
-            // Confirm on server
-            await completePaymentVerification({
-              orderId: response.razorpay_order_id || orderId,
-              paymentId: response.razorpay_payment_id,
-              signature: response.razorpay_signature,
-            });
-          },
-          modal: {
-            ondismiss: function () {
-              // On cancellation, return to bid page with form state intact
-              setIsSubmitting(false);
-            },
-          },
-        };
-
-        const rzp = new window.Razorpay(options);
-        rzp.on("payment.failed", function (response: any) {
-          console.error("Razorpay payment failed", response.error);
-          setIsSubmitting(false);
-          alert(`Payment failed: ${response.error.description || "Transaction cancelled"}`);
+      // High-fidelity Sandbox Simulation for immediate preview without merchant keys
+      setTimeout(async () => {
+        const mockPaymentId = `pay_sim_${Date.now()}`;
+        await completePaymentVerification({
+          orderId,
+          paymentId: mockPaymentId,
+          signature: "verified_sandbox_sig",
+          resolvedWebsite: sanitizedWebsite || trimmedWebsite,
+          resolvedIconUrl: effectiveIconUrl,
         });
-        rzp.open();
-      } else {
-        // High-fidelity Sandbox Simulation for immediate preview without merchant keys
-        setTimeout(async () => {
-          const mockPaymentId = `pay_rzp_${Date.now()}`;
-          await completePaymentVerification({
-            orderId,
-            paymentId: mockPaymentId,
-            signature: "verified_sandbox_sig",
-          });
-        }, 1200);
-      }
+      }, 1200);
     } catch (err: any) {
       console.error(err);
       setIsSubmitting(false);
@@ -349,16 +310,19 @@ function BidFormContent({ keySlot }: { keySlot: string }) {
     orderId,
     paymentId,
     signature,
+    resolvedWebsite,
+    resolvedIconUrl,
   }: {
     orderId: string;
     paymentId: string;
     signature: string;
+    resolvedWebsite?: string;
+    resolvedIconUrl?: string | null;
   }) => {
     try {
-      const verifyRes = await fetch("/api/payment/verify", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      const verifyRes = await axios.post(
+        "/api/payment/verify",
+        {
           orderId,
           paymentId,
           signature,
@@ -366,14 +330,17 @@ function BidFormContent({ keySlot }: { keySlot: string }) {
           bidAmount,
           brandName: brandName.trim(),
           email: email.trim(),
-          website: website.trim(),
-          iconUrl: logoUrl,
-        }),
-      });
+          website: resolvedWebsite ?? website.trim(),
+          iconUrl: resolvedIconUrl ?? logoUrl,
+        },
+        {
+          validateStatus: (status) => status < 500,
+        }
+      );
 
-      const verifyData = await verifyRes.json();
-      if (!verifyRes.ok || !verifyData.success) {
-        throw new Error(verifyData.error || "Payment verification failed on server");
+      const verifyData = verifyRes.data;
+      if (verifyRes.status >= 400 || !verifyData?.success) {
+        throw new Error(verifyData?.error || "Payment verification failed on server");
       }
 
       // Display Post-Payment Confirmation state
@@ -789,7 +756,7 @@ function BidFormContent({ keySlot }: { keySlot: string }) {
 
                 <div className="pt-2 text-[11px] text-zinc-500 dark:text-zinc-400 font-mono flex items-center gap-1.5">
                   <IconLock size={12} className="text-emerald-600 dark:text-emerald-400" />
-                  <span>Processed securely via Razorpay in USD. Zero surprise charges.</span>
+                  <span>Processed securely in USD. Zero surprise charges.</span>
                 </div>
               </div>
 
@@ -856,7 +823,7 @@ function BidFormContent({ keySlot }: { keySlot: string }) {
               </button>
 
               <p className="text-[11px] text-center text-zinc-500 dark:text-zinc-400 font-mono">
-                Encrypted with Razorpay · Immediate receipt & notification sent to your email
+                Encrypted checkout · Immediate receipt & notification sent to your email
               </p>
             </form>
           </div>

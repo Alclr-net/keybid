@@ -34,7 +34,6 @@ export default function FaqSection() {
   return (
     <section id="faq" className="w-full py-10 sm:py-20 px-4 sm:px-6 bg-zinc-50/70 dark:bg-zinc-950/40 border-t border-zinc-300/80 dark:border-white/5">
       <div className="max-w-4xl mx-auto">
-
         {/* Section Header */}
         <ScrollReveal>
           <div className="mb-10 sm:mb-14">

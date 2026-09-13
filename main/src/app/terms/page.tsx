@@ -98,7 +98,7 @@ export default function TermsPage() {
 
             <div className="text-sm text-zinc-600 dark:text-zinc-300 space-y-3.5 leading-relaxed">
               <p>
-                All bids are one-time payments processed through Razorpay. KeyBid is the seller of the placement; Razorpay is the payment processor only and is not the merchant of record.
+                All bids are one-time payments processed through Cashfree. KeyBid is the seller of the placement; Cashfree is the payment processor only and is not the merchant of record.
               </p>
               <ul className="list-disc pl-5 space-y-2 text-sm text-zinc-600 dark:text-zinc-300">
                 <li>
@@ -139,7 +139,7 @@ export default function TermsPage() {
                     Technical Error Exception:
                   </p>
                   <p>
-                    If a payment is captured by Razorpay but, due to a technical error on our end, is not correctly reflected as a bid on the Platform, contact us on X (
+                    If a payment is captured by Cashfree but, due to a technical error on our end, is not correctly reflected as a bid on the Platform, contact us on X (
                     <a
                       href="https://x.com/seth_rachit_"
                       target="_blank"

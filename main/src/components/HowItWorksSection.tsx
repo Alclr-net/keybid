@@ -129,39 +129,6 @@ export default function HowItWorksSection() {
           </div>
         </ScrollReveal>
 
-        {/* ── Standalone Visual Break: Hardware UV-Printing & $2,400+ Stat ── */}
-        <ScrollReveal delay={0.12} distance={25}>
-          <div className="my-16 sm:my-20 relative overflow-hidden rounded-3xl bg-[#090b14] border border-blue-500/20 shadow-[0_20px_60px_-15px_rgba(30,58,138,0.25)] p-8 sm:p-12 text-white select-none">
-
-            <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-indigo-600/15 rounded-full blur-3xl pointer-events-none" />
-
-            {/* Animated Laser UV Print Beam across top */}
-            <div className="absolute top-0 inset-x-0 h-[2px] bg-gradient-to-r from-transparent via-blue-400 to-transparent opacity-70 animate-pulse" />
-
-            <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-8 lg:gap-12">
-              {/* Left Column: Big Single Stat */}
-              <div className="max-w-md">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/15 border border-blue-400/30 text-blue-400 text-xs font-mono font-bold mb-4">
-                  <Ping color={'bg-blue-400'}>
-
-                    <span>HIGHLIGHT</span>
-                  </Ping>
-                </div>
-
-                <div className="font-mono text-5xl sm:text-6xl md:text-7xl font-black tracking-tight text-white flex items-baseline gap-1">
-                  <span>${totalPool > 0 ? `${totalPool.toLocaleString()}+` : "$0"}</span>
-                </div>
-
-                <p className="font-display text-lg sm:text-xl font-bold text-zinc-200 mt-2">
-                  Claimed in active auction volume across {claimedCount > 0 ? claimedCount : "28"} keyboard {claimedCount === 1 ? "key" : "keys"}.
-                </p>
-
-
-              </div>
-            </div>
-          </div>
-        </ScrollReveal>
-
       </div>
     </section>
   );

@@ -1,17 +1,20 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "motion/react";
+import axios from "axios";
 import {
   IconX,
   IconCheck,
   IconAlertCircle,
   IconUpload,
+  IconWorld,
 } from "@tabler/icons-react";
 import type { Key } from "@/types/database";
 import { useKeysStore } from "@/lib/store/keysStore";
 import { cn } from "@/src/lib/utils";
+import { extractValidDomain, getFaviconProviders } from "@/lib/constant";
 import TermsModal from "@/src/components/TermsModal";
 
 export type OutbidTarget = Key;
@@ -27,48 +30,6 @@ interface OutbidModalProps {
   initialLogo?: string;
 }
 
-interface RazorpayOptions {
-  key: string;
-  amount: number;
-  currency: string;
-  name: string;
-  description: string;
-  image?: string;
-  order_id: string;
-  prefill?: {
-    name?: string;
-    email?: string;
-  };
-  theme?: {
-    color?: string;
-  };
-  handler: (response: {
-    razorpay_payment_id: string;
-    razorpay_order_id: string;
-    razorpay_signature: string;
-  }) => void | Promise<void>;
-  modal?: {
-    ondismiss?: () => void;
-  };
-}
-
-interface RazorpayErrorResponse {
-  error: {
-    description?: string;
-    code?: string;
-  };
-}
-
-interface RazorpayInstance {
-  open: () => void;
-  on: (event: string, callback: (response: RazorpayErrorResponse) => void) => void;
-}
-
-declare global {
-  interface Window {
-    Razorpay?: new (options: RazorpayOptions) => RazorpayInstance;
-  }
-}
 
 export default function OutbidModal({
   company,
@@ -97,9 +58,9 @@ export default function OutbidModal({
 
   const getKeySlot = (k: Key | any | null): string => {
     if (!k) return "";
-    if (typeof k.keyboard_key === "string" && k.keyboard_key) return k.keyboard_key.trim().toUpperCase();
+    if (typeof k.key_slot === "string" && k.key_slot) return k.key_slot.trim().toUpperCase();
     if (typeof k.keySlot === "string" && k.keySlot) return k.keySlot.trim().toUpperCase();
-    if (typeof k.key_name === "string" && k.key_name.trim().length === 1) return k.key_name.trim().toUpperCase();
+    if (typeof k.brand_name === "string" && k.brand_name.trim().length === 1) return k.brand_name.trim().toUpperCase();
     if (typeof k.submitted_url === "string" && k.submitted_url) {
       try {
         const domain = k.submitted_url.replace(/^(https?:\/\/)?(www\.)?/, "").split("/")[0].split(":")[0];
@@ -115,7 +76,7 @@ export default function OutbidModal({
 
   const getKeyName = (k: Key | any | null): string => {
     if (!k) return "";
-    if (typeof k.key_name === "string" && k.key_name) return k.key_name;
+    if (typeof k.brand_name === "string" && k.brand_name) return k.brand_name;
     if (typeof k.name === "string" && k.name) return k.name;
     if (typeof k.submitted_url === "string" && k.submitted_url) {
       try {
@@ -154,8 +115,8 @@ export default function OutbidModal({
     (company ? getKeySlot(company) : "") || initialKeySlot || ""
   );
 
-  const rawBase = Number(process.env.NEXT_PUBLIC_BASE_PRICE || process.env.BASE_PRICE || 10);
-  const BASE_PRICE = !isNaN(rawBase) && rawBase > 0 ? rawBase : 10;
+  const rawBase = Number(process.env.BASE_PRICE || 10);
+  const BASE_PRICE = !isNaN(rawBase) && rawBase > 0 ? rawBase : 0;
 
   const targetSlot = keySlot.trim().toUpperCase();
 
@@ -168,8 +129,8 @@ export default function OutbidModal({
     if (targetSlot) {
       const match = storeKeys.find(
         (k) =>
-          k.keyboard_key?.trim().toUpperCase() === targetSlot ||
-          k.key_name?.trim().toUpperCase() === targetSlot ||
+          k.key_slot?.trim().toUpperCase() === targetSlot ||
+          k.brand_name?.trim().toUpperCase() === targetSlot ||
           k.id.toUpperCase() === targetSlot
       );
       if (match) return match;
@@ -192,6 +153,9 @@ export default function OutbidModal({
   const [website, setWebsite] = useState("");
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [logoStatus, setLogoStatus] = useState<"idle" | "loading" | "found" | "error">("idle");
+  const [autoLogo, setAutoLogo] = useState<string | null>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [termsAgreed, setTermsAgreed] = useState(false);
   const [termsModalOpen, setTermsModalOpen] = useState(false);
 
@@ -211,16 +175,63 @@ export default function OutbidModal({
     setMounted(true);
   }, []);
 
-  // Load Razorpay checkout script
-  useEffect(() => {
-    if (typeof window !== "undefined" && !document.getElementById("razorpay-sdk")) {
-      const script = document.createElement("script");
-      script.id = "razorpay-sdk";
-      script.src = "https://checkout.razorpay.com/v1/checkout.js";
-      script.async = true;
-      document.body.appendChild(script);
+  // Resolve favicon/logo from domain (same pattern as InputToClaim.tsx)
+  const resolveCompany = useCallback((domain: string) => {
+    const providers = getFaviconProviders(domain);
+    if (providers.length === 0) {
+      setAutoLogo(null);
+      setLogoStatus("error");
+      return;
     }
+
+    setLogoStatus("loading");
+
+    const loadImage = (url: string): Promise<HTMLImageElement> => {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = () => reject();
+        img.src = url;
+      });
+    };
+
+    (async () => {
+      for (const providerUrl of providers) {
+        try {
+          const img = await loadImage(providerUrl);
+          if (img.naturalWidth > 16 && img.naturalHeight > 16) {
+            setAutoLogo(providerUrl);
+            setLogoStatus("found");
+            return;
+          }
+        } catch {
+          // try next provider
+        }
+      }
+      setAutoLogo(null);
+      setLogoStatus("error");
+    })();
   }, []);
+
+  // Auto-resolve logo when website URL changes
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+
+    const domain = extractValidDomain(website);
+    if (!domain) {
+      setAutoLogo(null);
+      setLogoStatus("idle");
+      return;
+    }
+
+    debounceRef.current = setTimeout(() => {
+      resolveCompany(domain);
+    }, 450);
+
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [website, resolveCompany]);
 
   // Synchronize initial bid and values when company, store, or isOpen changes
   useEffect(() => {
@@ -235,8 +246,8 @@ export default function OutbidModal({
       (target
         ? storeKeys.find(
           (k) =>
-            k.keyboard_key?.trim().toUpperCase() === target ||
-            k.key_name?.trim().toUpperCase() === target ||
+            k.key_slot?.trim().toUpperCase() === target ||
+            k.brand_name?.trim().toUpperCase() === target ||
             k.id.toUpperCase() === target
         )
         : null) ||
@@ -248,13 +259,33 @@ export default function OutbidModal({
 
     setBrandName(initialBrandName || "");
     setWebsite(initialWebsite || "");
-    setLogoPreview(initialLogo || null);
-    setLogoUrl(initialLogo || null);
+
+    if (initialLogo) {
+      setLogoPreview(initialLogo);
+      setLogoUrl(initialLogo);
+      setAutoLogo(initialLogo);
+      setLogoStatus("found");
+    } else {
+      setLogoPreview(null);
+      setLogoUrl(null);
+      setAutoLogo(null);
+      if (initialWebsite) {
+        const domain = extractValidDomain(initialWebsite);
+        if (domain) {
+          resolveCompany(domain);
+        } else {
+          setLogoStatus("idle");
+        }
+      } else {
+        setLogoStatus("idle");
+      }
+    }
+
     setTermsAgreed(false);
     setIsSubmitting(false);
     setOutbidAlert(null);
     setPaymentSuccess(null);
-  }, [company, isOpen, initialKeySlot, initialBrandName, initialWebsite, initialLogo, storeKeys, BASE_PRICE]);
+  }, [company, isOpen, initialKeySlot, initialBrandName, initialWebsite, initialLogo, storeKeys, BASE_PRICE, resolveCompany]);
 
   // Close on Escape key
   useEffect(() => {
@@ -300,7 +331,7 @@ export default function OutbidModal({
     brandName.trim().length > 0 &&
     targetSlot.length > 0;
 
-  // Complete in-modal Razorpay payment flow
+  // Complete in-modal payment flow
   const handleInitiatePayment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!canSubmit) return;
@@ -309,91 +340,74 @@ export default function OutbidModal({
     setOutbidAlert(null);
 
     try {
+      // Validate website URL if provided
+      const trimmedWebsite = website.trim();
+      let sanitizedWebsite = "";
+      let effectiveIconUrl = logoUrl || autoLogo;
+      if (trimmedWebsite) {
+        const validDomain = extractValidDomain(trimmedWebsite);
+        if (!validDomain) {
+          alert("Please enter a valid, well-formed website URL (e.g. https://yourcompany.com)");
+          setIsSubmitting(false);
+          return;
+        }
+        sanitizedWebsite = trimmedWebsite.startsWith("http://") || trimmedWebsite.startsWith("https://")
+          ? trimmedWebsite
+          : `https://${trimmedWebsite}`;
+        if (!effectiveIconUrl) {
+          effectiveIconUrl = `https://www.google.com/s2/favicons?domain=${encodeURIComponent(validDomain)}&sz=128`;
+        }
+      }
+
       // 1. Live Outbid Protection: Create order on server
-      const orderRes = await fetch("/api/payment/create-order", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      const orderRes = await axios.post(
+        "/api/payments/create-order",
+        {
           keySlot: targetSlot,
           bidAmount,
           brandName: brandName.trim(),
-          email: "bidder@keybid.net",
-          website: website.trim(),
-          iconUrl: logoUrl,
+          website: sanitizedWebsite || trimmedWebsite,
+          iconUrl: effectiveIconUrl,
           lastSeenHighestBid: currentHighest,
-        }),
-      });
+        },
+        {
+          validateStatus: (status) => status < 500,
+        }
+      );
 
-      const orderData = await orderRes.json();
+      const orderData = orderRes.data;
 
       // If outbid occurred concurrently, server returns 409 Conflict
-      if (orderRes.status === 409 || orderData.code === "OUTBID") {
+      if (orderRes.status === 409 || orderData?.code === "OUTBID") {
         setOutbidAlert({
-          highestBid: orderData.currentHighestBid || currentHighest,
-          minNext: orderData.minimumNextBid || Math.max(BASE_PRICE, currentHighest + 1),
+          highestBid: orderData?.currentHighestBid || currentHighest,
+          minNext: orderData?.minimumNextBid || Math.max(BASE_PRICE, currentHighest + 1),
           message:
-            orderData.error ||
-            `This key was just outbid at $${orderData.currentHighestBid} — minimum next bid updated.`,
+            orderData?.error ||
+            `This key was just outbid at $${orderData?.currentHighestBid} — minimum next bid updated.`,
         });
-        setBidAmount(orderData.minimumNextBid || Math.max(BASE_PRICE, currentHighest + 1));
+        setBidAmount(orderData?.minimumNextBid || Math.max(BASE_PRICE, currentHighest + 1));
         setIsSubmitting(false);
         return;
       }
 
-      if (!orderRes.ok || !orderData.success) {
-        throw new Error(orderData.error || "Failed to generate payment order");
+      if (orderRes.status >= 400 || !orderData?.success) {
+        throw new Error(orderData?.error || "Failed to generate payment order");
       }
 
-      const { orderId, amount, keyId, isLiveRazorpay } = orderData;
+      const { orderId } = orderData;
 
-      // 2. Open Razorpay Checkout or Sandbox Simulator
-      if (typeof window.Razorpay === "function" && isLiveRazorpay) {
-        const options: RazorpayOptions = {
-          key: keyId,
-          amount: amount,
-          currency: "USD",
-          name: "KeyBid Hardware Auction",
-          description: `Leading Bid for Key [${targetSlot}] · Apple Magic Keyboard`,
-          image: "/icon_no_border.svg",
-          order_id: orderId,
-          prefill: {
-            name: brandName,
-          },
-          theme: {
-            color: "#2563eb",
-          },
-          handler: async function (response) {
-            await completePaymentVerification({
-              orderId: response.razorpay_order_id || orderId,
-              paymentId: response.razorpay_payment_id,
-              signature: response.razorpay_signature,
-            });
-          },
-          modal: {
-            ondismiss: function () {
-              setIsSubmitting(false);
-            },
-          },
-        };
-
-        const rzp = new window.Razorpay(options);
-        rzp.on("payment.failed", function (response: RazorpayErrorResponse) {
-          console.error("Razorpay payment failed", response.error);
-          setIsSubmitting(false);
-          alert(`Payment failed: ${response.error?.description || "Transaction cancelled"}`);
+      // Sandbox Simulator for immediate local testing without live gateway keys
+      setTimeout(async () => {
+        const mockPaymentId = `pay_sim_${Date.now()}`;
+        await completePaymentVerification({
+          orderId,
+          paymentId: mockPaymentId,
+          signature: "verified_sandbox_sig",
+          resolvedWebsite: sanitizedWebsite || trimmedWebsite,
+          resolvedIconUrl: effectiveIconUrl,
         });
-        rzp.open();
-      } else {
-        // Sandbox Simulator for immediate local testing without live gateway keys
-        setTimeout(async () => {
-          const mockPaymentId = `pay_sim_${Date.now()}`;
-          await completePaymentVerification({
-            orderId,
-            paymentId: mockPaymentId,
-            signature: "verified_sandbox_sig",
-          });
-        }, 1000);
-      }
+      }, 1000);
     } catch (err: unknown) {
       const e = err as { message?: string };
       console.error(err);
@@ -407,31 +421,36 @@ export default function OutbidModal({
     orderId,
     paymentId,
     signature,
+    resolvedWebsite,
+    resolvedIconUrl,
   }: {
     orderId: string;
     paymentId: string;
     signature: string;
+    resolvedWebsite?: string;
+    resolvedIconUrl?: string | null;
   }) => {
     try {
-      const verifyRes = await fetch("/api/payment/verify", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      const verifyRes = await axios.post(
+        "/api/payment/verify",
+        {
           orderId,
           paymentId,
           signature,
           keySlot: targetSlot,
           bidAmount,
           brandName: brandName.trim(),
-          email: "bidder@keybid.net",
-          website: website.trim(),
-          iconUrl: logoUrl,
-        }),
-      });
+          website: resolvedWebsite ?? website.trim(),
+          iconUrl: resolvedIconUrl ?? logoUrl,
+        },
+        {
+          validateStatus: (status) => status < 500,
+        }
+      );
 
-      const verifyData = await verifyRes.json();
-      if (!verifyRes.ok || !verifyData.success) {
-        throw new Error(verifyData.error || "Payment verification failed on server");
+      const verifyData = verifyRes.data;
+      if (verifyRes.status >= 400 || !verifyData?.success) {
+        throw new Error(verifyData?.error || "Payment verification failed on server");
       }
 
       // Display In-Modal Post-Payment Confirmation state
@@ -446,12 +465,10 @@ export default function OutbidModal({
       const updatedKey: Key = {
         id: activeKey?.id || (company && "id" in company ? company.id : `key_${Date.now()}`),
         submitted_url: website.trim() || getKeyUrl(activeKey) || "",
-        keyboard_key: targetSlot,
-        key_name: brandName.trim() || activeKey?.key_name || null,
+        key_slot: targetSlot,
+        brand_name: brandName.trim() || activeKey?.brand_name || null,
         about: getKeyTagline(activeKey) || `Winning bid by ${brandName.trim()}`,
         key_logo: logoUrl || getKeyLogo(activeKey) || null,
-        fetch_status: "fetched",
-        fetched_at: new Date().toISOString(),
         current_bid_id: `bid_${orderId}`,
         click_count: activeKey?.click_count || 0,
         current_bid_amount: bidAmount,
@@ -676,7 +693,48 @@ export default function OutbidModal({
 
                   {/* 2x2 Fields Grid: Sponsor Details */}
                   {/* Sponsor Details: Brand Name & Website */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                  <div className="flex-col justify-center items-center gap-3 pt-1">
+
+                    <div>
+                      <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
+                        Website <span className="text-red-500">*</span>
+                      </label>
+                      <div className="flex items-center gap-2">
+                        {/* ── Separated Domain/Logo Badge (same style as InputToClaim.tsx) ── */}
+                        <div className="relative flex w-10 h-10 shrink-0 items-center justify-center rounded-xl border border-zinc-200/90 dark:border-zinc-700 bg-white dark:bg-zinc-800/90 shadow-xs transition-all overflow-hidden select-none">
+                          {logoStatus === "loading" ? (
+                            <span className="h-4 w-4 animate-spin rounded-full border-2 border-zinc-300 border-t-blue-600 dark:border-zinc-700 dark:border-t-blue-400" />
+                          ) : logoPreview ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={logoPreview}
+                              alt="Logo preview"
+                              className="w-full h-full object-contain p-1.5"
+                            />
+                          ) : logoStatus === "found" && autoLogo ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={autoLogo}
+                              alt="Website logo"
+                              className="w-full h-full object-contain p-1.5"
+                            />
+                          ) : logoStatus === "error" ? (
+                            <IconAlertCircle size={18} className="text-amber-500" title="Logo not found" />
+                          ) : (
+                            <IconWorld size={18} className="text-zinc-400 dark:text-zinc-500" />
+                          )}
+                        </div>
+
+                        {/* ── Website Text Input ── */}
+                        <input
+                          type="url"
+                          placeholder="https://yourcompany.com"
+                          value={website}
+                          onChange={(e) => setWebsite(e.target.value)}
+                          className="flex-1 min-w-0 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/60 px-3 py-2 text-xs sm:text-sm text-zinc-900 dark:text-white placeholder:text-zinc-400 dark:placeholder:text-zinc-500 outline-none focus:border-blue-500 focus:bg-white dark:focus:bg-zinc-900 transition-colors h-10"
+                        />
+                      </div>
+                    </div>
                     <div>
                       <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
                         Brand Name <span className="text-red-500">*</span>
@@ -684,72 +742,11 @@ export default function OutbidModal({
                       <input
                         type="text"
                         required
-                        placeholder="e.g. Acme, Supabase"
+                        placeholder="Enter Your Brand Name"
                         value={brandName}
                         onChange={(e) => setBrandName(e.target.value)}
-                        className="w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/60 px-3 py-2 text-xs sm:text-sm text-zinc-900 dark:text-white placeholder:text-zinc-400 dark:placeholder:text-zinc-500 outline-none focus:border-blue-500 focus:bg-white dark:focus:bg-zinc-900 transition-colors"
+                        className="w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/60 px-3 py-2 text-xs sm:text-sm text-zinc-900 dark:text-white placeholder:text-zinc-400 dark:placeholder:text-zinc-500 outline-none focus:border-blue-500 focus:bg-white dark:focus:bg-zinc-900 transition-colors h-10"
                       />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
-                        Website URL <span className="text-zinc-400 dark:text-zinc-500 font-normal">(Optional)</span>
-                      </label>
-                      <input
-                        type="url"
-                        placeholder="https://yourcompany.com"
-                        value={website}
-                        onChange={(e) => setWebsite(e.target.value)}
-                        className="w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/60 px-3 py-2 text-xs sm:text-sm text-zinc-900 dark:text-white placeholder:text-zinc-400 dark:placeholder:text-zinc-500 outline-none focus:border-blue-500 focus:bg-white dark:focus:bg-zinc-900 transition-colors"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Logo Upload Dropzone */}
-                  <div>
-                    <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
-                      Decal Logo <span className="text-zinc-400 dark:text-zinc-500 font-normal">(Optional · PNG, SVG)</span>
-                    </label>
-                    <div
-                      onClick={() => fileInputRef.current?.click()}
-                      className="relative border-2 border-dashed border-zinc-200 dark:border-zinc-700 hover:border-blue-500 dark:hover:border-blue-500 rounded-2xl p-3 text-center cursor-pointer transition-colors bg-zinc-50/80 dark:bg-zinc-900/30 group"
-                    >
-                      <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept="image/png, image/jpeg, image/svg+xml"
-                        onChange={handleFileChange}
-                        className="hidden"
-                      />
-
-                      {logoPreview ? (
-                        <div className="flex items-center justify-center gap-3">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src={logoPreview}
-                            alt="Logo preview"
-                            className="w-9 h-9 object-contain rounded-lg border border-zinc-200 dark:border-zinc-700 p-1 bg-white dark:bg-zinc-800 shadow-xs"
-                          />
-                          <div className="text-left">
-                            <p className="text-xs font-semibold text-zinc-900 dark:text-white">Custom logo attached</p>
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setLogoPreview(null);
-                                setLogoUrl(null);
-                              }}
-                              className="text-[11px] text-red-500 hover:underline font-medium cursor-pointer"
-                            >
-                              Remove logo
-                            </button>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="flex items-center justify-center gap-2 text-zinc-500 dark:text-zinc-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                          <IconUpload size={16} />
-                          <span className="text-xs font-semibold">Upload vector / high-res logo</span>
-                        </div>
-                      )}
                     </div>
                   </div>
 
@@ -802,7 +799,7 @@ export default function OutbidModal({
                             <span>Preparing Secure Checkout…</span>
                           </>
                         ) : (
-                          <span>Pay ${bidAmount}</span>
+                          <span>Proceed</span>
                         )}
                       </button>
                     </div>

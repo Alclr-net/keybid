@@ -33,12 +33,12 @@ export default function LiveAuctionSection() {
     if (bidB !== bidA) {
       return bidB - bidA;
     }
-    return (a.key_name || "").localeCompare(b.key_name || "");
+    return (a.brand_name || "").localeCompare(b.brand_name || "");
   });
 
   const handleOpenModal = (keyItem: Key) => {
     setSelectedKey(keyItem);
-    const slot = (keyItem.key_name || keyItem.id.slice(0, 1)).slice(0, 3).toUpperCase();
+    const slot = (keyItem.brand_name || keyItem.id.slice(0, 1)).slice(0, 3).toUpperCase();
     setTargetSlot(slot);
     setIsModalOpen(true);
   };
@@ -114,8 +114,8 @@ export default function LiveAuctionSection() {
               sortedKeys.slice(0, 8).map((keyItem) => {
                 const hasBid = (keyItem.current_bid_amount || 0) > 0;
                 const bidAmount = keyItem.current_bid_amount || 0;
-                const keyName = keyItem.key_name || `Key ${keyItem.id.slice(0, 4)}`;
-                const keySlot = (keyItem.keyboard_key || keyItem.id.slice(0, 1)).slice(0, 3).toUpperCase();
+                const keyName = keyItem.brand_name || `Key ${keyItem.id.slice(0, 4)}`;
+                const keySlot = (keyItem.key_slot || keyItem.id.slice(0, 1)).slice(0, 3).toUpperCase();
 
                 return (
                   <div

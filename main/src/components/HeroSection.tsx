@@ -38,7 +38,7 @@ function HeroSection() {
         const brandName = rawName ? rawName.charAt(0).toUpperCase() + rawName.slice(1) : "";
 
         // Check if this key slot is already held by a key
-        const existingKey = keySlot ? (keysList.find(k => k.key_name?.toUpperCase() === keySlot) || null) : null;
+        const existingKey = keySlot ? (keysList.find(k => k.brand_name?.toUpperCase() === keySlot) || null) : null;
 
         setClaimModalState({
             isOpen: true,

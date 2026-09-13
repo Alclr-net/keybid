@@ -198,11 +198,85 @@ export const KEY_DISPLAY_LABELS: Record<string, string> = {
     Slash: "/",
 };
 
-export const getFaviconProviders = (domain: string): string[] => [
-    `https://www.google.com/s2/favicons?domain=${domain}&sz=128`,
-    `https://icons.duckduckgo.com/ip3/${domain}.ico`,
-    `https://${domain}/favicon.ico`,
-];
+/**
+ * Strict validation to ensure a domain is well-formed, safe, and public.
+ * Rejects localhost, loopback, private IPs, dangerous schemes, and malformed strings.
+ */
+export function isValidDomain(domain: string): boolean {
+    if (!domain || typeof domain !== "string") return false;
+
+    const trimmed = domain.trim().toLowerCase();
+
+    // RFC 1035 length limits (1-253 chars)
+    if (trimmed.length < 3 || trimmed.length > 253) return false;
+
+    // Reject whitespaces, control characters, or injection characters
+    if (/[\s\r\n\0"'`<>\/\\?#:@%]/.test(trimmed)) return false;
+
+    // Reject IP addresses (IPv4 & IPv6) and local/private domains
+    if (/^(localhost|127\.|0\.|10\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[0-1])\.|169\.254\.)/.test(trimmed)) return false;
+    if (/^(\d{1,3}\.){3}\d{1,3}$/.test(trimmed)) return false;
+    if (trimmed.includes(":") || trimmed.includes("[") || trimmed.includes("]")) return false;
+
+    // Reject internal or reserved TLDs
+    if (/\.(local|internal|test|example|invalid|localhost)$/i.test(trimmed)) return false;
+
+    // Valid domain regex (labels 1-63 chars, letters/numbers/hyphens, valid TLD)
+    const domainRegex = /^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+(?:[a-z]{2,63}|xn--[a-z0-9-]{2,59})$/i;
+    return domainRegex.test(trimmed);
+}
+
+/**
+ * Extracts and validates a well-formed domain from user input (URL or domain string).
+ * Returns normalized domain or null if malformed/invalid/malicious.
+ */
+export function extractValidDomain(input: string): string | null {
+    if (!input || typeof input !== "string") return null;
+
+    const trimmed = input.trim();
+    if (!trimmed) return null;
+
+    // Reject dangerous schemes explicitly
+    if (/^(javascript|data|vbscript|file|blob):/i.test(trimmed)) return null;
+
+    try {
+        const urlStr = trimmed.startsWith("http://") || trimmed.startsWith("https://")
+            ? trimmed
+            : `https://${trimmed}`;
+
+        const parsed = new URL(urlStr);
+
+        // Only allow http: or https:
+        if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return null;
+
+        // Disallow credentials
+        if (parsed.username || parsed.password) return null;
+
+        const hostname = parsed.hostname.replace(/^www\./i, "").toLowerCase();
+
+        if (isValidDomain(hostname)) {
+            return hostname;
+        }
+    } catch {
+        return null;
+    }
+
+    return null;
+}
+
+export const getFaviconProviders = (input: string): string[] => {
+    const domain = isValidDomain(input) ? input.trim().toLowerCase() : extractValidDomain(input);
+    if (!domain) {
+        return [];
+    }
+
+    const encodedDomain = encodeURIComponent(domain);
+    return [
+        `https://www.google.com/s2/favicons?domain=${encodedDomain}&sz=128`,
+        `https://icons.duckduckgo.com/ip3/${encodedDomain}.ico`,
+        `https://${domain}/favicon.ico`,
+    ];
+};
 
 export const SITE_CONFIG = {
     name: "Keybid",

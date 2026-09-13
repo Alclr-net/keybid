@@ -373,8 +373,8 @@ export default function MacWindow({ className }: { className?: string }) {
             ) : (
               top5.map((keyItem, i) => {
                 const isLeader = i === 0;
-                const keyName = keyItem.key_name || `Key ${keyItem.id.slice(0, 4)}`;
-                const keySlot = (keyItem.keyboard_key || keyItem.id.slice(0, 1)).toUpperCase();
+                const keyName = keyItem.brand_name || `Key ${keyItem.id.slice(0, 4)}`;
+                const keySlot = (keyItem.key_slot || keyItem.id.slice(0, 1)).toUpperCase();
                 const hasBid = (keyItem.current_bid_amount || 0) > 0;
                 const bidAmount = keyItem.current_bid_amount || 0;
 

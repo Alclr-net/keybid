@@ -6,7 +6,6 @@ export interface PendingOrder {
   email?: string;
   website?: string;
   iconUrl?: string;
-  isLiveRazorpay?: boolean;
   createdAt?: number;
   status?: string;
   currency?: string;

@@ -4,7 +4,7 @@
 
 import { supabase } from '@/lib/supabase/client'
 import type { Key } from '@/types/database'
-import type { RealtimeChannel } from '@supabase/supabase-js'
+
 
 /**
  * Fetch all keys for display (e.g. homepage/board).
@@ -12,7 +12,7 @@ import type { RealtimeChannel } from '@supabase/supabase-js'
 export async function getAllKeys(): Promise<Key[]> {
     const { data, error } = await supabase
         .from('keys')
-        .select('id,submitted_url, keyboard_key, key_name, about, key_logo, fetch_status, current_bid_amount, created_at,click_count')
+        .select('id,submitted_url, key_slot, brand_name, about, key_logo, current_bid_amount, created_at,click_count')
         .order('created_at', { ascending: false })
 
     if (error) {

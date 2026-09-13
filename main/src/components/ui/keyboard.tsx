@@ -117,7 +117,7 @@ export function ClaimedKeyIcon({
     return (
       <KeyLogoContent
         logo={claimedKey.key_logo}
-        alt={claimedKey.key_name || letter}
+        alt={claimedKey.brand_name || letter}
         fallback={fallback}
       />
     );
@@ -127,13 +127,13 @@ export function ClaimedKeyIcon({
 }
 
 /** Derive the single-letter keyboard slot from a Key record.
- * Uses keyboard_key field first (the DB column that stores the claimed letter, e.g. "V"),
+ * Uses key_slot field first (the DB column that stores the claimed letter, e.g. "V"),
  * then falls back to the first char of submitted_url domain.
  */
 function deriveKeySlot(k: Key): string {
-  // 1. Use the explicit keyboard_key field (e.g. "V", "W", "A")
-  if (k.keyboard_key && k.keyboard_key.trim().length > 0) {
-    return k.keyboard_key.trim().toUpperCase();
+  // 1. Use the explicit key_slot field (e.g. "V", "W", "A")
+  if (k.key_slot && k.key_slot.trim().length > 0) {
+    return k.key_slot.trim().toUpperCase();
   }
   // 2. Fallback: Extract from submitted_url domain's first alphanumeric character
   if (k.submitted_url) {
@@ -148,9 +148,9 @@ function deriveKeySlot(k: Key): string {
       // fall through
     }
   }
-  // 3. If key_name is exactly 1 character, treat it as the slot
-  if (k.key_name && k.key_name.trim().length === 1) {
-    return k.key_name.trim().toUpperCase();
+  // 3. If brand_name is exactly 1 character, treat it as the slot
+  if (k.brand_name && k.brand_name.trim().length === 1) {
+    return k.brand_name.trim().toUpperCase();
   }
   return "";
 }
@@ -407,13 +407,7 @@ export const Keypad = () => {
         </Key>
         <Key keyCode="TouchID" containerClassName="rounded-tr-xl" className="rounded-tr-lg">
           <div className="h-[17px] w-[17px] rounded-full p-[1px] bg-gradient-to-b from-neutral-300 via-neutral-200 to-neutral-300 dark:from-neutral-600 dark:via-neutral-700 dark:to-neutral-600 shadow-sm flex items-center justify-center">
-            <div className="h-full w-full rounded-full overflow-hidden flex items-center justify-center bg-black">
-              <img
-                src="/icon_no_border.svg"
-                alt="Keybid"
-                className="h-full w-full object-cover rounded-full"
-              />
-            </div>
+            <div className="h-full w-full rounded-full bg-white dark:bg-neutral-900" />
           </div>
         </Key>
       </Row>
@@ -693,7 +687,7 @@ const Key = ({
         onClick={handleClick}
         title={
           claimedKey
-            ? `${claimedKey.key_name || "Key"} (Key [${keySlot}]) · Current bid $${claimedKey.current_bid_amount || 0} · Click to Outbid`
+            ? `${claimedKey.brand_name || "Key"} (Key [${keySlot}]) · Current bid $${claimedKey.current_bid_amount || 0} · Click to Outbid`
             : keySlot
               ? `Key [${keySlot}] · Open · Click to Bid`
               : undefined
@@ -711,7 +705,7 @@ const Key = ({
         {claimedKey && claimedKey.key_logo ? (
           <KeyLogoContent
             logo={claimedKey.key_logo}
-            alt={claimedKey.key_name || keySlot}
+            alt={claimedKey.brand_name || keySlot}
             fallback={
               <div className={cn(
                 "flex h-full w-full flex-col items-center justify-center text-[5px] text-neutral-700 dark:text-neutral-200 font-medium",
@@ -792,7 +786,7 @@ const ModifierKey = ({
         onClick={handleClick}
         title={
           claimedKey
-            ? `${claimedKey.key_name || "Key"} (Key [${keySlot}]) · Current bid $${claimedKey.current_bid_amount || 0} · Click to Outbid`
+            ? `${claimedKey.brand_name || "Key"} (Key [${keySlot}]) · Current bid $${claimedKey.current_bid_amount || 0} · Click to Outbid`
             : keySlot
               ? `Key [${keySlot}] · Open · Click to Bid`
               : undefined
@@ -810,7 +804,7 @@ const ModifierKey = ({
         {claimedKey && claimedKey.key_logo ? (
           <KeyLogoContent
             logo={claimedKey.key_logo}
-            alt={claimedKey.key_name || keySlot}
+            alt={claimedKey.brand_name || keySlot}
             fallback={
               <div className="flex h-full w-full flex-col items-start justify-between p-1 text-[5px] text-neutral-700 dark:text-neutral-200 font-medium">
                 {children}

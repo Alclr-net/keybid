@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { IconWorld, IconAlertCircle } from "@tabler/icons-react";
 import { cn } from "@/src/lib/utils";
-import { getFaviconProviders } from "@/lib/constant";
+import { getFaviconProviders, extractValidDomain, isValidDomain } from "@/lib/constant";
 
 interface CompanyInfo {
     domain: string;
@@ -19,15 +19,7 @@ interface UriClaimInputProps {
 }
 
 function normalizeDomain(input: string): string | null {
-    const trimmed = input.trim();
-    console.log(trimmed)
-    if (!trimmed) return null;
-    try {
-        const url = trimmed.startsWith("http") ? trimmed : `https://${trimmed}`;
-        return new URL(url).hostname.replace(/^www\./, "");
-    } catch {
-        return null;
-    }
+    return extractValidDomain(input);
 }
 
 export function UriClaimInput({
@@ -43,9 +35,14 @@ export function UriClaimInput({
     const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const resolveCompany = useCallback((domain: string) => {
-        setStatus("loading");
-
         const providers = getFaviconProviders(domain);
+        if (providers.length === 0) {
+            setInfo(null);
+            setStatus("error");
+            return;
+        }
+
+        setStatus("loading");
 
         const loadImage = (url: string): Promise<HTMLImageElement> => {
             return new Promise((resolve, reject) => {
@@ -102,8 +99,17 @@ export function UriClaimInput({
             return;
         }
         const domain = normalizeDomain(trimmed);
-        const targetUri = trimmed.startsWith("http") ? trimmed : `https://${trimmed}`;
-        const claimInfo = info || (domain ? { domain, logo: `https://www.google.com/s2/favicons?domain=${domain}&sz=128` } : null);
+        if (!domain) {
+            setStatus("error");
+            return;
+        }
+        const targetUri = trimmed.startsWith("http://") || trimmed.startsWith("https://")
+            ? trimmed
+            : `https://${trimmed}`;
+        const claimInfo = info || {
+            domain,
+            logo: `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=128`,
+        };
         onClaim(targetUri, claimInfo);
     };
 

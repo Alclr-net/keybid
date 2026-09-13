@@ -47,7 +47,7 @@ function PodiumCard({
 }) {
   const [hovered, setHovered] = useState(false);
   const config = PODIUM_CONFIG[rank] || PODIUM_CONFIG[3];
-  const name = keyData.key_name || `Key ${keyData.id.slice(0, 4)}`;
+  const name = keyData.brand_name || `Key ${keyData.id.slice(0, 4)}`;
   const bidAmount = keyData.current_bid_amount || 0;
 
   return (

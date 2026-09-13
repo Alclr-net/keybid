@@ -46,7 +46,7 @@ export default function AuctionLeaderboardPage() {
       const q = searchQuery.toLowerCase().trim();
       list = list.filter(
         (k) =>
-          (k.key_name && k.key_name.toLowerCase().includes(q)) ||
+          (k.brand_name && k.brand_name.toLowerCase().includes(q)) ||
           (k.about && k.about.toLowerCase().includes(q)) ||
           k.id.toLowerCase().includes(q)
       );
@@ -215,7 +215,7 @@ export default function AuctionLeaderboardPage() {
                 const isThird = idx === 2 && sortBy === "bid-desc";
                 const hasBid = (key.current_bid_amount || 0) > 0;
                 const bidAmount = key.current_bid_amount || 0;
-                const keyName = key.key_name || `Key ${key.id.slice(0, 4)}`;
+                const keyName = key.brand_name || `Key ${key.id.slice(0, 4)}`;
 
                 return (
                   <div
@@ -251,7 +251,7 @@ export default function AuctionLeaderboardPage() {
                     {/* Key Slot Badge */}
                     <div className="w-10 text-center shrink-0">
                       <span className="font-mono font-bold text-xs px-2.5 py-1 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-200 border border-zinc-200 dark:border-white/10 shadow-2xs">
-                        {(key.key_name || key.id.slice(0, 1)).slice(0, 3).toUpperCase()}
+                        {(key.brand_name || key.id.slice(0, 1)).slice(0, 3).toUpperCase()}
                       </span>
                     </div>
 
