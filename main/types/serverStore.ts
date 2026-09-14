@@ -4,7 +4,7 @@ export interface PendingOrder {
   bidAmount: number;
   brandName: string;
   email?: string;
-  website?: string;
+  submitted_url?: string;
   iconUrl?: string;
   createdAt?: number;
   status?: string;
@@ -15,7 +15,7 @@ export interface KeyLiveState {
   keySlot: string;
   currentHighestBid: number;
   leaderBrand?: string;
-  leaderWebsite?: string;
+  leadersubmitted_url?: string;
   leaderIcon?: string;
   updatedAt: number;
 }
@@ -107,7 +107,7 @@ export function finalizeWinningBid(
     bidAmount: number;
     brandName: string;
     email?: string;
-    website?: string;
+    submitted_url?: string;
     iconUrl?: string;
     orderId: string;
     paymentId: string;
@@ -118,7 +118,7 @@ export function finalizeWinningBid(
     keySlot: slotUpper,
     currentHighestBid: data.bidAmount,
     leaderBrand: data.brandName,
-    leaderWebsite: data.website,
+    leadersubmitted_url: data.submitted_url,
     leaderIcon: data.iconUrl,
     updatedAt: Date.now(),
   };

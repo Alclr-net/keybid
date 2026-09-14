@@ -17,7 +17,7 @@ function HeroSection() {
         keyData: Key | null;
         keySlot: string;
         brandName?: string;
-        website?: string;
+        submitted_url?: string;
         logo?: string;
     }>({
         isOpen: false,
@@ -45,7 +45,7 @@ function HeroSection() {
             keyData: existingKey,
             keySlot,
             brandName,
-            website: targetUri,
+            submitted_url: targetUri,
             logo: info?.logo,
         });
     };
@@ -125,7 +125,7 @@ function HeroSection() {
                 isOpen={claimModalState.isOpen}
                 initialKeySlot={claimModalState.keySlot}
                 initialBrandName={claimModalState.brandName}
-                initialWebsite={claimModalState.website}
+                initialsubmitted_url={claimModalState.submitted_url}
                 initialLogo={claimModalState.logo}
                 onClose={() => setClaimModalState((prev) => ({ ...prev, isOpen: false }))}
                 onSuccess={(_bidAmount, _createdCompany, createdKey) => {

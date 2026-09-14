@@ -50,7 +50,7 @@ export async function POST(req: Request) {
       // (Cashfree can send the same webhook more than once)
       const { data: existing } = await supabaseAdmin
         .from("pending_bids")
-        .select("status, key_slot, bid_amount, brand_name, website, key_logo, email")
+        .select("status, key_slot, bid_amount, brand_name, submitted_url, key_logo, email")
         .eq("order_id", orderId)
         .single();
 
@@ -81,7 +81,7 @@ export async function POST(req: Request) {
           key_slot: existing.key_slot,
           bid_amount: existing.bid_amount,
           brand_name: existing.brand_name,
-          website: existing.website,
+          submitted_url: existing.submitted_url,
           key_logo: existing.key_logo,
           email: existing.email,
           paid_at: new Date().toISOString(),

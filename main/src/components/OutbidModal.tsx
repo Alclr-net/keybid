@@ -25,7 +25,7 @@ interface OutbidModalProps {
   onSuccess?: (bidAmount: number, createdCompany?: any, createdKey?: Key) => void;
   initialKeySlot?: string;
   initialBrandName?: string;
-  initialWebsite?: string;
+  initialsubmitted_url?: string;
   initialLogo?: string;
 }
 
@@ -44,7 +44,7 @@ const CASHFREE_MODE: "sandbox" | "production" =
   process.env.NEXT_PUBLIC_CASHFREE_ENV === "production" ? "production" : "sandbox";
 
 /** Only allow well-formed http(s) URLs — blocks javascript:, data:, etc. */
-function safeWebsiteUrl(raw: string): string | null {
+function safesubmitted_urlUrl(raw: string): string | null {
   const domain = extractValidDomain(raw);
   if (!domain) return null;
   const withScheme = raw.startsWith("http://") || raw.startsWith("https://") ? raw : `https://${raw}`;
@@ -64,7 +64,7 @@ export default function OutbidModal({
   onSuccess,
   initialKeySlot,
   initialBrandName,
-  initialWebsite,
+  initialsubmitted_url,
   initialLogo,
 }: OutbidModalProps) {
   const [mounted, setMounted] = useState(false);
@@ -127,7 +127,7 @@ export default function OutbidModal({
   const effectiveMinBid = outbidAlert ? outbidAlert.minNext : minBid;
   const [bidAmount, setBidAmount] = useState<number>(effectiveMinBid);
   const [brandName, setBrandName] = useState("");
-  const [website, setWebsite] = useState("");
+  const [submitted_url, setsubmitted_url] = useState("");
   const [logoStatus, setLogoStatus] = useState<"idle" | "loading" | "found" | "error">("idle");
   const [autoLogo, setAutoLogo] = useState<string | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -192,7 +192,7 @@ export default function OutbidModal({
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    const domain = extractValidDomain(website);
+    const domain = extractValidDomain(submitted_url);
     if (!domain) {
       setAutoLogo(null);
       setLogoStatus("idle");
@@ -202,7 +202,7 @@ export default function OutbidModal({
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
-  }, [website, resolveCompany]);
+  }, [submitted_url, resolveCompany]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -221,14 +221,14 @@ export default function OutbidModal({
     const keyBid = getKeyBid(liveKey);
     setBidAmount(keyBid > 0 ? Math.max(BASE_PRICE, keyBid + 1) : BASE_PRICE);
     setBrandName(initialBrandName || "");
-    setWebsite(initialWebsite || "");
+    setsubmitted_url(initialsubmitted_url || "");
 
     if (initialLogo) {
       setAutoLogo(initialLogo);
       setLogoStatus("found");
     } else {
       setAutoLogo(null);
-      const domain = initialWebsite ? extractValidDomain(initialWebsite) : null;
+      const domain = initialsubmitted_url ? extractValidDomain(initialsubmitted_url) : null;
       if (domain) resolveCompany(domain);
       else setLogoStatus("idle");
     }
@@ -237,7 +237,7 @@ export default function OutbidModal({
     setIsSubmitting(false);
     setOutbidAlert(null);
     setPaymentSuccess(null);
-  }, [company, isOpen, initialKeySlot, initialBrandName, initialWebsite, initialLogo, storeKeys, BASE_PRICE, resolveCompany]);
+  }, [company, isOpen, initialKeySlot, initialBrandName, initialsubmitted_url, initialLogo, storeKeys, BASE_PRICE, resolveCompany]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -268,20 +268,20 @@ export default function OutbidModal({
     setOutbidAlert(null);
 
     try {
-      const trimmedWebsite = website.trim();
-      let sanitizedWebsite = "";
+      const trimmedsubmitted_url = submitted_url.trim();
+      let sanitizedsubmitted_url = "";
       let effectiveIconUrl = autoLogo;
 
-      if (trimmedWebsite) {
-        const safeUrl = safeWebsiteUrl(trimmedWebsite);
+      if (trimmedsubmitted_url) {
+        const safeUrl = safesubmitted_urlUrl(trimmedsubmitted_url);
         if (!safeUrl) {
-          alert("Please enter a valid website URL (e.g. https://yourcompany.com)");
+          alert("Please enter a valid submitted_url URL (e.g. https://yourcompany.com)");
           setIsSubmitting(false);
           return;
         }
-        sanitizedWebsite = safeUrl;
+        sanitizedsubmitted_url = safeUrl;
         if (!effectiveIconUrl) {
-          const domain = extractValidDomain(sanitizedWebsite)!;
+          const domain = extractValidDomain(sanitizedsubmitted_url)!;
           effectiveIconUrl = `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=128`;
         }
       }
@@ -293,7 +293,7 @@ export default function OutbidModal({
           keySlot: targetSlot,
           bidAmount,
           brandName: brandName.trim(),
-          website: sanitizedWebsite,
+          submitted_url: sanitizedsubmitted_url,
           iconUrl: effectiveIconUrl,
           lastSeenHighestBid: currentHighest,
         },
@@ -342,7 +342,7 @@ export default function OutbidModal({
 
       await completePaymentVerification({
         order_id,
-        resolvedWebsite: sanitizedWebsite,
+        resolvedsubmitted_url: sanitizedsubmitted_url,
         resolvedIconUrl: effectiveIconUrl,
       });
     } catch (err: unknown) {
@@ -355,11 +355,11 @@ export default function OutbidModal({
 
   const completePaymentVerification = async ({
     order_id,
-    resolvedWebsite,
+    resolvedsubmitted_url,
     resolvedIconUrl,
   }: {
     order_id: string;
-    resolvedWebsite?: string;
+    resolvedsubmitted_url?: string;
     resolvedIconUrl?: string | null;
   }) => {
     try {
@@ -383,7 +383,7 @@ export default function OutbidModal({
 
       const updatedKey: Key = {
         id: activeKey?.id || (company && "id" in company ? company.id : `key_${Date.now()}`),
-        submitted_url: resolvedWebsite || getKeyUrl(activeKey) || "",
+        submitted_url: resolvedsubmitted_url || getKeyUrl(activeKey) || "",
         key_slot: targetSlot,
         brand_name: brandName.trim() || activeKey?.brand_name || null,
         about: getKeyTagline(activeKey) || `Winning bid by ${brandName.trim()}`,
@@ -577,7 +577,7 @@ export default function OutbidModal({
                   <div className="flex-col justify-center items-center gap-3 pt-1">
                     <div>
                       <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
-                        Website <span className="text-red-500">*</span>
+                        submitted_url <span className="text-red-500">*</span>
                       </label>
                       <div className="flex items-center gap-2">
                         <div className="relative flex w-10 h-10 shrink-0 items-center justify-center rounded-xl border border-zinc-200/90 dark:border-zinc-700 bg-white dark:bg-zinc-800/90 shadow-xs transition-all overflow-hidden select-none">
@@ -585,7 +585,7 @@ export default function OutbidModal({
                             <span className="h-4 w-4 animate-spin rounded-full border-2 border-zinc-300 border-t-blue-600 dark:border-zinc-700 dark:border-t-blue-400" />
                           ) : logoStatus === "found" && autoLogo ? (
                             // eslint-disable-next-line @next/next/no-img-element
-                            <img src={autoLogo} alt="Website logo" className="w-full h-full object-contain p-1.5" />
+                            <img src={autoLogo} alt="submitted_url logo" className="w-full h-full object-contain p-1.5" />
                           ) : logoStatus === "error" ? (
                             <IconAlertCircle size={18} className="text-amber-500" title="Logo not found" />
                           ) : (
@@ -595,8 +595,8 @@ export default function OutbidModal({
                         <input
                           type="url"
                           placeholder="https://yourcompany.com"
-                          value={website}
-                          onChange={(e) => setWebsite(e.target.value)}
+                          value={submitted_url}
+                          onChange={(e) => setsubmitted_url(e.target.value)}
                           className="flex-1 min-w-0 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/60 px-3 py-2 text-xs sm:text-sm text-zinc-900 dark:text-white placeholder:text-zinc-400 dark:placeholder:text-zinc-500 outline-none focus:border-blue-500 focus:bg-white dark:focus:bg-zinc-900 transition-colors h-10"
                         />
                       </div>

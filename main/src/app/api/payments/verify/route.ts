@@ -2,11 +2,13 @@ import { Cashfree, CFEnvironment } from "cashfree-pg";
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 
+const isProd = process.env.NEXT_PUBLIC_CASHFREE_ENV === "production";
 const cashfree = new Cashfree(
-    CFEnvironment.SANDBOX, // production mein PRODUCTION karna
+    isProd ? CFEnvironment.PRODUCTION : CFEnvironment.SANDBOX, // production mein PRODUCTION karna
     process.env.CASHFREE_APP_ID!,
     process.env.CASHFREE_SECRET_KEY!
 );
+
 
 export async function POST(req: Request) {
     const body = await req.json();
@@ -73,9 +75,9 @@ export async function POST(req: Request) {
             .from("keys")
             .update({
                 current_bid_amount: pendingBid.bid_amount,
-                key_name: pendingBid.brand_name,
-                submitted_url: pendingBid.website,
-                key_logo: pendingBid.logo_data_url,
+                brand_name: pendingBid.brand_name,
+                submitted_url: pendingBid.submitted_url,
+                key_logo: pendingBid.key_logo,
                 updated_at: new Date().toISOString(),
             })
             .eq("key_slot", pendingBid.key_slot);

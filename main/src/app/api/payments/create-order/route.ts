@@ -29,13 +29,13 @@ export async function POST(req: Request) {
         keySlot,
         bidAmount,
         brandName,
-        website,
+        submitted_url,
         iconUrl,
         lastSeenHighestBid,
     } = body;
     console.log(req.body)
     // Basic validation
-    if (!keySlot || !bidAmount || !brandName || !website) {
+    if (!keySlot || !bidAmount || !brandName || !submitted_url) {
         return NextResponse.json(
             { success: false, error: "Missing required fields" },
             { status: 400 }
@@ -86,7 +86,7 @@ export async function POST(req: Request) {
                 key_slot: keySlot,
                 bid_amount: bidAmount,
                 brand_name: brandName,
-                website: website,
+                submitted_url: submitted_url,
                 key_logo: iconUrl,
                 status: "PENDING",
                 terms_accepted_at: new Date().toISOString(),
@@ -98,7 +98,7 @@ export async function POST(req: Request) {
         // ─────────────────────────────────────────────
         // STEP 3: Call Cashfree's PGCreateOrder API
         // ─────────────────────────────────────────────
-        const domain = new URL(website).hostname.replace("www.", "");
+        const domain = new URL(submitted_url).hostname.replace("www.", "");
         const derivedEmail = `contact@${domain}`;
 
         const orderResponse = await cashfree.PGCreateOrder({

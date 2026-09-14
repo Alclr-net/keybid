@@ -194,7 +194,7 @@ export default function TermsPage() {
 
             <div className="text-sm text-zinc-600 dark:text-zinc-300 space-y-3.5 leading-relaxed">
               <p>
-                The service is provided on an as-available basis and may be changed, interrupted, or discontinued at any time. To the maximum extent permitted by law, KeyBid is not liable for indirect or consequential losses, lost traffic, lost revenue, changes in bid position, being outbid, third-party website content, or any outcome dependent on visitor behavior.
+                The service is provided on an as-available basis and may be changed, interrupted, or discontinued at any time. To the maximum extent permitted by law, KeyBid is not liable for indirect or consequential losses, lost traffic, lost revenue, changes in bid position, being outbid, third-party submitted_url content, or any outcome dependent on visitor behavior.
               </p>
               <p className="font-medium text-zinc-800 dark:text-zinc-200">
                 You bid entirely at your own discretion and accept full responsibility for that decision.
