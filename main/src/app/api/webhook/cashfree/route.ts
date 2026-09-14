@@ -33,7 +33,9 @@ export async function POST(req: Request) {
   const payload = JSON.parse(rawBody);
   const orderId: string = payload?.data?.order?.order_id;
   const paymentStatus: string = payload?.data?.payment?.payment_status;
-  const cfPaymentId = payload?.data?.payment?.cf_payment_id;
+  const cfPaymentId = payload?.data?.payment?.cf_payment_id
+    ? String(payload.data.payment.cf_payment_id)
+    : null;
 
   if (!orderId) {
     return NextResponse.json({ error: "Missing order_id" }, { status: 400 });
@@ -46,56 +48,30 @@ export async function POST(req: Request) {
     // for the same order_id across retries.
     // ─────────────────────────────────────────────
     if (paymentStatus === "SUCCESS") {
-      // Idempotency: skip if this order was already marked PAID
-      // (Cashfree can send the same webhook more than once)
-      const { data: existing } = await supabaseAdmin
-        .from("pending_bids")
-        .select("status, key_slot, bid_amount, brand_name, submitted_url, key_logo, email")
-        .eq("order_id", orderId)
-        .single();
+      // Delegate all DB logic to confirm_bid — same function used by verify route.
+      // It handles idempotency (duplicate webhooks), inserts into bids,
+      // updates keys, and deletes from pending_bids atomically.
+      const { data, error } = await supabaseAdmin.rpc("confirm_bid", {
+        p_order_id: orderId,
+        p_cf_payment_id: cfPaymentId,
+        p_cf_contact: null,
+      });
 
-      if (!existing) {
-        console.error(`Webhook for unknown order_id: ${orderId}`);
-        return NextResponse.json({ received: true }); // ack anyway, nothing to do
+      if (error) {
+        console.error("Webhook confirm_bid error:", error);
+        return NextResponse.json({ error: "Processing failed" }, { status: 500 });
       }
 
-      if (existing.status === "PAID") {
-        // Already processed — avoid double-inserting into bids / double-updating keys
-        return NextResponse.json({ received: true });
+      const result = data as { success: boolean; error?: string };
+      if (!result.success) {
+        console.error("Webhook confirm_bid returned failure:", result.error);
+        // Still return 200 if bid not found (order may have already been
+        // confirmed by the verify route — that's fine).
+        if (result.error?.includes("not found")) {
+          return NextResponse.json({ received: true });
+        }
+        return NextResponse.json({ error: result.error }, { status: 500 });
       }
-
-      // 1. Mark pending_bids as PAID
-      const { error: updateError } = await supabaseAdmin
-        .from("pending_bids")
-        .update({ status: "PAID", cf_payment_id: cfPaymentId })
-        .eq("order_id", orderId);
-
-      if (updateError) throw updateError;
-
-      // 2. Move into bids table as the confirmed record
-      //    NOTE: adjust these columns to match your actual bids table schema.
-      const { error: bidsInsertError } = await supabaseAdmin
-        .from("bids")
-        .insert({
-          order_id: orderId,
-          key_slot: existing.key_slot,
-          bid_amount: existing.bid_amount,
-          brand_name: existing.brand_name,
-          submitted_url: existing.submitted_url,
-          key_logo: existing.key_logo,
-          email: existing.email,
-          paid_at: new Date().toISOString(),
-        });
-
-      if (bidsInsertError) throw bidsInsertError;
-
-      // 3. Update keys table with the new highest bid
-      const { error: keysUpdateError } = await supabaseAdmin
-        .from("keys")
-        .update({ current_bid_amount: existing.bid_amount })
-        .eq("key_slot", existing.key_slot);
-
-      if (keysUpdateError) throw keysUpdateError;
     } else if (paymentStatus === "FAILED" || paymentStatus === "USER_DROPPED") {
       await supabaseAdmin
         .from("pending_bids")
@@ -107,9 +83,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ received: true });
   } catch (err: any) {
     console.error("webhook processing error:", err);
-    // Still return 200 if you don't want Cashfree to keep retrying on a
-    // permanent failure, or 500 if you want it to retry. 500 here on purpose
-    // since a DB error is likely transient.
+    // Return 500 so Cashfree retries on transient DB errors.
     return NextResponse.json({ error: "Processing failed" }, { status: 500 });
   }
 }

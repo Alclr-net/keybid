@@ -77,7 +77,7 @@ export async function POST(req: Request) {
         // STEP 2: Save data to pending_bids
         // ─────────────────────────────────────────────
         const pendingOrderId = `order_${keySlot}_${Date.now()}`;
-        const terms_version = process.env.TERMS_VERSION ?? "v1.0";
+        const terms_version = process.env.NEXT_TERMS_VERSION ?? "v1.0";
 
         const { error: insertError } = await supabaseAdmin
             .from("pending_bids")
