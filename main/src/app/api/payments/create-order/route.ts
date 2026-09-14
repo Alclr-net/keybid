@@ -2,26 +2,40 @@ import { Cashfree, CFEnvironment } from "cashfree-pg";
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 
+// ─────────────────────────────────────────────
+// Environment-based config — no manual flipping needed
+// ─────────────────────────────────────────────
+const isProd = process.env.NEXT_PUBLIC_CASHFREE_ENV === "production";
+
 const cashfree = new Cashfree(
-    CFEnvironment.SANDBOX, // switch to CFEnvironment.PRODUCTION when live
-    process.env.CASHFREE_CLIENT_ID!,
-    process.env.CASHFREE_CLIENT_SECRET!
+    isProd ? CFEnvironment.PRODUCTION : CFEnvironment.SANDBOX,
+    process.env.CASHFREE_APP_ID!,
+    process.env.CASHFREE_SECRET_KEY!
 );
+
+const ORDER_CURRENCY = isProd ? "INR" : "INR";
+
+const NOTIFY_URL = isProd
+    ? "https://keybid.lol/api/webhook/cashfree"
+    : "https://canopy-proofs-exit.ngrok-free.dev/api/webhook/cashfree"; // update if your ngrok URL changes
+
+const RETURN_URL = isProd
+    ? "https://keybid.lol/payment-status?order_id={order_id}"
+    : "https://canopy-proofs-exit.ngrok-free.dev/payment-status?order_id={order_id}";
 
 export async function POST(req: Request) {
     const body = await req.json();
     const {
-        keySlot,       // this is your keyboard_key
+        keySlot,
         bidAmount,
         brandName,
-        email,
         website,
         iconUrl,
         lastSeenHighestBid,
     } = body;
-
+    console.log(req.body)
     // Basic validation
-    if (!keySlot || !bidAmount || !brandName || !email) {
+    if (!keySlot || !bidAmount || !brandName || !website) {
         return NextResponse.json(
             { success: false, error: "Missing required fields" },
             { status: 400 }
@@ -35,7 +49,7 @@ export async function POST(req: Request) {
         const { data: currentKey, error: keyError } = await supabaseAdmin
             .from("keys")
             .select("current_bid_amount")
-            .eq("keyboard_key", keySlot)
+            .eq("key_slot", keySlot)
             .single();
 
         if (keyError && keyError.code !== "PGRST116") {
@@ -63,20 +77,20 @@ export async function POST(req: Request) {
         // STEP 2: Save data to pending_bids
         // ─────────────────────────────────────────────
         const pendingOrderId = `order_${keySlot}_${Date.now()}`;
+        const terms_version = process.env.TERMS_VERSION ?? "v1.0";
 
         const { error: insertError } = await supabaseAdmin
             .from("pending_bids")
             .insert({
                 order_id: pendingOrderId,
-                keyboard_key: keySlot,
+                key_slot: keySlot,
                 bid_amount: bidAmount,
                 brand_name: brandName,
-                email: email,
                 website: website,
-                logo_data_url: iconUrl,
+                key_logo: iconUrl,
                 status: "PENDING",
                 terms_accepted_at: new Date().toISOString(),
-                terms_version: "v1.0",
+                terms_version: terms_version,
             });
 
         if (insertError) throw insertError;
@@ -85,18 +99,20 @@ export async function POST(req: Request) {
         // STEP 3: Call Cashfree's PGCreateOrder API
         // ─────────────────────────────────────────────
         const domain = new URL(website).hostname.replace("www.", "");
-        const derivedEmail = `contact@${domain}`
+        const derivedEmail = `contact@${domain}`;
+
         const orderResponse = await cashfree.PGCreateOrder({
             order_id: pendingOrderId,
             order_amount: bidAmount,
-            order_currency: "USD",
+            order_currency: ORDER_CURRENCY,
             customer_details: {
                 customer_id: `cust_${Date.now()}`,
                 customer_email: derivedEmail,
                 customer_phone: "9999999999", // required by Cashfree even if unused
             },
             order_meta: {
-                return_url: `https://keybid.lol/payment-status?order_id={order_id}`,
+                return_url: RETURN_URL,
+                notify_url: NOTIFY_URL,
             },
         });
 
@@ -106,9 +122,15 @@ export async function POST(req: Request) {
             order_id: pendingOrderId,
         });
     } catch (err: any) {
-        console.error("create-order error:", err);
+        console.log("create-order error:", err);
         return NextResponse.json(
-            { success: false, error: err.response?.data?.message || err.message || "Order creation failed" },
+            {
+                success: false,
+                error:
+                    err.response?.data?.message ||
+                    err.message ||
+                    "Order creation failed",
+            },
             { status: 500 }
         );
     }

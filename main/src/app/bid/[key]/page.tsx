@@ -321,7 +321,7 @@ function BidFormContent({ keySlot }: { keySlot: string }) {
   }) => {
     try {
       const verifyRes = await axios.post(
-        "/api/payment/verify",
+        "/api/payments/verify",
         {
           orderId,
           paymentId,
