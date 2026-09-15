@@ -301,7 +301,7 @@ export default function OutbidModal({
       );
 
       const orderData = orderRes.data;
-
+      console.log("order_data", orderData)
       if (orderRes.status === 409 || orderData?.code === "OUTBID") {
         const nextMin = orderData?.minimumNextBid || Math.max(BASE_PRICE, currentHighest + 1);
         setOutbidAlert({

@@ -5,6 +5,7 @@ const nextConfig: NextConfig = {
     BASE_PRICE: process.env.BASE_PRICE || "",
     NEXT_PUBLIC_BASE_PRICE: process.env.NEXT_PUBLIC_BASE_PRICE || process.env.BASE_PRICE || "",
   },
+  allowedDevOrigins: ['*.ngrok-free.dev', '*.ngrok.io'],
 };
 
 export default nextConfig;

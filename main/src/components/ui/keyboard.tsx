@@ -55,25 +55,43 @@ export const getKeySlotFromCode = (keyCode: string): string => {
   if (keyCode === "Backspace") return "DELETE";
   if (keyCode === "Tab") return "TAB";
   if (keyCode === "CapsLock") return "CAPS";
-  if (keyCode === "ShiftLeft" || keyCode === "ShiftRight") return "SHIFT";
-  if (keyCode === "MetaLeft" || keyCode === "MetaRight") return "CMD";
-  if (keyCode === "AltLeft" || keyCode === "AltRight") return "OPT";
+  if (keyCode === "ShiftLeft") return "SHIFTL";
+  if (keyCode === "ShiftRight") return "SHIFTR";
+  if (keyCode === "MetaLeft") return "CMDL";
+  if (keyCode === "MetaRight") return "CMDR";
+  if (keyCode === "AltLeft") return "OPTL";
+  if (keyCode === "AltRight") return "OPTR";
   if (keyCode === "ControlLeft" || keyCode === "ControlRight") return "CTRL";
-  if (keyCode === "TouchID" || keyCode === "Power") return "TOUCH ID";
-  if (keyCode === "BracketLeft") return "[";
-  if (keyCode === "BracketRight") return "]";
-  if (keyCode === "Backslash") return "\\";
-  if (keyCode === "Semicolon") return ";";
-  if (keyCode === "Quote") return "'";
-  if (keyCode === "Comma") return ",";
-  if (keyCode === "Period") return ".";
-  if (keyCode === "Slash") return "/";
-  if (keyCode === "Minus") return "-";
-  if (keyCode === "Equal") return "=";
-  if (keyCode === "Backquote") return "`";
+  if (keyCode === "Fn") return "FN";
+  if (keyCode === "TouchID" || keyCode === "Power") return "TOUCH";
+  if (keyCode === "BracketLeft") return "BRACKETLEFT";
+  if (keyCode === "BracketRight") return "BRACKETRIGHT";
+  if (keyCode === "Backslash") return "BACKSLASH";
+  if (keyCode === "Semicolon") return "SEMICOLON";
+  if (keyCode === "Quote") return "QUOTE";
+  if (keyCode === "Comma") return "COMMA";
+  if (keyCode === "Period") return "PERIOD";
+  if (keyCode === "Slash") return "SLASH";
+  if (keyCode === "Minus") return "MINUS";
+  if (keyCode === "Equal") return "EQUAL";
+  if (keyCode === "Backquote") return "BACKQUOTE";
   if (keyCode.startsWith("F") && keyCode.length <= 3) return keyCode;
-  return keyCode;
+  // Normalize any remaining keyCode to uppercase so DB lookups are consistent
+  return keyCode.toUpperCase();
 };
+
+/**
+ * Returns true if any currently pressed key maps to the same slot as `keySlot`.
+ * This makes mirrored keys (MetaLeft/MetaRight, AltLeft/AltRight, ShiftLeft/ShiftRight)
+ * light up together when either side is pressed.
+ */
+function isSlotPressed(pressedKeys: Set<string>, keySlot: string): boolean {
+  if (!keySlot) return false;
+  for (const code of pressedKeys) {
+    if (getKeySlotFromCode(code) === keySlot) return true;
+  }
+  return false;
+}
 
 function KeyLogoContent({
   logo,
@@ -645,9 +663,11 @@ const Key = ({
 }) => {
   const { pressedKeys, setPressed, setReleased, onKeyClick, keysMap } =
     useKeyboardSound();
-  const isPressed = keyCode ? pressedKeys.has(keyCode) : false;
 
   const keySlot = keyCode ? getKeySlotFromCode(keyCode) : "";
+  // Use slot-level pressed check so mirrored keys (Left/Right variants) share state
+  const isPressed = keySlot ? isSlotPressed(pressedKeys, keySlot) : false;
+
   const claimedKey = keySlot
     ? keysMap.get(keySlot.toUpperCase()) || null
     : null;
@@ -744,9 +764,11 @@ const ModifierKey = ({
 }) => {
   const { pressedKeys, setPressed, setReleased, onKeyClick, keysMap } =
     useKeyboardSound();
-  const isPressed = keyCode ? pressedKeys.has(keyCode) : false;
 
   const keySlot = keyCode ? getKeySlotFromCode(keyCode) : "";
+  // Use slot-level pressed check so mirrored keys (Left/Right variants) share state
+  const isPressed = keySlot ? isSlotPressed(pressedKeys, keySlot) : false;
+
   const claimedKey = keySlot
     ? keysMap.get(keySlot.toUpperCase()) || null
     : null;

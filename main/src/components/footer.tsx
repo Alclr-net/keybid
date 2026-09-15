@@ -1,6 +1,8 @@
+"use client"
 import React from 'react';
 import Link from 'next/link';
 import { SITE_CONFIG, FOOTER_NAV_LINKS } from '@/lib/constant';
+import { cn } from '../lib/utils';
 
 export default function Footer() {
   return (
@@ -8,14 +10,23 @@ export default function Footer() {
       <div className="max-w-4xl mx-auto">
         {/* Top: Bio & Profile */}
         <div className="flex items-start gap-4">
-          <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden shrink-0 border border-zinc-200/80 dark:border-white/15 bg-zinc-100 dark:bg-zinc-800 shadow-xs">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/api/avatar"
-              alt={SITE_CONFIG.creator}
-              className="w-full h-full object-cover object-center rounded-xl"
-            />
-          </div>
+          <Link
+            href={SITE_CONFIG.twitterUrl}
+            target="_blank"
+            rel="noopener noreferrer">
+
+            <div className={cn("w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden shrink-0 border border-zinc-200/80 dark:border-white/15 bg-zinc-100 dark:bg-zinc-800 shadow-xs",
+              "shadow-[0_4px_16px_rgba(37,99,235,0.35),inset_0_1px_0.5px_rgba(255,255,255,0.25)] hover:shadow-[0_6px_22px_rgba(37,99,235,0.45)]",
+              "cursor-pointer")}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/api/avatar"
+                alt={SITE_CONFIG.creator}
+                className={cn("w-full h-full object-cover object-center rounded-xl")}
+              />
+            </div>
+          </Link>
 
           <div className="space-y-1">
             <h3 className="text-sm sm:text-base font-bold text-zinc-950 dark:text-white flex items-center gap-1.5">
@@ -57,6 +68,6 @@ export default function Footer() {
           </p>
         </div>
       </div>
-    </footer>
+    </footer >
   );
 }

@@ -251,7 +251,7 @@ export default function AuctionLeaderboardPage() {
                     {/* Key Slot Badge */}
                     <div className="w-10 text-center shrink-0">
                       <span className="font-mono font-bold text-xs px-2.5 py-1 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-200 border border-zinc-200 dark:border-white/10 shadow-2xs">
-                        {(key.brand_name || key.id.slice(0, 1)).slice(0, 3).toUpperCase()}
+                        {(key.key_slot || key.brand_name || key.id.slice(0, 1)).toUpperCase()}
                       </span>
                     </div>
 

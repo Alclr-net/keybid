@@ -11,6 +11,7 @@ const cashfree = new Cashfree(
 
 export async function POST(req: Request) {
     // ── Input validation ─────────────────────────────────────────
+    console.log("verfication happening...")
     let body: any;
     try {
         body = await req.json();
@@ -54,8 +55,9 @@ export async function POST(req: Request) {
         p_cf_contact: cfContact,
     });
 
+    console.log("[verify] RPC response:", data);
     if (error) {
-        console.error("[verify] RPC error:", error);
+        console.log("[verify] RPC error:", error);
         return NextResponse.json(
             { success: false, error: error.message || "Verification failed" },
             { status: 500 }

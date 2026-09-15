@@ -38,7 +38,7 @@ export default function LiveAuctionSection() {
 
   const handleOpenModal = (keyItem: Key) => {
     setSelectedKey(keyItem);
-    const slot = (keyItem.brand_name || keyItem.id.slice(0, 1)).slice(0, 3).toUpperCase();
+    const slot = (keyItem.key_slot || keyItem.brand_name || keyItem.id.slice(0, 1)).toUpperCase();
     setTargetSlot(slot);
     setIsModalOpen(true);
   };
@@ -115,7 +115,7 @@ export default function LiveAuctionSection() {
                 const hasBid = (keyItem.current_bid_amount || 0) > 0;
                 const bidAmount = keyItem.current_bid_amount || 0;
                 const keyName = keyItem.brand_name || `Key ${keyItem.id.slice(0, 4)}`;
-                const keySlot = (keyItem.key_slot || keyItem.id.slice(0, 1)).slice(0, 3).toUpperCase();
+                const keySlot = (keyItem.key_slot || keyItem.id.slice(0, 1)).toUpperCase();
 
                 return (
                   <div

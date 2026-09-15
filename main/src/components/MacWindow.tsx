@@ -345,7 +345,7 @@ export default function MacWindow({ className }: { className?: string }) {
           </div>
 
           {/* All 5 Company Rows Fitted Neatly (No Scrolling!) */}
-          <div className="flex-1 flex flex-col justify-around space-y-1">
+          <div className="flex-1 flex flex-col justify-start space-y-1">
             {isLoading ? (
               [1, 2, 3, 4, 5].map((i) => (
                 <div
