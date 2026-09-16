@@ -92,14 +92,14 @@ export default function TermsModal({ isOpen, onClose }: TermsModalProps) {
                   2. Payments and Continuous Bidding
                 </h4>
                 <p>
-                  Bids are one-time payments processed through Cashfree. A bid is valid only after successful payment capture. There is no fixed end time — positions can be challenged and outbid at any time, indefinitely.
+                  Bids are one-time payments processed through Dodo Payments. A bid is valid only after successful payment capture. There is no fixed end time — positions can be challenged and outbid at any time, indefinitely.
                 </p>
               </div>
 
               <div className="space-y-1">
                 <h4 className="font-bold text-zinc-900 dark:text-white">3. Technical Error Exception</h4>
                 <p>
-                  If a payment is captured by Cashfree but, due to a technical error on our end, is not reflected as a bid on our platform, contact us on X (
+                  If a payment is captured by Dodo Payments but, due to a technical error on our end, is not reflected as a bid on our platform, contact us on X (
                   <a
                     href="https://x.com/seth_rachit_"
                     target="_blank"
@@ -133,7 +133,7 @@ export default function TermsModal({ isOpen, onClose }: TermsModalProps) {
 
             {/* Footer */}
             <div className="pt-4 border-t border-zinc-200 dark:border-white/10 flex items-center justify-between shrink-0">
-              <span className="text-[11px] text-zinc-500 font-mono">Protected by Cashfree Security</span>
+              <span className="text-[11px] text-zinc-500 font-mono">Protected by Dodo Payments Security</span>
               <button
                 type="button"
                 onClick={onClose}

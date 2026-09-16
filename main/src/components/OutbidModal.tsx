@@ -29,20 +29,6 @@ interface OutbidModalProps {
   initialLogo?: string;
 }
 
-declare global {
-  interface Window {
-    Cashfree?: (config?: { mode?: "sandbox" | "production" }) => {
-      checkout: (options: {
-        paymentSessionId: string;
-        redirectTarget?: "_self" | "_modal" | "_blank" | "_top";
-      }) => Promise<{ error?: { message: string }; paymentDetails?: unknown }>;
-    };
-  }
-}
-
-const CASHFREE_MODE: "sandbox" | "production" =
-  process.env.NEXT_PUBLIC_CASHFREE_ENV === "production" ? "production" : "sandbox";
-
 /** Only allow well-formed http(s) URLs — blocks javascript:, data:, etc. */
 function safesubmitted_urlUrl(raw: string): string | null {
   const domain = extractValidDomain(raw);
@@ -134,6 +120,7 @@ export default function OutbidModal({
   const [termsAgreed, setTermsAgreed] = useState(false);
   const [termsModalOpen, setTermsModalOpen] = useState(false);
 
+  const [country, setCountry] = useState("US");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [paymentSuccess, setPaymentSuccess] = useState<{
     keySlot: string;
@@ -144,17 +131,6 @@ export default function OutbidModal({
 
   useEffect(() => {
     setMounted(true);
-  }, []);
-
-  // Load Cashfree checkout SDK once
-  useEffect(() => {
-    if (typeof window !== "undefined" && !document.getElementById("cashfree-sdk")) {
-      const script = document.createElement("script");
-      script.id = "cashfree-sdk";
-      script.src = "https://sdk.cashfree.com/js/v3/cashfree.js";
-      script.async = true;
-      document.body.appendChild(script);
-    }
   }, []);
 
   const resolveCompany = useCallback((domain: string) => {
@@ -257,8 +233,19 @@ export default function OutbidModal({
   const isBidAmountValid =
     Number.isFinite(bidAmount) && Number.isInteger(bidAmount) && bidAmount >= effectiveMinBid && bidAmount < 1_000_000;
 
+  // HIGH-02: submitted_url is now required — without it the server cannot process the order
+  const isUrlValid = submitted_url.trim().length > 0;
+
+  const isCountryValid = country.trim().length === 2;
+
   const canSubmit =
-    !isSubmitting && termsAgreed && isBidAmountValid && brandName.trim().length > 0 && targetSlot.length > 0;
+    !isSubmitting &&
+    termsAgreed &&
+    isBidAmountValid &&
+    brandName.trim().length > 0 &&
+    targetSlot.length > 0 &&
+    isUrlValid &&
+    isCountryValid;
 
   const handleInitiatePayment = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -286,9 +273,9 @@ export default function OutbidModal({
         }
       }
 
-      // Create order server-side (does outbid check + Cashfree PGCreateOrder)
+      // Create checkout session server-side with Dodo Payments
       const orderRes = await axios.post(
-        "/api/payments/create-order",
+        "/api/create-checkout",
         {
           keySlot: targetSlot,
           bidAmount,
@@ -296,12 +283,12 @@ export default function OutbidModal({
           submitted_url: sanitizedsubmitted_url,
           iconUrl: effectiveIconUrl,
           lastSeenHighestBid: currentHighest,
+          country,
         },
         { validateStatus: (status) => status < 500 }
       );
 
       const orderData = orderRes.data;
-      console.log("order_data", orderData)
       if (orderRes.status === 409 || orderData?.code === "OUTBID") {
         const nextMin = orderData?.minimumNextBid || Math.max(BASE_PRICE, currentHighest + 1);
         setOutbidAlert({
@@ -318,33 +305,13 @@ export default function OutbidModal({
         throw new Error(orderData?.error || "Failed to generate payment order");
       }
 
-      const { order_id, payment_session_id } = orderData;
-      if (!order_id || !payment_session_id) {
-        throw new Error("Order was not created correctly — missing session details");
+      const { checkout_url } = orderData;
+      if (!checkout_url) {
+        throw new Error("Order was not created correctly — missing checkout URL");
       }
 
-      if (typeof window.Cashfree !== "function") {
-        throw new Error("Payment system is still loading — please try again in a moment.");
-      }
-
-      const cashfree = window.Cashfree({ mode: CASHFREE_MODE });
-
-      const result = await cashfree.checkout({
-        paymentSessionId: payment_session_id,
-        redirectTarget: "_modal",
-      });
-
-      if (result?.error) {
-        // User closed the modal or payment failed — not a hard error
-        setIsSubmitting(false);
-        return;
-      }
-
-      await completePaymentVerification({
-        order_id,
-        resolvedsubmitted_url: sanitizedsubmitted_url,
-        resolvedIconUrl: effectiveIconUrl,
-      });
+      // Redirect to Dodo hosted checkout page
+      window.location.href = checkout_url;
     } catch (err: unknown) {
       const e = err as { message?: string };
       console.error(err);
@@ -597,6 +564,8 @@ export default function OutbidModal({
                           placeholder="https://yourcompany.com"
                           value={submitted_url}
                           onChange={(e) => setsubmitted_url(e.target.value)}
+                          required
+                          aria-label="Company website URL (required)"
                           className="flex-1 min-w-0 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/60 px-3 py-2 text-xs sm:text-sm text-zinc-900 dark:text-white placeholder:text-zinc-400 dark:placeholder:text-zinc-500 outline-none focus:border-blue-500 focus:bg-white dark:focus:bg-zinc-900 transition-colors h-10"
                         />
                       </div>
@@ -614,6 +583,43 @@ export default function OutbidModal({
                         onChange={(e) => setBrandName(e.target.value)}
                         className="w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/60 px-3 py-2 text-xs sm:text-sm text-zinc-900 dark:text-white placeholder:text-zinc-400 dark:placeholder:text-zinc-500 outline-none focus:border-blue-500 focus:bg-white dark:focus:bg-zinc-900 transition-colors h-10"
                       />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
+                        Billing Country <span className="text-red-500">*</span>
+                      </label>
+                      <select
+                        value={country}
+                        onChange={(e) => setCountry(e.target.value)}
+                        required
+                        className="w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/60 px-3 py-2 text-xs sm:text-sm text-zinc-900 dark:text-white outline-none focus:border-blue-500 focus:bg-white dark:focus:bg-zinc-900 transition-colors h-10 cursor-pointer"
+                      >
+                        <option value="US">United States (US)</option>
+                        <option value="IN">India (IN)</option>
+                        <option value="GB">United Kingdom (GB)</option>
+                        <option value="CA">Canada (CA)</option>
+                        <option value="DE">Germany (DE)</option>
+                        <option value="FR">France (FR)</option>
+                        <option value="AU">Australia (AU)</option>
+                        <option value="JP">Japan (JP)</option>
+                        <option value="SG">Singapore (SG)</option>
+                        <option value="NL">Netherlands (NL)</option>
+                        <option value="AE">United Arab Emirates (AE)</option>
+                        <option value="BR">Brazil (BR)</option>
+                        <option value="CH">Switzerland (CH)</option>
+                        <option value="ES">Spain (ES)</option>
+                        <option value="IT">Italy (IT)</option>
+                        <option value="SE">Sweden (SE)</option>
+                        <option value="KR">South Korea (KR)</option>
+                        <option value="IE">Ireland (IE)</option>
+                        <option value="NZ">New Zealand (NZ)</option>
+                        <option value="MX">Mexico (MX)</option>
+                        <option value="ID">Indonesia (ID)</option>
+                        <option value="MY">Malaysia (MY)</option>
+                        <option value="PL">Poland (PL)</option>
+                        <option value="TR">Turkey (TR)</option>
+                        <option value="ZA">South Africa (ZA)</option>
+                      </select>
                     </div>
                   </div>
 
@@ -671,11 +677,13 @@ export default function OutbidModal({
                           ? "Please specify a keycap slot"
                           : !brandName.trim()
                             ? "Please enter your brand name"
-                            : !isBidAmountValid
-                              ? `Bid must be at least $${effectiveMinBid}`
-                              : !termsAgreed
-                                ? "Please agree to the placement rules"
-                                : ""}
+                            : !isUrlValid
+                              ? "Please enter your company website URL"
+                              : !isBidAmountValid
+                                ? `Bid must be at least $${effectiveMinBid}`
+                                : !termsAgreed
+                                  ? "Please agree to the placement rules"
+                                  : ""}
                       </p>
                     )}
                     <p className="text-[11px] text-center text-zinc-500 dark:text-zinc-400 font-mono">
