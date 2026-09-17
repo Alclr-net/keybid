@@ -4,7 +4,6 @@ import React, { useState, useRef, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "motion/react";
 import axios from "axios";
-import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { toast } from "sonner";
 import {
   IconX,
@@ -96,10 +95,6 @@ export default function OutbidModal({
   const [mounted, setMounted] = useState(false);
   const storeKeys = useKeysStore((state) => state.keys);
   const updateStoreKey = useKeysStore((state) => state.updateKey);
-
-  const searchParams = useSearchParams();
-  const router = useRouter();
-  const pathname = usePathname();
 
   const getKeyBid = (k: Key | any | null): number =>
     typeof k?.current_bid_amount === "number" ? k.current_bid_amount : 0;
@@ -383,6 +378,14 @@ export default function OutbidModal({
     }
   };
 
+  // NOTE: This function remains here in case something in the future needs
+  // to trigger verification directly from the modal. In the current flow,
+  // verification after returning from Dodo checkout is handled entirely by
+  // the dedicated /payments/verify page (which has its own Suspense
+  // boundary around useSearchParams) — not by this modal. Do not re-add a
+  // useSearchParams-based auto-trigger here; that previously broke the
+  // /auction page's static build because this modal has no Suspense
+  // boundary of its own.
   const completePaymentVerification = useCallback(
     async ({
       order_id,
@@ -465,23 +468,6 @@ export default function OutbidModal({
     },
     [activeKey, bidAmount, brandName, company, onSuccess, targetSlot, updateStoreKey]
   );
-
-  // ── Auto-trigger verification on return from Dodo checkout ──
-  useEffect(() => {
-    const orderIdFromUrl = searchParams?.get("order_id");
-    if (!orderIdFromUrl) return;
-    if (paymentSuccess || isVerifying) return;
-
-    completePaymentVerification({ order_id: orderIdFromUrl });
-
-    if (pathname) {
-      const params = new URLSearchParams(searchParams?.toString());
-      params.delete("order_id");
-      const next = params.toString() ? `${pathname}?${params.toString()}` : pathname;
-      router.replace(next);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams]);
 
   if (!mounted || typeof document === "undefined") return null;
 
