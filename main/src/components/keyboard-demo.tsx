@@ -141,15 +141,16 @@ export default function KeyboardDemo() {
 
   return (
     <section
-      className="relative flex min-h-[320px] xs:min-h-[360px] sm:min-h-[520px] md:min-h-[620px] lg:min-h-[700px] w-full flex-col items-center justify-center py-4 sm:py-10 md:py-16 overflow-hidden"
+
+      className="relative flex min-h-[300px] xs:min-h-[340px] sm:min-h-[520px] md:min-h-[620px] lg:min-h-[700px] w-full flex-col items-center justify-center py-4 sm:py-10 md:py-16 overflow-hidden"
       ref={containerRef}
     >
       {/* Perspective Mode Control Pill */}
-      <div className="mb-3 sm:mb-6 flex items-center gap-1 sm:gap-1.5 rounded-full border border-zinc-200/80 dark:border-white/10 bg-white/70 dark:bg-zinc-900/60 p-0.5 sm:p-1 backdrop-blur-md shadow-xs text-[10px] sm:text-[11px] font-medium text-zinc-600 dark:text-zinc-400 select-none z-20 max-w-[95vw] overflow-x-auto scrollbar-none">
+      <div className="mb-3 sm:mb-6 flex items-center gap-1 sm:gap-1.5 rounded-full border border-zinc-200/80 dark:border-white/10 bg-white/70 dark:bg-zinc-900/60 p-0.5 sm:p-1 backdrop-blur-md shadow-xs text-[10px] sm:text-[11px] font-medium text-zinc-600 dark:text-zinc-400 select-none z-20 ">
         <button
           type="button"
           onClick={() => setPerspectiveMode("auto")}
-          className={cn("flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full transition-all cursor-pointer whitespace-nowrap",
+          className={cn("flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full transition-all cursor-pointer",
             `${perspectiveMode === "auto"
               ? "bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800 font-semibold shadow-[0_4px_16px_rgba(0,0,0,0.06),0_1px_3px_rgba(0,0,0,0.04),inset_0_1px_0.5px_0.05px_rgba(255,255,255,0.2),inset_0_-1px_0.5px_0.05px_rgba(0,0,0,0.1)]"
               : "hover:text-blue-600 dark:hover:text-blue-400"
@@ -162,7 +163,7 @@ export default function KeyboardDemo() {
         <button
           type="button"
           onClick={() => setPerspectiveMode("desk")}
-          className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full transition-all cursor-pointer whitespace-nowrap ${perspectiveMode === "desk"
+          className={`flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full transition-all cursor-pointer ${perspectiveMode === "desk"
             ? "bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800 font-semibold shadow-[0_4px_16px_rgba(0,0,0,0.06),0_1px_3px_rgba(0,0,0,0.04),inset_0_1px_0.5px_0.05px_rgba(255,255,255,0.2),inset_0_-1px_0.5px_0.05px_rgba(0,0,0,0.1)]"
             : "hover:text-blue-600 dark:hover:text-blue-400"
             }`}
@@ -174,7 +175,7 @@ export default function KeyboardDemo() {
         <button
           type="button"
           onClick={() => setPerspectiveMode("flat")}
-          className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full transition-all cursor-pointer whitespace-nowrap ${perspectiveMode === "flat"
+          className={`flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full transition-all cursor-pointer ${perspectiveMode === "flat"
             ? "bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800 font-semibold shadow-[0_4px_16px_rgba(0,0,0,0.06),0_1px_3px_rgba(0,0,0,0.04),inset_0_1px_0.5px_0.05px_rgba(255,255,255,0.2),inset_0_-1px_0.5px_0.05px_rgba(0,0,0,0.1)]"
             : "hover:text-blue-600 dark:hover:text-blue-400"
             }`}
@@ -186,7 +187,7 @@ export default function KeyboardDemo() {
 
       {/* Interactive Helper Hint with TextHoverEffect */}
       <div className="absolute bottom-0 sm:bottom-1 md:bottom-2 inset-x-0 w-full flex justify-center items-center px-4 z-20 pointer-events-auto">
-        <div className="w-full max-w-5xl h-14 sm:h-24 md:h-36 lg:h-40 flex items-center justify-center">
+        <div className="w-full max-w-5xl h-20 sm:h-28 md:h-36 lg:h-40 flex items-center justify-center">
           <TextHoverEffect
             text="CLICK ANY KEY TO CLAIM"
             containerRef={containerRef}
@@ -196,7 +197,7 @@ export default function KeyboardDemo() {
 
       {/* 3D Perspective Stage Container */}
       <div
-        className="relative flex w-full items-center justify-center px-1 sm:px-4 max-w-full overflow-x-auto sm:overflow-visible touch-pan-x scrollbar-none py-2"
+        className="relative flex w-full items-center justify-center px-1 sm:px-4"
         style={{
           perspective: isMobile ? 900 : 1400,
           perspectiveOrigin: "50% 40%",
