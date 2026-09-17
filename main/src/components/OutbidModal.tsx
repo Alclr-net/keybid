@@ -623,7 +623,7 @@ export default function OutbidModal({
                           if (outbidAlert) setOutbidAlert(null);
                         }}
                         required
-                        className="w-full bg-transparent font-mono text-sm font-bold text-zinc-950 dark:text-white outline-none"
+                        className="w-full bg-transparent font-mono text-base sm:text-sm font-bold text-zinc-950 dark:text-white outline-none"
                       />
                       <span className="text-zinc-400 dark:text-zinc-500 font-mono text-[10px] uppercase select-none">USD</span>
                     </div>
@@ -675,7 +675,7 @@ export default function OutbidModal({
                           onChange={(e) => setsubmitted_url(e.target.value)}
                           required
                           aria-label="Company website URL (required)"
-                          className="flex-1 min-w-0 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/60 px-3 py-1.5 text-xs sm:text-sm text-zinc-900 dark:text-white placeholder:text-zinc-400 dark:placeholder:text-zinc-500 outline-none focus:border-blue-500 focus:bg-white dark:focus:bg-zinc-900 transition-colors h-9"
+                          className="flex-1 min-w-0 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/60 px-3 py-1.5 text-base sm:text-sm text-zinc-900 dark:text-white placeholder:text-zinc-400 dark:placeholder:text-zinc-500 outline-none focus:border-blue-500 focus:bg-white dark:focus:bg-zinc-900 transition-colors h-9"
                         />
                       </div>
                     </Field>
@@ -691,7 +691,7 @@ export default function OutbidModal({
                         placeholder="Enter Your Brand Name"
                         value={brandName}
                         onChange={(e) => setBrandName(e.target.value)}
-                        className="w-full rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/60 px-3 py-1.5 text-xs sm:text-sm text-zinc-900 dark:text-white placeholder:text-zinc-400 dark:placeholder:text-zinc-500 outline-none focus:border-blue-500 focus:bg-white dark:focus:bg-zinc-900 transition-colors h-9"
+                        className="w-full rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/60 px-3 py-1.5 text-base sm:text-sm text-zinc-900 dark:text-white placeholder:text-zinc-400 dark:placeholder:text-zinc-500 outline-none focus:border-blue-500 focus:bg-white dark:focus:bg-zinc-900 transition-colors h-9"
                       />
                     </Field>
 
@@ -716,7 +716,7 @@ export default function OutbidModal({
                         maxLength={500}
                         rows={3}
                         placeholder="Tell us about your brand — what you do, what you make, or why you're claiming this key…"
-                        className="w-full rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/60 px-3 py-2 text-xs sm:text-sm text-zinc-900 dark:text-white placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:border-blue-500 focus:bg-white dark:focus:bg-zinc-900 focus-visible:ring-0 focus-visible:ring-offset-0 transition-colors resize-none leading-relaxed min-h-0"
+                        className="w-full rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/60 px-3 py-2 text-base sm:text-sm text-zinc-900 dark:text-white placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:border-blue-500 focus:bg-white dark:focus:bg-zinc-900 focus-visible:ring-0 focus-visible:ring-offset-0 transition-colors resize-none leading-relaxed min-h-0"
                       />
                     </Field>
                   </div>

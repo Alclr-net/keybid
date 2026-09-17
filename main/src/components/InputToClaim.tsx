@@ -155,7 +155,7 @@ export function UriClaimInput({
                         disabled={disabled}
                         spellCheck={false}
                         autoComplete="off"
-                        className="w-full h-full bg-transparent px-3.5 sm:px-6 text-sm sm:text-base md:text-lg text-zinc-950 dark:text-white outline-none placeholder:text-zinc-400 dark:placeholder:text-zinc-500 font-normal"
+                        className="w-full h-full bg-transparent px-3.5 sm:px-6 text-base md:text-lg text-zinc-950 dark:text-white outline-none placeholder:text-zinc-400 dark:placeholder:text-zinc-500 font-normal"
                     />
                 </div>
             </div>

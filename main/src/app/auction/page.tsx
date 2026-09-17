@@ -134,7 +134,7 @@ export default function AuctionLeaderboardPage() {
               placeholder="Search company or key name..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 rounded-xl text-xs sm:text-sm bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/10 text-zinc-900 dark:text-white placeholder:text-zinc-400 outline-none focus:border-blue-500 transition-colors shadow-2xs"
+              className="w-full pl-9 pr-4 py-2 rounded-xl text-base sm:text-sm bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/10 text-zinc-900 dark:text-white placeholder:text-zinc-400 outline-none focus:border-blue-500 transition-colors shadow-2xs"
             />
           </div>
 
@@ -144,7 +144,7 @@ export default function AuctionLeaderboardPage() {
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as "bid-desc" | "bid-asc" | "clicks-desc")}
-              className="w-full sm:w-auto px-3 py-2 rounded-xl text-xs font-semibold bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/10 text-zinc-700 dark:text-zinc-300 outline-none cursor-pointer shadow-2xs"
+              className="w-full sm:w-auto px-3 py-2 rounded-xl text-base sm:text-xs font-semibold bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/10 text-zinc-700 dark:text-zinc-300 outline-none cursor-pointer shadow-2xs"
             >
               <option value="bid-desc">Highest Bid First</option>
               <option value="bid-asc">Lowest Bid First</option>

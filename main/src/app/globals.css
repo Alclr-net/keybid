@@ -169,3 +169,13 @@ body {
 .dark ::-webkit-scrollbar-thumb:hover {
   background: #3f3f46;
 }
+
+/* Prevent iOS Safari auto-zoom on input focus for mobile viewports below sm: (640px) */
+@media screen and (max-width: 639px) {
+
+  input,
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+}
