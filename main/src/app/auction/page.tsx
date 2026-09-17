@@ -81,7 +81,7 @@ export default function AuctionLeaderboardPage() {
         {/* Page Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-8 border-b border-zinc-200 dark:border-white/10">
           <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-700 dark:text-emerald-400 text-xs font-bold mb-3 shadow-2xs">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-emerald-500/10 border border-emerald-500/30 text-emerald-700 dark:text-emerald-400 text-xs font-bold mb-3 shadow-2xs">
               <Ping>
                 <span>Complete Hardware Registry</span>
               </Ping>
@@ -95,30 +95,30 @@ export default function AuctionLeaderboardPage() {
           </div>
 
           {/* Quick Metrics */}
-          <div className="flex items-center gap-4 sm:gap-6 bg-white dark:bg-zinc-900/80 border border-zinc-200 dark:border-white/10 rounded-2xl p-4 shadow-sm">
-            <div>
-              <div className="text-[11px] font-mono uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
+          <div className="grid grid-cols-3 sm:flex items-center justify-between gap-2 sm:gap-6 bg-white dark:bg-zinc-900/80 border border-zinc-200 dark:border-white/10 rounded-2xl p-3 sm:p-4 shadow-sm w-full md:w-auto">
+            <div className="text-center sm:text-left">
+              <div className="text-[10px] sm:text-[11px] font-mono uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
                 Total Pool
               </div>
-              <div className="font-mono text-2xl font-bold text-blue-600 dark:text-blue-400">
+              <div className="font-mono text-base sm:text-2xl font-bold text-blue-600 dark:text-blue-400">
                 ${totalPool}
               </div>
             </div>
-            <div className="h-8 w-px bg-zinc-200 dark:bg-white/10" />
-            <div>
-              <div className="text-[11px] font-mono uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
-                Claimed Keys
+            <div className="hidden sm:block h-8 w-px bg-zinc-200 dark:bg-white/10" />
+            <div className="text-center sm:text-left border-x border-zinc-200 dark:border-white/10 sm:border-x-0 px-2 sm:px-0">
+              <div className="text-[10px] sm:text-[11px] font-mono uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
+                Claimed
               </div>
-              <div className="font-mono text-2xl font-bold text-zinc-900 dark:text-white">
+              <div className="font-mono text-base sm:text-2xl font-bold text-zinc-900 dark:text-white">
                 {isLoading ? "..." : `${keysList.length} / 28`}
               </div>
             </div>
-            <div className="h-8 w-px bg-zinc-200 dark:bg-white/10" />
-            <div>
-              <div className="text-[11px] font-mono uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
-                Total Clicks
+            <div className="hidden sm:block h-8 w-px bg-zinc-200 dark:bg-white/10" />
+            <div className="text-center sm:text-left">
+              <div className="text-[10px] sm:text-[11px] font-mono uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
+                Clicks
               </div>
-              <div className="font-mono text-2xl font-bold text-zinc-900 dark:text-white">
+              <div className="font-mono text-base sm:text-2xl font-bold text-zinc-900 dark:text-white">
                 {isLoading ? "..." : totalClicks}
               </div>
             </div>
@@ -126,7 +126,7 @@ export default function AuctionLeaderboardPage() {
         </div>
 
         {/* Search & Sort Controls */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 py-6">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 py-6">
           <div className="relative w-full sm:w-80">
             <IconSearch size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400" />
             <input
@@ -139,12 +139,12 @@ export default function AuctionLeaderboardPage() {
           </div>
 
           <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
-            <IconArrowsSort size={15} className="text-zinc-400 hidden sm:block" />
-            <span className="text-xs text-zinc-500 font-medium hidden sm:inline">Sort:</span>
+            <IconArrowsSort size={15} className="text-zinc-400 hidden sm:block shrink-0" />
+            <span className="text-xs text-zinc-500 font-medium hidden sm:inline shrink-0">Sort:</span>
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as "bid-desc" | "bid-asc" | "clicks-desc")}
-              className="px-3 py-2 rounded-xl text-xs font-semibold bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/10 text-zinc-700 dark:text-zinc-300 outline-none cursor-pointer shadow-2xs"
+              className="w-full sm:w-auto px-3 py-2 rounded-xl text-xs font-semibold bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/10 text-zinc-700 dark:text-zinc-300 outline-none cursor-pointer shadow-2xs"
             >
               <option value="bid-desc">Highest Bid First</option>
               <option value="bid-asc">Lowest Bid First</option>
@@ -221,52 +221,52 @@ export default function AuctionLeaderboardPage() {
                   <div
                     key={key.id}
                     className={cn(
-                      "flex items-center gap-3 sm:gap-4 px-4 sm:px-6 py-4 transition-colors",
+                      "flex items-center gap-2.5 sm:gap-4 px-3 sm:px-6 py-3 sm:py-4 transition-colors",
                       isLeader && hasBid
                         ? "bg-amber-500/[0.04] dark:bg-amber-500/[0.06]"
                         : "hover:bg-zinc-50/80 dark:hover:bg-white/[0.02]"
                     )}
                   >
                     {/* Rank Badge */}
-                    <div className="w-8 text-center shrink-0 flex items-center justify-center">
+                    <div className="w-6 sm:w-8 text-center shrink-0 hidden xs:flex items-center justify-center">
                       {hasBid && isLeader ? (
-                        <span className="font-mono text-xs font-bold px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-800 dark:text-amber-400 border border-amber-500/40 flex items-center gap-1">
+                        <span className="font-mono text-[10px] sm:text-xs font-bold px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-800 dark:text-amber-400 border border-amber-500/40 flex items-center gap-0.5 sm:gap-1">
                           <IconTrophy size={11} /> #1
                         </span>
                       ) : hasBid && isSecond ? (
-                        <span className="font-mono text-xs font-bold px-1.5 py-0.5 rounded bg-slate-400/20 text-slate-800 dark:text-slate-300 border border-slate-400/40">
+                        <span className="font-mono text-[10px] sm:text-xs font-bold px-1.5 py-0.5 rounded bg-slate-400/20 text-slate-800 dark:text-slate-300 border border-slate-400/40">
                           #2
                         </span>
                       ) : hasBid && isThird ? (
-                        <span className="font-mono text-xs font-bold px-1.5 py-0.5 rounded bg-amber-800/15 text-amber-900 dark:text-amber-400 border border-amber-800/30">
+                        <span className="font-mono text-[10px] sm:text-xs font-bold px-1.5 py-0.5 rounded bg-amber-800/15 text-amber-900 dark:text-amber-400 border border-amber-800/30">
                           #3
                         </span>
                       ) : (
-                        <span className="font-mono text-xs font-medium text-zinc-400 dark:text-zinc-500">
+                        <span className="font-mono text-[11px] sm:text-xs font-medium text-zinc-400 dark:text-zinc-500">
                           #{idx + 1}
                         </span>
                       )}
                     </div>
 
                     {/* Key Slot Badge */}
-                    <div className="w-10 text-center shrink-0">
-                      <span className="font-mono font-bold text-xs px-2.5 py-1 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-200 border border-zinc-200 dark:border-white/10 shadow-2xs">
+                    <div className="w-8 sm:w-10 text-center shrink-0">
+                      <span className="font-mono font-bold text-[11px] sm:text-xs px-2 sm:px-2.5 py-1 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-200 border border-zinc-200 dark:border-white/10 shadow-2xs">
                         {(key.key_slot || key.brand_name || key.id.slice(0, 1)).toUpperCase()}
                       </span>
                     </div>
 
                     {/* Key Identity with KeyLogo (Placeholder fallback supported) */}
-                    <div className="flex items-center gap-3 min-w-0 flex-1 pr-2">
+                    <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1 pr-1 sm:pr-2">
                       <KeyLogo
                         src={key.key_logo}
                         alt={keyName}
                         fallbackText={keyName}
-                        className="w-8 h-8 rounded-lg object-contain bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 p-0.5 shrink-0 shadow-2xs"
-                        fallbackClassName="w-8 h-8 text-xs"
+                        className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg object-contain bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 p-0.5 shrink-0 shadow-2xs"
+                        fallbackClassName="w-7 h-7 sm:w-8 sm:h-8 text-xs"
                       />
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-1.5">
-                          <span className="font-display font-semibold text-xs sm:text-sm text-zinc-900 dark:text-white truncate">
+                          <span className="font-display font-semibold text-xs sm:text-sm text-zinc-900 dark:text-white truncate max-w-[100px] xs:max-w-[150px] sm:max-w-xs md:max-w-none">
                             {keyName}
                           </span>
                           {key.submitted_url && (
@@ -279,7 +279,7 @@ export default function AuctionLeaderboardPage() {
                                 trackKeyClick(key.id);
                                 useKeysStore.getState().incrementClickCount(key.id);
                               }}
-                              className="text-zinc-400 hover:text-blue-600 dark:text-zinc-500 dark:hover:text-blue-400 transition-colors p-0.5"
+                              className="text-zinc-400 hover:text-blue-600 dark:text-zinc-500 dark:hover:text-blue-400 transition-colors p-0.5 shrink-0"
                               title={`Visit ${keyName}`}
                             >
                               <IconExternalLink size={13} />
@@ -308,10 +308,10 @@ export default function AuctionLeaderboardPage() {
                     </div>
 
                     {/* Leading Bid or No bids yet */}
-                    <div className="text-right shrink-0 pr-2">
+                    <div className="text-right shrink-0 pr-1 sm:pr-2">
                       {hasBid ? (
                         <>
-                          <div className="font-mono text-sm sm:text-base font-bold text-zinc-950 dark:text-white">
+                          <div className="font-mono text-xs sm:text-base font-bold text-zinc-950 dark:text-white">
                             ${bidAmount}
                           </div>
                           <div className="text-[10px] text-zinc-400 font-mono hidden sm:block">
@@ -319,8 +319,8 @@ export default function AuctionLeaderboardPage() {
                           </div>
                         </>
                       ) : (
-                        <div className="text-xs font-medium italic text-zinc-400 dark:text-zinc-500">
-                          No bids yet
+                        <div className="text-[11px] sm:text-xs font-medium italic text-zinc-400 dark:text-zinc-500 whitespace-nowrap">
+                          No bids
                         </div>
                       )}
                     </div>
@@ -339,7 +339,7 @@ export default function AuctionLeaderboardPage() {
                               setIsModalOpen(true);
                             }}
                             className={cn(
-                              "flex items-center justify-center gap-1 px-3 py-1.5 rounded-[6px] text-xs font-bold transition-all cursor-pointer shadow-[0_4px_16px_rgba(0,0,0,0.06),0_1px_3px_rgba(0,0,0,0.04),inset_0_1px_0.5px_0.05px_rgba(255,255,255,0.2),inset_0_-1px_0.5px_0.05px_rgba(0,0,0,0.1)]",
+                              "flex items-center justify-center gap-1 px-2.5 sm:px-3 py-1.5 rounded-[6px] text-[11px] sm:text-xs font-bold transition-all cursor-pointer whitespace-nowrap shadow-[0_4px_16px_rgba(0,0,0,0.06),0_1px_3px_rgba(0,0,0,0.04),inset_0_1px_0.5px_0.05px_rgba(255,255,255,0.2),inset_0_-1px_0.5px_0.05px_rgba(0,0,0,0.1)]",
                               isLeader
                                 ? "bg-amber-400 hover:bg-amber-500 text-zinc-950"
                                 : "bg-blue-600 hover:bg-blue-500 text-white"
@@ -357,9 +357,9 @@ export default function AuctionLeaderboardPage() {
                               setSelectedKey(key);
                               setIsModalOpen(true);
                             }}
-                            className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-[6px] text-xs font-bold transition-all cursor-pointer bg-blue-600 hover:bg-blue-500 text-white shadow-[0_4px_16px_rgba(0,0,0,0.06),0_1px_3px_rgba(0,0,0,0.04),inset_0_1px_0.5px_0.05px_rgba(255,255,255,0.2),inset_0_-1px_0.5px_0.05px_rgba(0,0,0,0.1)]"
+                            className="flex items-center justify-center gap-1 px-2.5 sm:px-3 py-1.5 rounded-[6px] text-[11px] sm:text-xs font-bold transition-all cursor-pointer whitespace-nowrap bg-blue-600 hover:bg-blue-500 text-white shadow-[0_4px_16px_rgba(0,0,0,0.06),0_1px_3px_rgba(0,0,0,0.04),inset_0_1px_0.5px_0.05px_rgba(255,255,255,0.2),inset_0_-1px_0.5px_0.05px_rgba(0,0,0,0.1)]"
                           >
-                            <span>Be the first to bid</span>
+                            <span>Be first</span>
                           </button>
                         </div>
                       )}

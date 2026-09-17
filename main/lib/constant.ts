@@ -16,35 +16,72 @@ export const FAQ_ITEMS: FaqItem[] = [
     },
     {
         value: "item-2",
-        trigger: "How does the bidding work?",
+        trigger: "How does the bidding work on KeyBid?",
         content:
-            "Every key has an initial starting bid of $1. Anyone can outbid the current holder by at least $1. If you're outbid, your spot is replaced and you can choose to outbid back to reclaim it.",
+            "Every key starts at a $15 minimum bid (taxes inclusive). Anyone can outbid the current holder by paying the difference plus a small increment. The highest bidder at any moment holds the key — there's no fixed end time, so competition is ongoing. It's a live, real-time website bidding board.",
     },
     {
         value: "item-3",
-        trigger: "What happens if I get outbid?",
+        trigger: "What happens if someone outbids my website listing?",
         content:
-            "When you get outbid, the new highest bidder takes over that key slot. You will receive an immediate notification so you have the opportunity to defend your spot before the auction closes.",
+            "When you get outbid, the new highest bidder takes over that key slot and your listing is replaced. You receive an immediate notification so you can choose to outbid back and reclaim your spot. Your original payment is non-refundable — each payment buys the moment of placement, not a guaranteed duration.",
     },
     {
         value: "item-4",
-        trigger: "Can I change my logo or destination link later?",
+        trigger: "How is KeyBid different from outbid.lol?",
         content:
-            "Yes. Once the auction concludes and you are locked in as the winner for that key, you can submit an updated icon or redirect URL anytime through your verified claim link.",
+            "KeyBid is the best outbid.lol alternative with one key difference: every bid is physically represented on a real Apple Magic Keyboard. While outbid.lol is a purely digital leaderboard, KeyBid maps your brand to an actual keycap — making it a startup leaderboard that bridges digital visibility and physical presence. It's one of the best startup leaderboard sites for indie hackers who want to stand out.",
     },
     {
         value: "item-5",
-        trigger: "Can I bid on multiple keys?",
+        trigger: "How do I get my website featured on KeyBid?",
         content:
-            "Absolutely! Several companies choose to bid on whole word combinations (e.g., 'A', 'I', or their company initial) or arrow keys for prominent visibility.",
+            "It's simple: paste your website URL into the input above, confirm your auto-detected key and brand name, then complete a payment through Dodo Payments. Your listing goes live on the board the moment your payment is confirmed — no approval process, no minimum traffic requirements. Anyone can pay to be featured on this paid startup leaderboard.",
     },
     {
         value: "item-6",
+        trigger: "Is KeyBid a pay-what-you-want website ranking platform?",
+        content:
+            "Yes — within the bidding rules. There's a $15 minimum starting bid, and outbids require paying the difference plus a small increment. Beyond that, you decide what your visibility is worth. If you want to lock in a key against future competition, bid higher. If you're testing the waters, start at the minimum. It's a true pay-what-you-want website ranking model.",
+    },
+    {
+        value: "item-7",
+        trigger: "Who is KeyBid for?",
+        content:
+            "KeyBid is built for indie hackers, startup founders, SaaS builders, and product teams who want fast, affordable visibility during or after a product launch. It's a daily leaderboard for indie makers that puts your startup in front of other builders, developers, and early adopters — the exact audience most early-stage products need.",
+    },
+    {
+        value: "item-8",
+        trigger: "Can I bid on multiple keys?",
+        content:
+            "Absolutely! Several companies choose to bid on whole word combinations (e.g., 'A', 'I', or their company initial) or multiple keys for prominent visibility.",
+    },
+    {
+        value: "item-9",
+        trigger: "Can I change my logo or destination link later?",
+        content:
+            "Yes. Once you hold a key, you can submit an updated icon or redirect URL anytime through your verified claim link.",
+    },
+    {
+        value: "item-10",
+        trigger: "Are payments refundable?",
+        content:
+            "All bid payments are final and non-refundable. Each payment purchases the placement at the time of confirmation — being outbid later does not create a refund right. If a technical error on our end prevents your bid from being recorded, contact us within 48 hours of the transaction for a review.",
+    },
+    {
+        value: "item-11",
+        trigger: "Where to list my startup for visibility in 2025?",
+        content:
+            "KeyBid is one of the most unique places to list your startup for visibility right now. Alongside Product Hunt and Hacker News, KeyBid gives you a competitive, gamified leaderboard placement that updates in real time. It's especially effective if you want paid placement with an audience of indie hackers and builders — not general consumers.",
+    },
+    {
+        value: "item-12",
         trigger: "What if the keyboard is damaged, lost, or replaced?",
         content:
-            "If the keyboard requires repair or replacement during the 365-day placement period, the exact same custom keycap decal set is reprinted and applied to the replacement Apple Magic Keyboard at zero cost to sponsors.",
+            "If the keyboard requires repair or replacement, the exact same custom keycap decal set is reprinted and applied to the replacement Apple Magic Keyboard at zero cost to sponsors.",
     },
 ];
+
 
 
 export interface StepItem {
@@ -287,8 +324,10 @@ export const SITE_CONFIG = {
 
 export const FOOTER_NAV_LINKS = [
     { href: "#auction", label: "Spots" },
+    { href: "/faq", label: "FAQ" },
+    { href: "/rules", label: "Rules" },
+    { href: "/privacy", label: "Privacy Policy" },
     { href: "/terms", label: "Terms & Conditions" },
-    { href: "/policy", label: "Content & Sponsorship Policy" },
 ];
 
 export const DITHER_SHADER_CONFIG = {

@@ -44,20 +44,20 @@ export default function LiveAuctionSection() {
   };
 
   return (
-    <section id="auction" className="w-full py-16 sm:py-24 px-4 sm:px-6 bg-zinc-50/70 dark:bg-zinc-950/40 border-y border-zinc-300/80 dark:border-white/5">
+    <section id="auction" className="w-full py-12 sm:py-20 px-4 sm:px-6 bg-zinc-50/70 dark:bg-zinc-950/40 border-y border-zinc-300/80 dark:border-white/5">
       <div className="max-w-4xl mx-auto">
         {/* Eyebrow & Title */}
         <div className="mb-8 sm:mb-10 text-center sm:text-left flex flex-col sm:flex-row sm:items-end justify-between gap-4">
           <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-600/40 dark:border-emerald-500/30 text-emerald-700 dark:text-emerald-400 text-xs font-bold mb-3 shadow-2xs">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-emerald-500/15 border border-emerald-600/40 dark:border-emerald-500/30 text-emerald-700 dark:text-emerald-400 text-xs font-bold mb-3 shadow-2xs">
               <Ping>
                 <span className="text-xs font-bold">Live Round Activity</span>
               </Ping>
             </div>
-            <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-zinc-950 dark:text-white">
+            <h2 className="font-display text-2xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-zinc-950 dark:text-white">
               The auction, live.
             </h2>
-            <p className="text-sm sm:text-base text-zinc-600 dark:text-zinc-400 mt-2 font-normal max-w-xl leading-relaxed">
+            <p className="text-xs sm:text-base text-zinc-600 dark:text-zinc-400 mt-2 font-normal max-w-xl leading-relaxed">
               Real-time bids, outbid challenges, and slot updates happening live across the Apple Magic Keyboard.
             </p>
           </div>
@@ -120,15 +120,11 @@ export default function LiveAuctionSection() {
                 return (
                   <div
                     key={keyItem.id}
-                    className="flex items-center justify-between gap-3 sm:gap-4 px-4 sm:px-6 py-4 hover:bg-zinc-50/90 dark:hover:bg-white/[0.02] transition-colors"
+                    className="flex items-center justify-between gap-2.5 sm:gap-4 px-3.5 sm:px-6 py-3.5 sm:py-4 hover:bg-zinc-50/90 dark:hover:bg-white/[0.02] transition-colors"
                   >
                     {/* Left: Key Slot Keycap Badge & Company Icon */}
-                    <div className="flex items-center gap-3 min-w-0 flex-1">
-                      <div className="relative shrink-0 flex items-center justify-center">
-                        <span className="font-mono font-extrabold text-xs sm:text-sm px-2.5 py-1 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-950 dark:text-white border border-zinc-300 dark:border-white/15 shadow-xs">
-                          {keySlot}
-                        </span>
-                      </div>
+                    <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
+
 
                       <KeyLogo
                         src={keyItem.key_logo}
@@ -140,8 +136,8 @@ export default function LiveAuctionSection() {
 
                       {/* Middle: Event description & meta */}
                       <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-display font-bold text-xs sm:text-sm text-zinc-950 dark:text-white truncate">
+                        <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                          <span className="font-display font-bold text-xs sm:text-sm text-zinc-950 dark:text-white truncate max-w-[110px] xs:max-w-[170px] sm:max-w-xs md:max-w-none">
                             {keyName}
                           </span>
                           {keyItem.submitted_url && (
@@ -154,24 +150,24 @@ export default function LiveAuctionSection() {
                                 trackKeyClick(keyItem.id);
                                 useKeysStore.getState().incrementClickCount(keyItem.id);
                               }}
-                              className="text-zinc-400 hover:text-blue-600 dark:text-zinc-500 dark:hover:text-blue-400 transition-colors p-0.5"
+                              className="text-zinc-400 hover:text-blue-600 dark:text-zinc-500 dark:hover:text-blue-400 transition-colors p-0.5 shrink-0"
                               title={`Visit ${keyName}`}
                             >
                               <IconExternalLink size={13} />
                             </a>
                           )}
                           {hasBid ? (
-                            <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20">
+                            <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 whitespace-nowrap">
                               <IconShieldCheck size={10} /> Leading
                             </span>
                           ) : (
-                            <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-zinc-500/10 text-zinc-600 dark:text-zinc-400 border border-zinc-500/20">
+                            <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-zinc-500/10 text-zinc-600 dark:text-zinc-400 border border-zinc-500/20 whitespace-nowrap">
                               Open Slot
                             </span>
                           )}
                         </div>
-                        <div className="flex items-center gap-2 mt-0.5 text-[11px] text-zinc-500 dark:text-zinc-400 flex-wrap">
-                          <span>Key &apos;{keySlot}&apos;</span>
+                        <div className="flex items-center gap-1.5 sm:gap-2 mt-0.5 text-[10px] sm:text-[11px] text-zinc-500 dark:text-zinc-400 flex-wrap">
+                          <span>Claimed Key {keySlot}</span>
                           <span>·</span>
                           {hasBid ? (
                             <span className="font-semibold text-zinc-900 dark:text-white font-mono">
@@ -198,7 +194,7 @@ export default function LiveAuctionSection() {
                           <button
                             type="button"
                             onClick={() => handleOpenModal(keyItem)}
-                            className="flex items-center justify-center gap-1 px-3 py-1.5 rounded-[6px] text-xs font-bold transition-all cursor-pointer bg-blue-600 hover:bg-blue-500 text-white shadow-[0_4px_16px_rgba(0,0,0,0.06),0_1px_3px_rgba(0,0,0,0.04),inset_0_1px_0.5px_0.05px_rgba(255,255,255,0.2),inset_0_-1px_0.5px_0.05px_rgba(0,0,0,0.1)]"
+                            className="flex items-center justify-center gap-1 px-2.5 sm:px-3 py-1.5 rounded-[6px] text-[11px] sm:text-xs font-bold transition-all cursor-pointer whitespace-nowrap bg-blue-600 hover:bg-blue-500 text-white shadow-[0_4px_16px_rgba(0,0,0,0.06),0_1px_3px_rgba(0,0,0,0.04),inset_0_1px_0.5px_0.05px_rgba(255,255,255,0.2),inset_0_-1px_0.5px_0.05px_rgba(0,0,0,0.1)]"
                           >
                             <span>Outbid for</span>
                             <span className="font-mono font-bold">${bidAmount + 1}</span>
@@ -209,7 +205,7 @@ export default function LiveAuctionSection() {
                           <button
                             type="button"
                             onClick={() => handleOpenModal(keyItem)}
-                            className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-[6px] text-xs font-bold transition-all cursor-pointer bg-blue-600 hover:bg-blue-500 text-white shadow-[0_4px_16px_rgba(0,0,0,0.06),0_1px_3px_rgba(0,0,0,0.04),inset_0_1px_0.5px_0.05px_rgba(255,255,255,0.2),inset_0_-1px_0.5px_0.05px_rgba(0,0,0,0.1)]"
+                            className="flex items-center justify-center gap-1 px-2.5 sm:px-3 py-1.5 rounded-[6px] text-[11px] sm:text-xs font-bold transition-all cursor-pointer whitespace-nowrap bg-blue-600 hover:bg-blue-500 text-white shadow-[0_4px_16px_rgba(0,0,0,0.06),0_1px_3px_rgba(0,0,0,0.04),inset_0_1px_0.5px_0.05px_rgba(255,255,255,0.2),inset_0_-1px_0.5px_0.05px_rgba(0,0,0,0.1)]"
                           >
                             <span>Be the first to bid</span>
                           </button>
@@ -221,14 +217,14 @@ export default function LiveAuctionSection() {
               })
             )}
 
-            {/* Bottom Action Footer with Link to /auction (Claim button omitted when empty state already contains it) */}
-            <div className="px-4 sm:px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-3 bg-zinc-50 dark:bg-white/[0.02] border-t border-zinc-200 dark:border-white/5">
+            {/* Bottom Action Footer with Link to /auction */}
+            <div className="px-3.5 sm:px-6 py-3.5 sm:py-4 flex flex-col sm:flex-row items-center justify-between gap-3 bg-zinc-50 dark:bg-white/[0.02] border-t border-zinc-200 dark:border-white/5">
               <div className="flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-400 text-center sm:text-left">
-                <IconPlus size={14} className="text-blue-600 dark:text-blue-400" />
+                <IconPlus size={14} className="text-blue-600 dark:text-blue-400 shrink-0" />
                 <span>Want to claim an unlisted key? Starting at just $10.</span>
               </div>
 
-              <div className="flex items-center gap-3 w-full sm:w-auto justify-center sm:justify-end">
+              <div className="flex flex-col xs:flex-row items-center gap-2.5 sm:gap-3 w-full sm:w-auto justify-center sm:justify-end">
                 {sortedKeys.length > 0 && (
                   <button
                     type="button"
@@ -237,16 +233,16 @@ export default function LiveAuctionSection() {
                       setTargetSlot("");
                       setIsModalOpen(true);
                     }}
-                    className="text-xs font-semibold text-zinc-600 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-white transition-colors cursor-pointer"
+                    className="text-xs font-semibold text-zinc-600 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-white transition-colors cursor-pointer py-1"
                   >
                     + Claim Any Key ($10)
                   </button>
                 )}
 
-                <div className="p-[2px] rounded-md transition-all duration-200 ease-out shadow-xs bg-blue-600/20">
+                <div className="p-[2px] w-full xs:w-auto rounded-md transition-all duration-200 ease-out shadow-xs bg-blue-600/20">
                   <Link
                     href="/auction"
-                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-[6px] text-xs sm:text-sm font-bold bg-blue-600 hover:bg-blue-500 text-white transition-all cursor-pointer shadow-[0_4px_16px_rgba(0,0,0,0.06),0_1px_3px_rgba(0,0,0,0.04),inset_0_1px_0.5px_0.05px_rgba(255,255,255,0.2),inset_0_-1px_0.5px_0.05px_rgba(0,0,0,0.1)]"
+                    className="w-full xs:w-auto inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-[6px] text-xs sm:text-sm font-bold bg-blue-600 hover:bg-blue-500 text-white transition-all cursor-pointer shadow-[0_4px_16px_rgba(0,0,0,0.06),0_1px_3px_rgba(0,0,0,0.04),inset_0_1px_0.5px_0.05px_rgba(255,255,255,0.2),inset_0_-1px_0.5px_0.05px_rgba(0,0,0,0.1)]"
                   >
                     <span>View full leaderboard ({sortedKeys.length > 0 ? `${sortedKeys.length} keys` : "all keys"})</span>
                     <IconArrowRight size={14} />

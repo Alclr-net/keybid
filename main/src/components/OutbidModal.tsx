@@ -4,6 +4,8 @@ import React, { useState, useRef, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "motion/react";
 import axios from "axios";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
+import { toast } from "sonner";
 import {
   IconX,
   IconCheck,
@@ -15,6 +17,10 @@ import { useKeysStore } from "@/lib/store/keysStore";
 import { cn } from "@/src/lib/utils";
 import { extractValidDomain, getFaviconProviders } from "@/lib/constant";
 import TermsModal from "@/src/components/TermsModal";
+import { Placeholder } from "./Placeholder";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Field } from "@/components/ui/field";
 
 export type OutbidTarget = Key;
 
@@ -43,6 +49,40 @@ function safesubmitted_urlUrl(raw: string): string | null {
   }
 }
 
+// ── client_token storage helpers ──
+// The token proves ownership of a pending order to the verify endpoint.
+// Stored keyed by order_id so multiple in-flight orders (rare, but possible
+// across tabs) don't clobber each other.
+const TOKEN_STORAGE_PREFIX = "keybid_client_token_";
+
+function storeClientToken(orderId: string, token: string) {
+  try {
+    sessionStorage.setItem(`${TOKEN_STORAGE_PREFIX}${orderId}`, token);
+  } catch {
+    // sessionStorage unavailable (private mode, etc.) — verification will
+    // fail server-side with a clear error instead of silently proceeding.
+  }
+}
+
+function readClientToken(orderId: string): string | null {
+  try {
+    return sessionStorage.getItem(`${TOKEN_STORAGE_PREFIX}${orderId}`);
+  } catch {
+    return null;
+  }
+}
+
+function clearClientToken(orderId: string) {
+  try {
+    sessionStorage.removeItem(`${TOKEN_STORAGE_PREFIX}${orderId}`);
+  } catch {
+    /* ignore */
+  }
+}
+
+// Frontend/backend limit must match /api/create-checkout exactly.
+const MAX_BID_AMOUNT = 10_000_000;
+
 export default function OutbidModal({
   company,
   isOpen,
@@ -56,6 +96,10 @@ export default function OutbidModal({
   const [mounted, setMounted] = useState(false);
   const storeKeys = useKeysStore((state) => state.keys);
   const updateStoreKey = useKeysStore((state) => state.updateKey);
+
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
 
   const getKeyBid = (k: Key | any | null): number =>
     typeof k?.current_bid_amount === "number" ? k.current_bid_amount : 0;
@@ -120,8 +164,10 @@ export default function OutbidModal({
   const [termsAgreed, setTermsAgreed] = useState(false);
   const [termsModalOpen, setTermsModalOpen] = useState(false);
 
-  const [country, setCountry] = useState("US");
+  const [about, setAbout] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [verifyError, setVerifyError] = useState<string | null>(null);
   const [paymentSuccess, setPaymentSuccess] = useState<{
     keySlot: string;
     bidAmount: number;
@@ -209,10 +255,12 @@ export default function OutbidModal({
       else setLogoStatus("idle");
     }
 
+    setAbout("");
     setTermsAgreed(false);
     setIsSubmitting(false);
     setOutbidAlert(null);
     setPaymentSuccess(null);
+    setVerifyError(null);
   }, [company, isOpen, initialKeySlot, initialBrandName, initialsubmitted_url, initialLogo, storeKeys, BASE_PRICE, resolveCompany]);
 
   useEffect(() => {
@@ -231,12 +279,13 @@ export default function OutbidModal({
   }, [isOpen]);
 
   const isBidAmountValid =
-    Number.isFinite(bidAmount) && Number.isInteger(bidAmount) && bidAmount >= effectiveMinBid && bidAmount < 1_000_000;
+    Number.isFinite(bidAmount) && Number.isInteger(bidAmount) && bidAmount >= effectiveMinBid && bidAmount < MAX_BID_AMOUNT;
 
   // HIGH-02: submitted_url is now required — without it the server cannot process the order
   const isUrlValid = submitted_url.trim().length > 0;
 
-  const isCountryValid = country.trim().length === 2;
+  const MIN_ABOUT_CHARS = 20;
+  const isAboutValid = about.trim().length >= MIN_ABOUT_CHARS;
 
   const canSubmit =
     !isSubmitting &&
@@ -245,7 +294,7 @@ export default function OutbidModal({
     brandName.trim().length > 0 &&
     targetSlot.length > 0 &&
     isUrlValid &&
-    isCountryValid;
+    isAboutValid;
 
   const handleInitiatePayment = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -262,7 +311,7 @@ export default function OutbidModal({
       if (trimmedsubmitted_url) {
         const safeUrl = safesubmitted_urlUrl(trimmedsubmitted_url);
         if (!safeUrl) {
-          alert("Please enter a valid submitted_url URL (e.g. https://yourcompany.com)");
+          toast.error("Please enter a valid website URL (e.g. https://yourcompany.com).");
           setIsSubmitting(false);
           return;
         }
@@ -283,7 +332,7 @@ export default function OutbidModal({
           submitted_url: sanitizedsubmitted_url,
           iconUrl: effectiveIconUrl,
           lastSeenHighestBid: currentHighest,
-          country,
+          about: about.trim(),
         },
         { validateStatus: (status) => status < 500 }
       );
@@ -291,11 +340,13 @@ export default function OutbidModal({
       const orderData = orderRes.data;
       if (orderRes.status === 409 || orderData?.code === "OUTBID") {
         const nextMin = orderData?.minimumNextBid || Math.max(BASE_PRICE, currentHighest + 1);
+        const outbidMsg = orderData?.error || `This key was just outbid. Minimum bid is now $${nextMin}.`;
         setOutbidAlert({
           highestBid: orderData?.currentHighestBid || currentHighest,
           minNext: nextMin,
-          message: orderData?.error || `This key was just outbid at $${orderData?.currentHighestBid}.`,
+          message: outbidMsg,
         });
+        toast.warning(outbidMsg);
         setBidAmount(nextMin);
         setIsSubmitting(false);
         return;
@@ -305,10 +356,22 @@ export default function OutbidModal({
         throw new Error(orderData?.error || "Failed to generate payment order");
       }
 
-      const { checkout_url } = orderData;
-      if (!checkout_url) {
-        throw new Error("Order was not created correctly — missing checkout URL");
+      const { checkout_url, order_id, client_token } = orderData;
+      if (!checkout_url || !order_id) {
+        throw new Error("Order was not created correctly — missing checkout URL or order id");
       }
+
+      // Persist the ownership token so the verify step (after redirect back
+      // from Dodo) can prove this browser created this order. Without this,
+      // /api/payments/verify has no way to distinguish this customer's
+      // order from anyone else's guessable order_id.
+      if (client_token) {
+        storeClientToken(order_id, client_token);
+      } else {
+        console.warn("[checkout] No client_token returned — verification may fail.");
+      }
+
+      toast.loading("Redirecting to secure checkout...");
 
       // Redirect to Dodo hosted checkout page
       window.location.href = checkout_url;
@@ -316,61 +379,109 @@ export default function OutbidModal({
       const e = err as { message?: string };
       console.error(err);
       setIsSubmitting(false);
-      alert(e?.message || "An error occurred while preparing your payment.");
+      toast.error(e?.message || "An error occurred while preparing checkout.");
     }
   };
 
-  const completePaymentVerification = async ({
-    order_id,
-    resolvedsubmitted_url,
-    resolvedIconUrl,
-  }: {
-    order_id: string;
-    resolvedsubmitted_url?: string;
-    resolvedIconUrl?: string | null;
-  }) => {
-    try {
-      const verifyRes = await axios.post(
-        "/api/payments/verify",
-        { order_id },
-        { validateStatus: (status) => status < 500 }
-      );
+  const completePaymentVerification = useCallback(
+    async ({
+      order_id,
+      resolvedsubmitted_url,
+      resolvedIconUrl,
+      resolvedBidAmount,
+      resolvedBrandName,
+      resolvedKeySlot,
+    }: {
+      order_id: string;
+      resolvedsubmitted_url?: string;
+      resolvedIconUrl?: string | null;
+      resolvedBidAmount?: number;
+      resolvedBrandName?: string;
+      resolvedKeySlot?: string;
+    }) => {
+      setIsVerifying(true);
+      setVerifyError(null);
 
-      const verifyData = verifyRes.data;
-      if (verifyRes.status >= 400 || !verifyData?.success) {
-        throw new Error(verifyData?.error || "Payment verification failed on server");
+      try {
+        const clientToken = readClientToken(order_id);
+
+        if (!clientToken) {
+          throw new Error(
+            "We couldn't find your payment session in this browser. If you completed payment, please contact support with your order ID."
+          );
+        }
+
+        const verifyRes = await axios.post(
+          "/api/payments/verify",
+          { order_id, client_token: clientToken },
+          { validateStatus: (status) => status < 500 }
+        );
+
+        const verifyData = verifyRes.data;
+        if (verifyRes.status >= 400 || !verifyData?.success) {
+          throw new Error(verifyData?.error || "Payment verification failed on server");
+        }
+
+        const finalBidAmount = resolvedBidAmount ?? bidAmount;
+        const finalBrandName = (resolvedBrandName ?? brandName).trim();
+        const finalKeySlot = resolvedKeySlot ?? targetSlot;
+
+        setPaymentSuccess({
+          keySlot: finalKeySlot,
+          bidAmount: finalBidAmount,
+          brandName: finalBrandName,
+          order_id,
+        });
+
+        const updatedKey: Key = {
+          id: activeKey?.id || (company && "id" in company ? company.id : `key_${Date.now()}`),
+          submitted_url: resolvedsubmitted_url || getKeyUrl(activeKey) || "",
+          key_slot: finalKeySlot,
+          brand_name: finalBrandName || activeKey?.brand_name || null,
+          about: getKeyTagline(activeKey) || `Winning bid by ${finalBrandName}`,
+          key_logo: resolvedIconUrl || getKeyLogo(activeKey) || null,
+          current_bid_id: `bid_${order_id}`,
+          click_count: activeKey?.click_count || 0,
+          current_bid_amount: finalBidAmount,
+          created_at: activeKey?.created_at || new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        };
+
+        updateStoreKey(updatedKey.id, updatedKey);
+        onSuccess?.(finalBidAmount, undefined, updatedKey);
+        toast.success("Payment verified! Your bid is now live.");
+
+        // Token has served its purpose — clear it so it can't be reused/leaked.
+        clearClientToken(order_id);
+      } catch (err: unknown) {
+        const e = err as { message?: string };
+        const msg = e?.message || "Payment verification failed.";
+        setVerifyError(msg);
+        toast.error(msg);
+      } finally {
+        setIsSubmitting(false);
+        setIsVerifying(false);
       }
+    },
+    [activeKey, bidAmount, brandName, company, onSuccess, targetSlot, updateStoreKey]
+  );
 
-      setPaymentSuccess({
-        keySlot: targetSlot,
-        bidAmount,
-        brandName: brandName.trim(),
-        order_id,
-      });
+  // ── Auto-trigger verification on return from Dodo checkout ──
+  useEffect(() => {
+    const orderIdFromUrl = searchParams?.get("order_id");
+    if (!orderIdFromUrl) return;
+    if (paymentSuccess || isVerifying) return;
 
-      const updatedKey: Key = {
-        id: activeKey?.id || (company && "id" in company ? company.id : `key_${Date.now()}`),
-        submitted_url: resolvedsubmitted_url || getKeyUrl(activeKey) || "",
-        key_slot: targetSlot,
-        brand_name: brandName.trim() || activeKey?.brand_name || null,
-        about: getKeyTagline(activeKey) || `Winning bid by ${brandName.trim()}`,
-        key_logo: resolvedIconUrl || getKeyLogo(activeKey) || null,
-        current_bid_id: `bid_${order_id}`,
-        click_count: activeKey?.click_count || 0,
-        current_bid_amount: bidAmount,
-        created_at: activeKey?.created_at || new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      };
+    completePaymentVerification({ order_id: orderIdFromUrl });
 
-      updateStoreKey(updatedKey.id, updatedKey);
-      onSuccess?.(bidAmount, undefined, updatedKey);
-    } catch (err: unknown) {
-      const e = err as { message?: string };
-      alert(`Verification error: ${e?.message || "Payment verification failed"}`);
-    } finally {
-      setIsSubmitting(false);
+    if (pathname) {
+      const params = new URLSearchParams(searchParams?.toString());
+      params.delete("order_id");
+      const next = params.toString() ? `${pathname}?${params.toString()}` : pathname;
+      router.replace(next);
     }
-  };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   if (!mounted || typeof document === "undefined") return null;
 
@@ -378,7 +489,7 @@ export default function OutbidModal({
     <>
       <AnimatePresence mode="wait">
         {isOpen && (
-          <div key="outbid-modal-overlay" className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
+          <div key="outbid-modal-overlay" className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
             <motion.div
               key="outbid-backdrop"
               initial={{ opacity: 0 }}
@@ -395,35 +506,59 @@ export default function OutbidModal({
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.96, y: 16 }}
               transition={{ duration: 0.24, ease: [0.16, 1, 0.3, 1] }}
-              className="relative w-full max-w-[500px] max-h-[90vh] overflow-y-auto bg-white dark:bg-[#121316] text-zinc-900 dark:text-white rounded-[26px] sm:rounded-[28px] p-5 sm:p-7 shadow-2xl border border-zinc-200/90 dark:border-white/10 z-10 my-auto transition-colors"
+              className="relative w-full max-w-[460px] max-h-[90dvh] sm:max-h-[88vh] overflow-y-auto bg-white dark:bg-[#121316] text-zinc-900 dark:text-white rounded-[20px] sm:rounded-[24px] p-4 sm:p-5 shadow-2xl border border-zinc-200/90 dark:border-white/10 z-10 my-auto transition-colors"
               onClick={(e) => e.stopPropagation()}
             >
               <button
                 onClick={onClose}
-                className="absolute top-5 right-5 p-1.5 rounded-full text-zinc-400 hover:text-zinc-700 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer z-10"
+                className="absolute top-4 right-4 p-1.5 rounded-full text-zinc-400 hover:text-zinc-700 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer z-10"
                 title="Close modal"
                 type="button"
               >
-                <IconX size={18} />
+                <IconX size={16} />
               </button>
 
-              {paymentSuccess ? (
-                <div className="py-4 text-center space-y-5 animate-in fade-in zoom-in-95 duration-200">
-                  <div className="w-14 h-14 rounded-full bg-emerald-500/10 dark:bg-emerald-500/15 border-2 border-emerald-500/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto text-2xl shadow-[0_0_20px_rgba(16,185,129,0.25)]">
-                    <IconCheck size={30} stroke={2.5} />
+              {isVerifying ? (
+                <div className="py-8 text-center space-y-3">
+                  <span className="inline-block h-7 w-7 border-2 border-zinc-300 border-t-blue-600 dark:border-zinc-700 dark:border-t-blue-400 rounded-full animate-spin" />
+                  <p className="text-xs text-zinc-600 dark:text-zinc-400">Verifying your payment…</p>
+                </div>
+              ) : verifyError ? (
+                <div className="py-5 text-center space-y-3">
+                  <div className="w-12 h-12 rounded-full bg-red-500/10 border-2 border-red-500/30 text-red-600 dark:text-red-400 flex items-center justify-center mx-auto text-xl">
+                    <IconAlertCircle size={24} />
                   </div>
                   <div>
-                    <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-emerald-500/10 dark:bg-emerald-500/15 border border-emerald-500/20 text-emerald-700 dark:text-emerald-400 text-[11px] font-bold font-mono uppercase tracking-wider mb-1.5">
+                    <h3 className="text-base font-bold text-zinc-950 dark:text-white">Verification Issue</h3>
+                    <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-1 max-w-xs mx-auto leading-relaxed">
+                      {verifyError}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={onClose}
+                    className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline"
+                  >
+                    Close
+                  </button>
+                </div>
+              ) : paymentSuccess ? (
+                <div className="py-3 text-center space-y-4 animate-in fade-in zoom-in-95 duration-200">
+                  <div className="w-12 h-12 rounded-full bg-emerald-500/10 dark:bg-emerald-500/15 border-2 border-emerald-500/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto text-2xl shadow-[0_0_20px_rgba(16,185,129,0.25)]">
+                    <IconCheck size={26} stroke={2.5} />
+                  </div>
+                  <div>
+                    <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 dark:bg-emerald-500/15 border border-emerald-500/20 text-emerald-700 dark:text-emerald-400 text-[10px] font-bold font-mono uppercase tracking-wider mb-1">
                       Payment Confirmed · Verified Bid
                     </div>
-                    <h3 className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-950 dark:text-white">
+                    <h3 className="text-lg sm:text-xl font-bold tracking-tight text-zinc-950 dark:text-white">
                       Key [{paymentSuccess.keySlot}] is Now Yours!
                     </h3>
-                    <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-1 max-w-xs mx-auto leading-relaxed">
+                    <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-0.5 max-w-xs mx-auto leading-relaxed">
                       Congratulations, <strong className="text-zinc-950 dark:text-white">{paymentSuccess.brandName}</strong>. Your bid has been recorded on the live auction ledger.
                     </p>
                   </div>
-                  <div className="rounded-2xl bg-zinc-50 dark:bg-black/40 border border-zinc-200 dark:border-white/10 p-3.5 text-xs font-mono space-y-2 text-left">
+                  <div className="rounded-xl bg-zinc-50 dark:bg-black/40 border border-zinc-200 dark:border-white/10 p-3 text-xs font-mono space-y-1.5 text-left">
                     <div className="flex justify-between text-zinc-500 dark:text-zinc-400">
                       <span>Hardware Slot:</span>
                       <span className="text-zinc-950 dark:text-white font-bold">Key [{paymentSuccess.keySlot}]</span>
@@ -434,50 +569,37 @@ export default function OutbidModal({
                     </div>
                     <div className="flex justify-between text-zinc-500 dark:text-zinc-400">
                       <span>Order ID:</span>
-                      <span className="text-zinc-700 dark:text-zinc-300 truncate max-w-[180px]">{paymentSuccess.order_id}</span>
+                      <span className="text-zinc-700 dark:text-zinc-300 truncate max-w-[160px]">{paymentSuccess.order_id}</span>
                     </div>
                   </div>
                   <div className="p-[2px] w-full rounded-md transition-all duration-200 ease-out shadow-xs bg-blue-600/20">
                     <button
                       type="button"
                       onClick={onClose}
-                      className="w-full py-3.5 px-4 rounded-[6px] font-bold text-xs sm:text-sm bg-blue-600 hover:bg-blue-500 text-white transition-all text-center cursor-pointer shadow-[0_4px_16px_rgba(0,0,0,0.06),0_1px_3px_rgba(0,0,0,0.04),inset_0_1px_0.5px_0.05px_rgba(255,255,255,0.2),inset_0_-1px_0.5px_0.05px_rgba(0,0,0,0.1)]"
+                      className="w-full py-3 px-4 rounded-[6px] font-bold text-xs sm:text-sm bg-blue-600 hover:bg-blue-500 text-white transition-all text-center cursor-pointer shadow-[0_4px_16px_rgba(0,0,0,0.06),0_1px_3px_rgba(0,0,0,0.04),inset_0_1px_0.5px_0.05px_rgba(255,255,255,0.2),inset_0_-1px_0.5px_0.05px_rgba(0,0,0,0.1)]"
                     >
                       Done & Return to Keyboard
                     </button>
                   </div>
                 </div>
               ) : (
-                <form onSubmit={handleInitiatePayment} className="space-y-4">
-                  <div>
-                    <div
-                      className={cn(
-                        "inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold mb-2",
-                        currentHighest > 0
-                          ? "bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400"
-                          : "bg-blue-500/10 border border-blue-500/20 text-blue-600 dark:text-blue-400"
-                      )}
-                    >
-                      {currentHighest > 0 ? "Outbid Current Holder" : targetSlot ? `Bid on Key [${targetSlot}]` : "Claim an Open Key"}
-                    </div>
-                    <h2 className="text-lg sm:text-xl font-bold tracking-tight text-zinc-950 dark:text-white">
-                      {targetSlot ? `Key ${targetSlot}` : "Claim Your Keycap"}
-                    </h2>
+                <form onSubmit={handleInitiatePayment} className="space-y-3">
+                  <Placeholder>
                     {currentHighest > 0 ? (
-                      <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-1">
+                      <p className="text-[11px] text-zinc-600 dark:text-zinc-400 mt-0.5">
                         Current leading bid <strong className="font-bold text-zinc-950 dark:text-white">${currentHighest}</strong>
                         {getKeyName(activeKey) ? ` by ${getKeyName(activeKey)}` : ""}
                       </p>
                     ) : (
-                      <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
-                        No active bids on this slot · Minimum starting bid <strong className="font-bold text-blue-600 dark:text-blue-400">${BASE_PRICE}</strong>
+                      <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5">
+                        No active bids on this slot
                       </p>
                     )}
-                  </div>
+                  </Placeholder>
 
                   {outbidAlert && (
-                    <div className="p-3.5 rounded-2xl bg-amber-50 dark:bg-amber-500/15 border-2 border-amber-300 dark:border-amber-500/40 text-amber-900 dark:text-amber-200 text-xs flex items-start gap-2.5 shadow-xs">
-                      <IconAlertCircle size={18} className="text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                    <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-500/15 border border-amber-300 dark:border-amber-500/40 text-amber-900 dark:text-amber-200 text-xs flex items-start gap-2 shadow-xs">
+                      <IconAlertCircle size={16} className="text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
                       <div className="flex-1 space-y-0.5">
                         <div className="font-bold text-amber-950 dark:text-amber-300">Live Outbid Detected</div>
                         <p className="text-[11px] text-amber-800 dark:text-amber-200">{outbidAlert.message}</p>
@@ -485,27 +607,28 @@ export default function OutbidModal({
                     </div>
                   )}
 
-                  <div>
-                    <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1">Keycap Slot</label>
-                    <div className="w-full rounded-xl border border-zinc-200 dark:border-zinc-700/80 bg-zinc-100/80 dark:bg-zinc-800/50 px-3.5 py-2.5 flex items-center justify-between">
-                      <span className="text-xs sm:text-sm font-mono font-bold text-zinc-900 dark:text-white truncate">{targetSlot}</span>
+                  <Field>
+                    <label className="block text-[11px] font-semibold text-zinc-700 dark:text-zinc-300 mb-1">Key Slot</label>
+                    <div className="w-full rounded-lg border border-zinc-200 dark:border-zinc-700/80 bg-zinc-100/80 dark:bg-zinc-800/50 px-3 py-2 flex items-center justify-between">
+                      <span className="text-xs font-mono font-bold text-zinc-900 dark:text-white truncate">{targetSlot}</span>
                     </div>
-                  </div>
+                  </Field>
 
-                  <div>
+                  <Field>
                     <div className="flex items-center justify-between mb-1">
-                      <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300">
-                        Your Bid Amount (USD) <span className="text-red-500">*</span>
+                      <label className="block text-[11px] font-semibold text-zinc-700 dark:text-zinc-300">
+                        Your Bid Amount<span className="text-red-500">*</span>
                       </label>
-                      <span className="text-[11px] font-mono text-zinc-500 dark:text-zinc-400">
-                        Min next: <strong className="text-blue-600 dark:text-blue-400">${effectiveMinBid}</strong>
+                      <span className="text-[10px] font-mono text-zinc-500 dark:text-zinc-400">
+                        Min: <strong className="text-blue-600 dark:text-blue-400">${effectiveMinBid}</strong>
                       </span>
                     </div>
-                    <div className="relative flex items-center rounded-xl border-2 border-blue-500 bg-zinc-50 dark:bg-zinc-900/60 shadow-xs px-3.5 py-2 transition-all">
-                      <span className="text-zinc-400 dark:text-zinc-500 font-mono font-medium text-base select-none pr-1.5">$</span>
+                    <div className="relative flex items-center rounded-lg border-2 border-blue-500 bg-zinc-50 dark:bg-zinc-900/60 shadow-xs px-3 py-1.5 transition-all">
+                      <span className="text-zinc-400 dark:text-zinc-500 font-mono font-medium text-sm select-none pr-1">$</span>
                       <input
                         type="number"
                         min={effectiveMinBid}
+                        max={MAX_BID_AMOUNT}
                         step={1}
                         value={bidAmount || ""}
                         onChange={(e) => {
@@ -514,12 +637,12 @@ export default function OutbidModal({
                           if (outbidAlert) setOutbidAlert(null);
                         }}
                         required
-                        className="w-full bg-transparent font-mono text-lg font-bold text-zinc-950 dark:text-white outline-none"
+                        className="w-full bg-transparent font-mono text-sm font-bold text-zinc-950 dark:text-white outline-none"
                       />
-                      <span className="text-zinc-400 dark:text-zinc-500 font-mono text-xs uppercase select-none">USD</span>
+                      <span className="text-zinc-400 dark:text-zinc-500 font-mono text-[10px] uppercase select-none">USD</span>
                     </div>
-                    <div className="flex items-center gap-1.5 pt-2 flex-wrap">
-                      <span className="text-[10px] font-mono uppercase text-zinc-400 dark:text-zinc-500">Quick:</span>
+                    <div className="flex items-center gap-1.5 pt-1.5 flex-wrap">
+
                       {[effectiveMinBid, effectiveMinBid + 5, effectiveMinBid + 10, effectiveMinBid + 25].map((amt) => (
                         <button
                           key={amt}
@@ -529,7 +652,7 @@ export default function OutbidModal({
                             if (outbidAlert) setOutbidAlert(null);
                           }}
                           className={cn(
-                            "px-2 py-0.5 rounded-lg text-[11px] font-mono font-bold transition-all cursor-pointer",
+                            "px-2 py-0.5 min-h-[26px] rounded-md text-[11px] font-mono font-bold transition-all cursor-pointer flex items-center justify-center",
                             bidAmount === amt
                               ? "bg-blue-600 text-white shadow-xs"
                               : "bg-zinc-100 hover:bg-zinc-200 dark:bg-white/5 dark:hover:bg-white/10 text-zinc-600 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-white border border-zinc-200/80 dark:border-white/5"
@@ -539,24 +662,24 @@ export default function OutbidModal({
                         </button>
                       ))}
                     </div>
-                  </div>
+                  </Field>
 
-                  <div className="flex-col justify-center items-center gap-3 pt-1">
-                    <div>
-                      <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
-                        submitted_url <span className="text-red-500">*</span>
+                  <div className="space-y-2.5">
+                    <Field>
+                      <label className="block text-[11px] font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
+                        Company Website URL <span className="text-red-500">*</span>
                       </label>
                       <div className="flex items-center gap-2">
-                        <div className="relative flex w-10 h-10 shrink-0 items-center justify-center rounded-xl border border-zinc-200/90 dark:border-zinc-700 bg-white dark:bg-zinc-800/90 shadow-xs transition-all overflow-hidden select-none">
+                        <div className="relative flex w-9 h-9 shrink-0 items-center justify-center rounded-lg border border-zinc-200/90 dark:border-zinc-700 bg-white dark:bg-zinc-800/90 shadow-xs transition-all overflow-hidden select-none">
                           {logoStatus === "loading" ? (
-                            <span className="h-4 w-4 animate-spin rounded-full border-2 border-zinc-300 border-t-blue-600 dark:border-zinc-700 dark:border-t-blue-400" />
+                            <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-zinc-300 border-t-blue-600 dark:border-zinc-700 dark:border-t-blue-400" />
                           ) : logoStatus === "found" && autoLogo ? (
                             // eslint-disable-next-line @next/next/no-img-element
-                            <img src={autoLogo} alt="submitted_url logo" className="w-full h-full object-contain p-1.5" />
+                            <img src={autoLogo} alt="submitted_url logo" className="w-full h-full object-contain p-1" />
                           ) : logoStatus === "error" ? (
-                            <IconAlertCircle size={18} className="text-amber-500" title="Logo not found" />
+                            <IconAlertCircle size={16} className="text-amber-500" title="Logo not found" />
                           ) : (
-                            <IconWorld size={18} className="text-zinc-400 dark:text-zinc-500" />
+                            <IconWorld size={16} className="text-zinc-400 dark:text-zinc-500" />
                           )}
                         </div>
                         <input
@@ -566,12 +689,13 @@ export default function OutbidModal({
                           onChange={(e) => setsubmitted_url(e.target.value)}
                           required
                           aria-label="Company website URL (required)"
-                          className="flex-1 min-w-0 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/60 px-3 py-2 text-xs sm:text-sm text-zinc-900 dark:text-white placeholder:text-zinc-400 dark:placeholder:text-zinc-500 outline-none focus:border-blue-500 focus:bg-white dark:focus:bg-zinc-900 transition-colors h-10"
+                          className="flex-1 min-w-0 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/60 px-3 py-1.5 text-xs sm:text-sm text-zinc-900 dark:text-white placeholder:text-zinc-400 dark:placeholder:text-zinc-500 outline-none focus:border-blue-500 focus:bg-white dark:focus:bg-zinc-900 transition-colors h-9"
                         />
                       </div>
-                    </div>
-                    <div>
-                      <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
+                    </Field>
+
+                    <Field>
+                      <label className="block text-[11px] font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
                         Brand Name <span className="text-red-500">*</span>
                       </label>
                       <input
@@ -581,81 +705,68 @@ export default function OutbidModal({
                         placeholder="Enter Your Brand Name"
                         value={brandName}
                         onChange={(e) => setBrandName(e.target.value)}
-                        className="w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/60 px-3 py-2 text-xs sm:text-sm text-zinc-900 dark:text-white placeholder:text-zinc-400 dark:placeholder:text-zinc-500 outline-none focus:border-blue-500 focus:bg-white dark:focus:bg-zinc-900 transition-colors h-10"
+                        className="w-full rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/60 px-3 py-1.5 text-xs sm:text-sm text-zinc-900 dark:text-white placeholder:text-zinc-400 dark:placeholder:text-zinc-500 outline-none focus:border-blue-500 focus:bg-white dark:focus:bg-zinc-900 transition-colors h-9"
                       />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
-                        Billing Country <span className="text-red-500">*</span>
-                      </label>
-                      <select
-                        value={country}
-                        onChange={(e) => setCountry(e.target.value)}
+                    </Field>
+
+                    <Field>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="block text-[11px] font-semibold text-zinc-700 dark:text-zinc-300">
+                          Description <span className="text-red-500">*</span>
+                        </label>
+                        <span className={`text-[10px] font-mono transition-colors ${about.trim().length >= 20
+                          ? "text-emerald-500 dark:text-emerald-400"
+                          : "text-zinc-400 dark:text-zinc-500"
+                          }`}>
+                          {about.trim().length}/500
+                          {about.trim().length < 20 && ` · ${20 - about.trim().length} more`}
+                        </span>
+                      </div>
+                      <Textarea
+                        value={about}
+                        onChange={(e) => setAbout(e.target.value.slice(0, 500))}
                         required
-                        className="w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/60 px-3 py-2 text-xs sm:text-sm text-zinc-900 dark:text-white outline-none focus:border-blue-500 focus:bg-white dark:focus:bg-zinc-900 transition-colors h-10 cursor-pointer"
-                      >
-                        <option value="US">United States (US)</option>
-                        <option value="IN">India (IN)</option>
-                        <option value="GB">United Kingdom (GB)</option>
-                        <option value="CA">Canada (CA)</option>
-                        <option value="DE">Germany (DE)</option>
-                        <option value="FR">France (FR)</option>
-                        <option value="AU">Australia (AU)</option>
-                        <option value="JP">Japan (JP)</option>
-                        <option value="SG">Singapore (SG)</option>
-                        <option value="NL">Netherlands (NL)</option>
-                        <option value="AE">United Arab Emirates (AE)</option>
-                        <option value="BR">Brazil (BR)</option>
-                        <option value="CH">Switzerland (CH)</option>
-                        <option value="ES">Spain (ES)</option>
-                        <option value="IT">Italy (IT)</option>
-                        <option value="SE">Sweden (SE)</option>
-                        <option value="KR">South Korea (KR)</option>
-                        <option value="IE">Ireland (IE)</option>
-                        <option value="NZ">New Zealand (NZ)</option>
-                        <option value="MX">Mexico (MX)</option>
-                        <option value="ID">Indonesia (ID)</option>
-                        <option value="MY">Malaysia (MY)</option>
-                        <option value="PL">Poland (PL)</option>
-                        <option value="TR">Turkey (TR)</option>
-                        <option value="ZA">South Africa (ZA)</option>
-                      </select>
-                    </div>
+                        minLength={20}
+                        maxLength={500}
+                        rows={3}
+                        placeholder="Tell us about your brand — what you do, what you make, or why you're claiming this key…"
+                        className="w-full rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/60 px-3 py-2 text-xs sm:text-sm text-zinc-900 dark:text-white placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:border-blue-500 focus:bg-white dark:focus:bg-zinc-900 focus-visible:ring-0 focus-visible:ring-offset-0 transition-colors resize-none leading-relaxed min-h-0"
+                      />
+                    </Field>
                   </div>
 
-                  <div className="p-3 rounded-xl bg-zinc-50 dark:bg-black/30 border border-zinc-200/80 dark:border-white/10">
-                    <label className="flex items-start gap-2.5 cursor-pointer text-xs text-zinc-700 dark:text-zinc-300 leading-tight">
-                      <input
-                        type="checkbox"
-                        checked={termsAgreed}
-                        onChange={(e) => setTermsAgreed(e.target.checked)}
-                        required
-                        className="mt-0.5 h-4 w-4 rounded border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-blue-600 focus:ring-blue-500 cursor-pointer"
-                      />
-                      <span>
-                        I agree to the{" "}
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            setTermsModalOpen(true);
-                          }}
-                          className="text-blue-600 dark:text-blue-400 hover:underline font-semibold cursor-pointer"
-                        >
-                          Terms &amp; Conditions
-                        </button>{" "}
-                        and understand that all bid payments are final.
-                      </span>
+                  <div className="p-2.5 rounded-lg bg-zinc-50 dark:bg-black/30 border border-zinc-200/80 dark:border-white/10 flex items-start gap-2">
+                    <Checkbox
+                      id="terms-checkbox"
+                      checked={termsAgreed}
+                      onCheckedChange={(checked) => setTermsAgreed(checked === true)}
+                      required
+                      className="mt-0.5 h-3.5 w-3.5 rounded border-zinc-300 dark:border-zinc-700 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                    />
+                    <label
+                      htmlFor="terms-checkbox"
+                      className="cursor-pointer text-[11px] text-zinc-700 dark:text-zinc-300 leading-tight"
+                    >
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setTermsModalOpen(true);
+                        }}
+                        className="text-blue-600 dark:text-blue-400 hover:underline font-semibold cursor-pointer"
+                      >
+                        Accept terms &amp; conditions
+                      </button>
                     </label>
                   </div>
 
-                  <div className="pt-2 border-t border-zinc-100 dark:border-white/10 space-y-2">
+                  <div className="pt-1.5 border-t border-zinc-100 dark:border-white/10 space-y-1.5">
                     <div className={cn("p-[2px] w-full rounded-md transition-all duration-200 ease-out shadow-xs", canSubmit ? "bg-blue-600/20" : "bg-zinc-200/50 dark:bg-zinc-800/50")}>
                       <button
                         type="submit"
                         disabled={!canSubmit}
                         className={cn(
-                          "w-full py-3.5 px-6 rounded-[6px] font-bold tracking-wider text-xs sm:text-sm text-white transition-all flex items-center justify-center gap-2",
+                          "w-full py-3 px-5 rounded-[6px] font-bold tracking-wider text-xs sm:text-sm text-white transition-all flex items-center justify-center gap-2",
                           canSubmit
                             ? "bg-blue-600 hover:bg-blue-500 active:bg-blue-700 cursor-pointer shadow-[0_4px_16px_rgba(37,99,235,0.35),inset_0_1px_0.5px_rgba(255,255,255,0.2),inset_0_-1px_0.5px_rgba(0,0,0,0.1)]"
                             : "bg-zinc-200 dark:bg-zinc-800 text-zinc-400 dark:text-zinc-500 border border-zinc-300/60 dark:border-white/5 cursor-not-allowed"
@@ -663,7 +774,7 @@ export default function OutbidModal({
                       >
                         {isSubmitting ? (
                           <>
-                            <span className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                            <span className="h-3.5 w-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                             <span>Preparing Secure Checkout…</span>
                           </>
                         ) : (
@@ -671,24 +782,8 @@ export default function OutbidModal({
                         )}
                       </button>
                     </div>
-                    {!canSubmit && !isSubmitting && (
-                      <p className="text-[10px] text-center text-zinc-400 dark:text-zinc-500">
-                        {!targetSlot
-                          ? "Please specify a keycap slot"
-                          : !brandName.trim()
-                            ? "Please enter your brand name"
-                            : !isUrlValid
-                              ? "Please enter your company website URL"
-                              : !isBidAmountValid
-                                ? `Bid must be at least $${effectiveMinBid}`
-                                : !termsAgreed
-                                  ? "Please agree to the placement rules"
-                                  : ""}
-                      </p>
-                    )}
-                    <p className="text-[11px] text-center text-zinc-500 dark:text-zinc-400 font-mono">
-                      Encrypted checkout · Immediate confirmation recorded
-                    </p>
+
+
                   </div>
                 </form>
               )}

@@ -56,7 +56,7 @@ function PodiumCard({
       onMouseLeave={() => setHovered(false)}
       onClick={() => setHovered((prev) => !prev)}
       className={cn(
-        "group relative flex flex-col justify-between p-6 sm:p-7 rounded-2xl border transition-all duration-300 overflow-hidden cursor-pointer select-none",
+        "group relative flex flex-col justify-between p-5 sm:p-7 rounded-2xl border transition-all duration-300 overflow-hidden cursor-pointer select-none",
         "bg-white/95 dark:bg-zinc-900/85 border-zinc-300 dark:border-white/10 backdrop-blur-xl",
         "shadow-[0_8px_30px_rgba(0,0,0,0.07),0_1px_3px_rgba(0,0,0,0.04),inset_0_1px_0.5px_rgba(255,255,255,0.2),inset_0_-1px_0.5px_rgba(0,0,0,0.1)]",
         config.borderHover,
@@ -211,22 +211,22 @@ export default function TopBidsCanvasReveal() {
     .slice(0, 3);
 
   return (
-    <section className="w-full py-12 sm:py-20 px-4 sm:px-6 relative">
+    <section className="w-full py-10 sm:py-16 md:py-20 px-4 sm:px-6 relative">
       <div className="max-w-6xl mx-auto">
         {/* Section Header */}
         <ScrollReveal delay={0.05} distance={20}>
-          <div className="flex flex-col items-center text-center mb-10 sm:mb-14">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-emerald-500/15 border border-emerald-600/40 dark:border-emerald-500/30 text-emerald-800 dark:text-emerald-400 text-xs font-bold mb-3 shadow-2xs select-none">
+          <div className="flex flex-col items-center text-center mb-8 sm:mb-14">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-md bg-emerald-500/15 border border-emerald-600/40 dark:border-emerald-500/30 text-emerald-800 dark:text-emerald-400 text-xs font-bold mb-3 shadow-2xs select-none">
               <Ping>
                 <span>Live Matrix Reveal</span>
               </Ping>
             </div>
 
-            <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-zinc-950 dark:text-white leading-tight">
+            <h2 className="font-display text-2xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-zinc-950 dark:text-white leading-tight">
               Top 3 Keys On Auction
             </h2>
 
-            <p className="mt-3 text-sm sm:text-base text-zinc-500 dark:text-zinc-400 max-w-xl font-normal leading-relaxed">
+            <p className="mt-2.5 sm:mt-3 text-xs sm:text-base text-zinc-500 dark:text-zinc-400 max-w-xl font-normal leading-relaxed px-2">
               Hover over each leader card to reveal the interactive canvas particle matrix. The highest bidder on each key claims permanent hardware placement.
             </p>
           </div>

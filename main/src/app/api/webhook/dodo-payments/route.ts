@@ -35,18 +35,48 @@ export const POST = Webhooks({
       return;
     }
 
-    // Pass total_amount in minor units (cents / paise) straight through as-is
-    const totalAmountMinor =
-      typeof payload?.data?.total_amount === "number" && Number.isFinite(payload.data.total_amount)
-        ? payload.data.total_amount
+    // ── Settlement amount/currency ──
+    // This is what actually lands in your Dodo balance, already converted
+    // from the customer's payment currency. This is what must be compared
+    // against bid_amount (which is stored in USD) in confirm_bid.
+    const settlementAmountMinor =
+      typeof payload?.data?.settlement_amount === "number" && Number.isFinite(payload.data.settlement_amount)
+        ? payload.data.settlement_amount
         : null;
+
+    const settlementCurrency =
+      typeof payload?.data?.settlement_currency === "string" ? payload.data.settlement_currency : null;
+
+    // ── What the customer actually paid, in their own currency ──
+    // For audit/refund reference only — never used for the amount-match check.
+    const paidAmountLocal =
+      typeof payload?.data?.total_amount === "number" && Number.isFinite(payload.data.total_amount)
+        ? payload.data.total_amount / 100
+        : null;
+
+    const paidCurrency = typeof payload?.data?.currency === "string" ? payload.data.currency : null;
+
+    // Guard: never let a missing settlement amount silently reach the DB function.
+    // A null p_amount_received_minor would make the fraud/amount-mismatch check
+    // in confirm_bid evaluate to NULL (treated as false in PL/pgSQL), which would
+    // silently bypass the fraud check instead of failing loudly.
+    if (settlementAmountMinor === null || !settlementCurrency) {
+      console.error(
+        `[Webhook] Missing settlement_amount/settlement_currency in payload for order ${orderId}. ` +
+        `Payment cannot be safely confirmed.`
+      );
+      throw new Error("Missing settlement amount in webhook payload"); // let Dodo retry
+    }
 
     const { data, error } = await supabaseAdmin.rpc("confirm_bid", {
       p_order_id: orderId,
       p_provider_payment_id: dodoPaymentId,
       p_provider_contact: contact,
-      p_amount_received_minor: totalAmountMinor,
+      p_amount_received_minor: settlementAmountMinor,
       p_webhook_event_id: webhookEventId,
+      p_paid_currency: paidCurrency,
+      p_paid_amount_local: paidAmountLocal,
+      p_settlement_currency: settlementCurrency,
     });
 
     if (error) {
@@ -78,7 +108,8 @@ export const POST = Webhooks({
       const isTerminalRejection =
         errCode.includes("REFUND_REQUIRED") ||
         errCode.includes("AMOUNT_MISMATCH") ||
-        errCode.includes("OUTBID");
+        errCode.includes("OUTBID") ||
+        errCode.includes("CURRENCY_MISMATCH");
 
       if (isTerminalRejection) {
         console.error(

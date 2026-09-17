@@ -36,10 +36,10 @@ function HowItWorksEvervaultCard({ step }: { step: StepItem }) {
     <div
       onMouseMove={onMouseMove}
       className={cn(
-        "group/card relative flex flex-col justify-between p-6 sm:p-7 rounded-2xl border transition-all duration-300 overflow-hidden select-none cursor-pointer",
+        "group/card relative flex flex-col justify-between p-5 sm:p-7 rounded-2xl border transition-all duration-300 overflow-hidden select-none cursor-pointer",
         "bg-white dark:bg-zinc-900/50 border-zinc-300 dark:border-white/10 backdrop-blur-xl",
-        "shadow-[0_8px_30px_rgba(0,0,0,0.06),0_1px_3px_rgba(0,0,0,0.04)] hover:shadow-2xl hover:scale-108 hover:border-zinc-400 dark:hover:border-white/25",
-        "h-full min-h-[240px] sm:min-h-[360px]"
+        "shadow-[0_8px_30px_rgba(0,0,0,0.06),0_1px_3px_rgba(0,0,0,0.04)] hover:shadow-2xl sm:hover:scale-[1.03] hover:border-zinc-400 dark:hover:border-white/25",
+        "h-full min-h-[220px] sm:min-h-[340px]"
       )}
     >
       {/* Corner crosshair icons */}
@@ -106,15 +106,15 @@ export default function HowItWorksSection() {
   const claimedCount = keysList.length;
 
   return (
-    <section id="how-it-works" className="w-full py-20 sm:py-28 px-4 sm:px-6">
+    <section id="how-it-works" className="w-full py-14 sm:py-24 px-4 sm:px-6">
       <div className="max-w-6xl mx-auto">
         {/* Section Header */}
         <ScrollReveal>
-          <div className="mb-10 sm:mb-14">
-            <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-zinc-950 dark:text-white leading-tight text-shadow-xs">
+          <div className="mb-8 sm:mb-14">
+            <h2 className="font-display text-2xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-zinc-950 dark:text-white leading-tight text-shadow-xs">
               How it works.
             </h2>
-            <p className="mt-2.5 text-sm sm:text-base text-zinc-600 dark:text-zinc-400 font-normal">
+            <p className="mt-2 text-xs sm:text-base text-zinc-600 dark:text-zinc-400 font-normal">
               Simple, transparent, and one-of-a-kind.
             </p>
           </div>
