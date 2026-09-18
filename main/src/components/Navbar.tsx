@@ -94,7 +94,7 @@ function Navbar() {
                 <div className="hidden sm:flex items-center justify-center gap-2 sm:gap-3 ">
                     <div className="flex items-center gap-4 sm:gap-6 text-xs sm:text-sm font-medium text-neutral-600 dark:text-neutral-400 mr-5">
                         {navLinks.map((link) => (
-                            <a href={link.href} className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                            <a key={link.href} href={link.href} className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
                                 {link.label}
                             </a>
                         ))}

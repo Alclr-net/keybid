@@ -128,6 +128,7 @@ export default function RootLayout({
     <html
       lang="en"
       className={`${plusJakarta.variable} ${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col font-[family-name:var(--font-apple)] antialiased selection:bg-blue-600 selection:text-white" suppressHydrationWarning>
         <Providers>

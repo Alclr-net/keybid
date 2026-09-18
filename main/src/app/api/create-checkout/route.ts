@@ -18,10 +18,10 @@ const client = new DodoPayments({
 const DODO_PRODUCT_ID = isProd ? process.env.DODO_PWYW_PRODUCT_ID : process.env.TEST_DODO_PRODUCT_ID;
 
 const RETURN_URL =
-  process.env.DODO_PAYMENTS_RETURN_URL ||
-  (isProd
+
+  isProd
     ? "https://keybid.lol/payments/verify?order_id={order_id}"
-    : "https://canopy-proofs-exit.ngrok-free.dev/payments/verify?order_id={order_id}");
+    : "https://canopy-proofs-exit.ngrok-free.dev/payments/verify?order_id={order_id}";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";

@@ -652,7 +652,8 @@ export const KeybidThemeToggleWithTransition = ({
         className
       )}
       onClick={(e) => toggleTheme(e)}
-      title={`Switch to ${isDark ? 'light' : 'dark'} mode`}
+      title={mounted ? `Switch to ${isDark ? 'light' : 'dark'} mode` : undefined}
+      suppressHydrationWarning
       role="button"
       tabIndex={0}
       onKeyDown={(e) => {
