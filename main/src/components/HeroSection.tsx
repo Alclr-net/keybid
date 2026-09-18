@@ -113,7 +113,7 @@ function HeroSection() {
                             </span>
                         </Ping>
                         <Ping color={"bg-red-500"}>
-                            <span className="whitespace-nowrap">grab your key now</span>
+                            <span className="whitespace-nowrap">Grab your key now</span>
                         </Ping>
                     </div>
                 </div>
