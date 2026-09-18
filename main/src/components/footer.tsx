@@ -1,6 +1,8 @@
 "use client"
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
+import avatarImg from '@/public/rachit.png';
 import { SITE_CONFIG, FOOTER_NAV_LINKS } from '@/lib/constant';
 import { cn } from '../lib/utils';
 
@@ -19,10 +21,12 @@ export default function Footer() {
               "shadow-[0_4px_16px_rgba(37,99,235,0.35),inset_0_1px_0.5px_rgba(255,255,255,0.25)] hover:shadow-[0_6px_22px_rgba(37,99,235,0.45)]",
               "cursor-pointer")}
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src="/api/avatar"
+              <Image
+                src={avatarImg}
                 alt={SITE_CONFIG.creator}
+                width={64}
+                height={64}
+                placeholder="blur"
                 className={cn("w-full h-full object-cover object-center rounded-xl")}
               />
             </div>
