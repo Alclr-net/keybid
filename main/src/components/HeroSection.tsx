@@ -112,7 +112,9 @@ function HeroSection() {
                                 ${keysList.reduce((acc, k) => acc + (k.current_bid_amount || 0), 0)} in active bids
                             </span>
                         </Ping>
-
+                        <Ping color={"bg-red-500"}>
+                            <span className="whitespace-nowrap">grab your key now</span>
+                        </Ping>
                     </div>
                 </div>
             </ScrollReveal>
